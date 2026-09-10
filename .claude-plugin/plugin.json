@@ -1,14 +1,12 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin.json",
-  "name": "b2tech-starter",
+  "name": "facility-crm",
   "version": "1.0.0",
-  "description": "Starter pack B2 Tech: hooks de segurança, skills de code review e security audit. Pensado para projetos novos com stack Python/Flask + Next.js/TS em GCP.",
+  "description": "Configuração Claude Code do Facility: hooks de segurança, skills de code review, security audit e engenharia de frontend. Stack React/Vite/TypeScript + Supabase (Postgres/RLS/Edge Functions).",
   "author": {
-    "name": "Bruno Bracaioli",
-    "email": "bruno@b2tech.com",
-    "url": "https://b2tech.io"
+    "name": "Rafael Ribeiro",
+    "email": "ti.rafaelr@braspress.com"
   },
-  "homepage": "https://b2tech.io",
   "repository": "https://github.com/brunobracaioli/claude-code-starter-pack",
   "license": "MIT",
   "keywords": [
@@ -16,10 +14,10 @@
     "code-review",
     "ddd",
     "vertical-slice",
-    "python",
-    "nextjs",
-    "gcp",
-    "b2tech"
+    "react",
+    "typescript",
+    "supabase",
+    "crm"
   ],
   "skills": ["./skills/"]
 }
