@@ -9,3 +9,21 @@
 .claude/.cache/
 
 aula-wsl-claude-code-starter.md
+
+# Node / build
+node_modules
+dist
+dist-ssr
+*.local
+coverage
+*.tsbuildinfo
+
+# Env (exceto .env.example, sem valores)
+.env
+.env.*
+!.env.example
+
+# Supabase local
+supabase/.branches
+supabase/.temp
+
