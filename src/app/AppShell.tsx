@@ -165,7 +165,7 @@ export function AppShell() {
         </div>
       </aside>
 
-      <div className="flex min-h-screen w-full flex-col md:min-h-0">
+      <div className="flex min-h-screen w-full min-w-0 flex-col md:min-h-0">
         {/* Barra superior — mobile */}
         <header className="flex items-center justify-between border-b border-border bg-sidebar px-4 py-3 md:hidden">
           <p className="font-display text-base font-medium text-sidebar-foreground">
@@ -181,7 +181,7 @@ export function AppShell() {
           </MenuUsuario>
         </header>
 
-        <main className="flex-1 pb-16 md:pb-0">
+        <main className="min-w-0 flex-1 pb-16 md:pb-0">
           <Outlet />
         </main>
 

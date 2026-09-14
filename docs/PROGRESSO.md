@@ -4,11 +4,20 @@ Log de continuidade entre máquinas/sessões. Atualize a seção "Estado atual" 
 
 ## Estado atual — 2026-09-14
 
-**Fase 1 — Fundação e núcleo. Correções de layout reportadas pelo usuário depois do 1D-4.** Sem migration. `lint`/`typecheck`/`test` (25/25)/`build` limpos. **Ainda não testado no navegador nesta sessão** — próximo passo ao retomar.
+**Fase 1 — Fundação e núcleo. Segunda rodada de correções de layout, reportadas pelo usuário testando em tela grande.** Sem migration. `lint`/`typecheck`/`test` (25/25)/`build` limpos. **Ainda não testado no navegador nesta sessão** — próximo passo ao retomar.
 
-**Bug real encontrado e corrigido:** `--popover`/`--popover-foreground` nunca tinham sido definidos em `globals.css`/`tailwind.config.ts`, mas `SelectContent`/`DropdownMenuContent` usam `bg-popover text-popover-foreground` desde que foram escritos — `hsl(var(--popover))` com variável inexistente virava cor inválida, então o fundo dos selects/menus ficava transparente e as opções ilegíveis. Não era gosto, era token faltando desde a origem.
+**Bug real encontrado e corrigido:** faltava `min-w-0` na cadeia flex do `AppShell.tsx` (a `<div>` de conteúdo e o `<main>` que envolve o `<Outlet/>`) — item flex tem `min-width: auto` por padrão, recusa encolher abaixo do próprio conteúdo. Quando o kanban de Funis tinha colunas suficientes pra passar da largura da tela, era o container do conteúdo inteiro que se recusava a encolher (em vez de só a faixa de colunas rolar via `overflow-x-auto`, que já existia em `QuadroFunil.tsx`) — por isso a última coluna sumia sem scrollbar. Não era falta de espaço, era esse bug clássico de flexbox.
 
-**Ajustes de gosto do usuário, também aplicados:** paleta trocada de teal (`#0D9488`, achado "muito verde/escuro") pra azul mais claro (`#2563EB`, validado de novo no `ui-ux-pro-max --domain color`); `border`/`muted` também dessaturados (eram um ciano bem forte, contribuíam pra sensação de "tudo verde"). Colunas do kanban (`QuadroFunil.tsx`) trocaram de `bg-secondary/40` (painel tingido na cor de marca) pra `bg-muted/60` (neutro) — "outra forma de construir", não só a mesma cor mais clara; cor fica reservada pra urgência (`--urgencia`, nos cards) e pro anel de "soltar aqui" (`ring-primary`). Larguras de conteúdo aumentadas: `Funil.tsx` perdeu o teto de largura (`max-w-6xl` → `w-full`, mais colunas visíveis no kanban), telas de navegação (`Inicio`, `ListaContatos`, `ListaVencimentos`, `ListaTarefas`) foram de `max-w-3xl`/`max-w-5xl` pra `max-w-7xl`, fichas de detalhe de `max-w-2xl` pra `max-w-3xl`; formulários de coluna única ficaram como estavam (alargar demais um formulário simples piora a leitura, e não foi o que foi reclamado).
+**Ajustes de gosto do usuário, também aplicados:** `Funil.tsx` voltou a ter a mesma largura das outras telas de navegação (`max-w-7xl`, igual `Inicio`/`ListaContatos`/`ListaVencimentos`/`ListaTarefas`) — o `w-full` sem teto da rodada anterior tinha sido a tentativa errada de resolver o bug do scroll acima, e quebrou a consistência entre telas. Cards de negócio (`CardNegocio.tsx`) ganharam cor por fase — como as etapas são dinâmicas por empresa (vêm do template do nicho), a cor é escolhida pela posição da etapa no funil (não pelo nome), ciclando por 6 matizes do Tailwind (violet/pink/amber/emerald/cyan/fuchsia) que não colidem com os tokens da marca — faixa colorida na borda esquerda + fundo bem sutil da mesma cor, claro e escuro. O destaque de "próximo passo vencido" continua como estava (chip interno em `--urgencia`), os dois sinais convivem sem se atropelar.
+
+<details>
+<summary>Histórico — Correções de layout, rodada 1 (2026-09-14)</summary>
+
+**Bug real:** `--popover`/`--popover-foreground` nunca tinham sido definidos em `globals.css`/`tailwind.config.ts`, mas `SelectContent`/`DropdownMenuContent` usam `bg-popover text-popover-foreground` desde que foram escritos — `hsl(var(--popover))` com variável inexistente virava cor inválida, fundo dos selects/menus ficava transparente e as opções ilegíveis. Corrigido.
+
+Ajustes de gosto: paleta trocada de teal (`#0D9488`, achado "muito verde/escuro") pra azul mais claro (`#2563EB`, validado no `ui-ux-pro-max --domain color`); `border`/`muted` também dessaturados. Colunas do kanban trocaram de `bg-secondary/40` (painel na cor de marca) pra `bg-muted/60` (neutro). Larguras de conteúdo aumentadas em geral.
+
+</details>
 
 <details>
 <summary>Histórico — 1D-4: Tela "Hoje" (2026-09-14)</summary>
@@ -232,7 +241,12 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 - **Bug real:** `--popover`/`--popover-foreground` nunca tinham sido definidos — `Select`/`DropdownMenu` usavam `bg-popover` desde que foram escritos, ficavam com fundo transparente/opções ilegíveis. Corrigido em `globals.css`/`tailwind.config.ts`.
 - Paleta trocada de teal pra azul mais claro (`#2563EB`, `ui-ux-pro-max --domain color`); `border`/`muted` dessaturados junto (eram um ciano forte).
 - `QuadroFunil.tsx`: colunas do kanban de `bg-secondary/40` (painel na cor de marca) pra `bg-muted/60` (neutro) — pedido explícito de "outra forma de construir", não só recolorir.
-- Larguras: `Funil.tsx` sem teto (`w-full`, mais colunas visíveis); telas de navegação (`Inicio`/`ListaContatos`/`ListaVencimentos`/`ListaTarefas`) em `max-w-7xl`; fichas de detalhe em `max-w-3xl`; formulários de coluna única mantidos em `max-w-2xl` (alargar formulário simples piora a leitura).
+- Larguras: telas de navegação (`Inicio`/`ListaContatos`/`ListaVencimentos`/`ListaTarefas`/`Funil`) em `max-w-7xl`, todas com a mesma largura; fichas de detalhe em `max-w-3xl`; formulários de coluna única mantidos em `max-w-2xl` (alargar formulário simples piora a leitura).
+
+**Correções de layout, rodada 2 (pós-teste em tela grande):**
+- **Bug real:** faltava `min-w-0` na cadeia flex do `AppShell.tsx` (div de conteúdo + `<main>`) — item flex com `min-width: auto` não encolhia, então o kanban de Funis empurrava a página inteira em vez de rolar só a faixa de colunas (`overflow-x-auto`, que já existia em `QuadroFunil.tsx`), e a última coluna sumia sem scrollbar. Corrigido.
+- `Funil.tsx` voltou a `max-w-7xl` — o `w-full` da rodada 1 tinha sido a tentativa errada de resolver o bug do scroll acima (achava que era falta de espaço), e quebrava a consistência de largura com as outras telas.
+- `CardNegocio.tsx`: cor por fase — 6 matizes do Tailwind (violet/pink/amber/emerald/cyan/fuchsia) ciclando pela **posição** da etapa no funil (etapas são dinâmicas por empresa, não dá pra colorir por nome), faixa na borda esquerda + fundo sutil, claro e escuro. Destaque de "próximo passo vencido" (chip interno `--urgencia`) não mudou.
 
 ### Pendências conhecidas
 
@@ -255,7 +269,7 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 8. **Achado de UX corrigido:** `/onboarding` não tinha botão de "Sair" (fica fora do `AppShell`, que é quem tem o menu de usuário) — sessão inválida (ex.: usuário apagado por `db:reset` local) prendia quem estava ali sem jeito de deslogar pela interface. Corrigido em `CriarEmpresa.tsx` com um botão "Sair" próprio.
 9. **Retrabalho visual (adoção do `ui-ux-pro-max`) validado no navegador pelo usuário** — paleta, tipografia e alternância de tema claro/escuro confirmados funcionando (o alternador só foi ligado ao menu de usuário depois de o usuário notar que não achava onde trocar — `useTema()` existia desde o 1A mas nunca tinha sido chamado por nenhum componente).
 10. **1D-3 (Tarefas) e 1D-4 (Tela "Hoje") validados no navegador pelo usuário.**
-11. **Correções de layout pós-1D-4 (bug do `--popover`, paleta azul, colunas do kanban, larguras) não foram testadas no navegador ainda** — `lint`/`typecheck`/`test`/`build` passam, mas só foram verificadas por leitura de código nesta sessão.
+11. **Correções de layout pós-1D-4 (duas rodadas: bug do `--popover`, paleta azul, colunas do kanban sem tingimento, bug do `min-w-0`/scroll do kanban, largura consistente entre telas, cor por fase nos cards de negócio) não foram testadas no navegador ainda** — `lint`/`typecheck`/`test`/`build` passam, mas só foram verificadas por leitura de código nesta sessão.
 
 ## Próximos passos imediatos (ao retomar, nesta ordem)
 
@@ -269,7 +283,7 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 8. `npm run dev` — testar no navegador o fluxo de Importação: em `/contatos/importar`, baixar o modelo, preencher com uma linha válida + uma com CPF inválido + uma duplicada de um contato do seed, subir o CSV, conferir o mapeamento automático, a prévia com os três status, confirmar, e checar que só a válida virou contato (e vencimento, se a coluna de data foi preenchida).
 9. Resolver a pendência de lançamento (`enable_confirmations`) **antes** de criar qualquer projeto Supabase de staging/produção.
 10. **1D-2, 1D-3, 1D-4 e o retrabalho visual (`ui-ux-pro-max`) já validados no navegador.**
-11. Testar as **correções de layout pós-1D-4** no navegador: abrir um `Select` (filtro em Contatos) e um `DropdownMenu` (menu de usuário) em claro e escuro — fundo deve estar sólido e legível; conferir a paleta azul em botões/links/badges/anéis de foco; abrir `/funis` e conferir que o quadro usa a largura toda da tela e que as colunas não têm mais tingimento colorido forte; conferir `/`, `/contatos`, `/vencimentos`, `/tarefas` usando mais largura; conferir que os formulários continuam com largura de leitura confortável.
+11. Testar as **correções de layout pós-1D-4** no navegador (numa tela grande, é onde o bug de largura apareceu): abrir um `Select`/`DropdownMenu` em claro e escuro — fundo sólido e legível; conferir a paleta azul; abrir `/funis` e conferir que a largura é igual à de `/`, `/contatos`, `/vencimentos`, `/tarefas`, e que — se o funil tiver etapas suficientes — a faixa de colunas rola horizontalmente *dentro* da tela, sem empurrar a página nem cortar a sidebar; conferir que cada etapa colore os cards de negócio de forma diferente (claro e escuro) e que o destaque de próximo-passo-vencido continua visível.
 12. Depois de validado, seguir pro **1D-5** (PWA completo com push) — fecha o incremento 1D inteiro.
 
 ## Roteiro dos incrementos da Fase 1
@@ -287,6 +301,6 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
   - **Retrabalho visual (`ui-ux-pro-max`):** depois do 1D-2 validado, o usuário instalou o plugin `ui-ux-pro-max` e pediu pra reconstruir a identidade visual do 1D-1+1D-2 com ele, pra ficar homogêneo desde o início — substitui a direção anterior (Fraunces/IBM Plex Sans) por Calistoga/Inter/JetBrains Mono + paleta teal/laranja. Detalhes no "Estado atual" acima e na memória `project_1d_visual_design`. Aplicado via troca de tokens (`globals.css`/`tailwind.config.ts`), sem reescrever páginas. Implementado e validado no navegador (inclusive o alternador de tema claro/escuro, ligado ao `useTema()` que existia desde o 1A mas nunca tinha sido chamado por nada).
   - **1D-3 — Tarefas:** CRUD de tarefas (diálogo, não página própria) + concluir/reabrir, vínculo opcional com contato ou negócio, destaque de atraso. Sem migration (schema/RLS já existiam desde o 1A). Implementado e validado no navegador. Cadências ficam pra Fase 2 (dependem de templates de mensagem).
   - **1D-4 — Tela "Hoje":** substitui o placeholder de `Inicio.tsx` — leads sem primeiro contato, follow-ups de hoje/atrasados, negócios com próximo passo vencido, vencimentos pendentes, aniversariantes, cards de resumo, checklist "Primeiros passos" (só os 3 itens viáveis na Fase 1 — decisão tomada com o usuário). Sem migration. Implementado e validado no navegador.
-  - **Correções de layout pós-1D-4:** bug do `--popover` faltando (selects/menus transparentes), paleta reclarada pra azul, colunas do kanban sem tingimento de cor, telas de navegação usando mais largura da tela — reportado pelo usuário, teste no navegador pendente.
+  - **Correções de layout pós-1D-4** (duas rodadas, reportadas pelo usuário): bug do `--popover` faltando (selects/menus transparentes), paleta reclarada pra azul, colunas do kanban sem tingimento de cor; depois, bug do `min-w-0` faltando no `AppShell` (kanban empurrava a página em vez de rolar), largura consistente entre todas as telas de navegação, cor por fase nos cards de negócio. Teste no navegador pendente.
   - **1D-5 — PWA completo com push** (depende de infra de notificação que ainda não existe). Não iniciado. Última fatia do 1D.
   - **Diretriz do usuário pro visual (vale pro 1D inteiro, não só 1D-1):** atual, sem cara de IA, padrão de produto SaaS de verdade — não os defaults genéricos do shadcn/ui. Registrada na memória de projeto `project_1d_visual_design`.

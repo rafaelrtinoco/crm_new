@@ -8,9 +8,10 @@ interface ColunaProps {
   etapa: Etapa;
   negocios: Negocio[];
   hoje: string;
+  corIndex: number;
 }
 
-function Coluna({ etapa, negocios, hoje }: ColunaProps) {
+function Coluna({ etapa, negocios, hoje, corIndex }: ColunaProps) {
   const { setNodeRef, isOver } = useDroppable({ id: etapa.id });
 
   return (
@@ -30,6 +31,7 @@ function Coluna({ etapa, negocios, hoje }: ColunaProps) {
             key={negocio.id}
             negocio={negocio}
             hoje={hoje}
+            corIndex={corIndex}
             diasNaEtapa={Math.max(0, diferencaEmDias(negocio.entrouNaEtapaEm.slice(0, 10), hoje))}
           />
         ))}
@@ -61,12 +63,13 @@ export function QuadroFunil({ etapas, negocios, hoje, onSoltar }: Props) {
   return (
     <DndContext onDragEnd={aoSoltar}>
       <div className="flex gap-3 overflow-x-auto pb-2">
-        {etapas.map((etapa) => (
+        {etapas.map((etapa, indice) => (
           <Coluna
             key={etapa.id}
             etapa={etapa}
             negocios={negocios.filter((n) => n.etapaId === etapa.id)}
             hoje={hoje}
+            corIndex={indice}
           />
         ))}
       </div>
