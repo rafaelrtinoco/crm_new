@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { LogOut } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { supabase } from "@/lib/supabase";
 import { empresaSchema, type EmpresaInput } from "@/features/onboarding/schemas";
 import { useCriarEmpresa, useNichoTemplates } from "@/features/onboarding/api/useOnboarding";
 import { useEmpresas } from "@/features/onboarding/api/useEmpresas";
@@ -41,7 +43,16 @@ export function CriarEmpresa() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
+    <main className="relative flex min-h-screen items-center justify-center p-4">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="absolute right-4 top-4"
+        onClick={() => supabase.auth.signOut()}
+      >
+        <LogOut className="h-4 w-4" />
+        Sair
+      </Button>
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle>Criar sua empresa</CardTitle>
