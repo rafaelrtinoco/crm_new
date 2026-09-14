@@ -10,7 +10,7 @@ Comentários HTML como este não entram no contexto do Claude.
 
 CRM multiempresa para corretores de seguros (nicho de lançamento) e, depois, outros negócios do ramo administrativo. Foco: leads, funil, vencimentos com lembretes automáticos, follow-up e campanhas. **Não** é sistema de gestão de apólices, financeiro ou comissões.
 
-> **Estado atual:** incremento **1A** (fundação: schema, RLS, isolamento) implementado **e validado** — scaffold React/Vite rodando, migrations+seed aplicados, 51/51 testes pgTAP passando, `src/types/database.ts` gerado. Falta só criar `.env.local` (manual, ver `docs/PROGRESSO.md`) pra confirmar `npm run dev` de ponta a ponta. 1B (auth/onboarding), 1C (contatos/vencimentos/importação) e 1D (funis/tarefas/Hoje/PWA completo) ainda não começaram.
+> **Estado atual:** incrementos **1A** (fundação) e **1B** (auth, onboarding, convites) implementados e validados — 72/72 testes pgTAP, fluxo de cadastro→empresa→convite confirmado via API real. **Pendência de lançamento:** `auth.email.enable_confirmations` precisa virar `true` antes de qualquer Supabase de staging/produção (ver `docs/PROGRESSO.md`). `npm run dev` não foi checado no navegador ainda (sem acesso a browser nesta sessão). 1C (contatos/vencimentos/importação) e 1D (funis/tarefas/Hoje/PWA completo) ainda não começaram. Detalhes: `docs/PROGRESSO.md`.
 
 - **Especificação:** `docs/PRD.md` — leia apenas a seção do que estiver implementando.
 - **Fase atual: 1 — Fundação e núcleo.** Não implemente nada de fases futuras sem eu pedir.
@@ -80,15 +80,15 @@ docs/
   PRD.md
   decisoes/
 src/
-  app/                  # rotas, layouts, providers globais (existe: App, router, providers, globals.css)
-  features/<slice>/     # api/ (hooks TanStack Query), components/, schemas.ts, páginas — chega em 1B+
-  components/ui/        # shadcn/ui — chega quando a primeira tela usar
-  lib/                  # cliente supabase, datas, formatadores BR, vocabulário (existe)
-  types/database.ts     # GERADO — use npm run db:types. Placeholder até a 1ª migration aplicada
+  app/                  # rotas, layouts, providers globais, guards (RotaProtegida/RotaPublica)
+  features/<slice>/     # api/ (hooks TanStack Query), components/, schemas.ts, páginas — existe: auth, onboarding
+  components/ui/        # shadcn/ui — existe: button, input, label, card, select, checkbox
+  lib/                  # cliente supabase, datas, formatadores BR, vocabulário
+  types/database.ts     # GERADO — use npm run db:types
 supabase/
-  migrations/           # 6 migrations do incremento 1A
+  migrations/           # 7 migrations (1A: fundação; 1B: onboarding)
   functions/_shared/    # providers, fila de envios, validação — chega na Fase 2 (WhatsApp)
-  tests/                # pgTAP — isolamento multiempresa, carteira compartilhada, plataforma_admins
+  tests/                # pgTAP — isolamento multiempresa, carteira compartilhada, plataforma_admins, onboarding
   seed.sql              # duas empresas fictícias (Alfa e Beta), nenhum dado real
 tests/e2e/              # smoke tests — ainda não existe
 ```

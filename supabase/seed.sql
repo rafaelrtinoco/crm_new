@@ -9,7 +9,7 @@ set search_path = public, extensions;
 -- ---------------------------------------------------------------------
 -- Catálogo: template de nicho "corretora" (PRD §3.3).
 -- ---------------------------------------------------------------------
-insert into public.nicho_templates (id, nicho, nome_exibicao, vocabulario, vencimento_tipos, motivos_perda, tags)
+insert into public.nicho_templates (id, nicho, nome_exibicao, vocabulario, vencimento_tipos, funis, motivos_perda, tags)
 values (
   'c0000000-0000-0000-0000-000000000001',
   'corretora',
@@ -25,6 +25,18 @@ values (
     {"nome": "Plano de saúde", "recorrencia_padrao": "anual"},
     {"nome": "Plano odontológico", "recorrencia_padrao": "anual"},
     {"nome": "Consórcio", "recorrencia_padrao": "anual"}
+  ]'::jsonb,
+  '[
+    {
+      "nome": "Venda nova",
+      "tipo": "venda_nova",
+      "etapas": ["Novo lead", "Primeiro contato", "Cotação", "Proposta enviada", "Negociação", "Ganho", "Perdido"]
+    },
+    {
+      "nome": "Renovação",
+      "tipo": "renovacao",
+      "etapas": ["A contatar", "Em contato", "Proposta de renovação", "Renovado", "Não renovado"]
+    }
   ]'::jsonb,
   '["Preço", "Fechou com outro", "Sem retorno", "Desistiu", "Sem perfil"]'::jsonb,
   '["VIP", "Esfriando", "Indicação"]'::jsonb

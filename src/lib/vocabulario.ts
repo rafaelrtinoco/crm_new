@@ -33,3 +33,17 @@ export const VocabularioContext = createContext<Vocabulario>(vocabularioPadrao);
 export function useVocabulario(): Vocabulario {
   return useContext(VocabularioContext);
 }
+
+/** Mescla o `vocabulario` jsonb da empresa (pode vir parcial ou vazio) com o padrão. */
+export function mesclarVocabulario(parcial: unknown): Vocabulario {
+  if (!parcial || typeof parcial !== "object") return vocabularioPadrao;
+  const valores = parcial as Partial<Vocabulario>;
+  return {
+    contato: valores.contato || vocabularioPadrao.contato,
+    contatoPlural: valores.contatoPlural || vocabularioPadrao.contatoPlural,
+    vencimento: valores.vencimento || vocabularioPadrao.vencimento,
+    vencimentoPlural: valores.vencimentoPlural || vocabularioPadrao.vencimentoPlural,
+    negocio: valores.negocio || vocabularioPadrao.negocio,
+    negocioPlural: valores.negocioPlural || vocabularioPadrao.negocioPlural,
+  };
+}

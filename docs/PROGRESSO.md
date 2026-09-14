@@ -2,13 +2,26 @@
 
 Log de continuidade entre máquinas/sessões. Atualize a seção "Estado atual" a cada incremento entregue; não precisa reescrever o histórico abaixo dela.
 
-## Estado atual — 2026-09-11
+## Estado atual — 2026-09-14
 
-**Fase 1 — Fundação e núcleo, incremento 1A (schema, RLS, isolamento) implementado e validado.** `npm run db:reset` aplica as 6 migrations + seed sem erro; `npm run test:db` passa com as 51 asserções pgTAP (0 falhas); `npm run lint`, `npm run typecheck` e `npm run test` (14/14) passam com `src/types/database.ts` gerado de verdade (não é mais o placeholder).
+**Fase 1 — Fundação e núcleo, incremento 1B (entrada: auth, onboarding, convites) implementado e validado.** 72/72 asserções pgTAP (51 do 1A + 21 novas). Fluxo completo validado **duas vezes**: via pgTAP (JWT simulado) e via `curl` direto contra a API real do Supabase local (signup de verdade → `criar_empresa_com_onboarding` → convite → segundo signup → `aceitar_convite`) — os dois bateram. `npm run dev` não foi testado no navegador nesta sessão (sem acesso a browser), mas a API por trás dele foi validada ponta a ponta.
+
+**Achado de segurança a resolver antes de qualquer ambiente real** (skill `security-check`, rodada nesta sessão): `aceitar_convite` confia em `auth.email()`, que só é confiável se o Supabase Auth exigir confirmação de e-mail. Localmente `enable_confirmations = false` (de propósito, pra agilizar dev) — em produção isso **precisa** virar `true`, senão qualquer pessoa pode se cadastrar com um e-mail que não é dela e resgatar convites endereçados a esse e-mail. Ver "Pré-requisitos de lançamento" abaixo.
+
+<details>
+<summary>Histórico — validação do 1A (2026-09-11)</summary>
+
+`npm run db:reset` aplica as 6 migrations + seed sem erro; `npm run test:db` passou com as 51 asserções pgTAP (0 falhas); `npm run lint`, `npm run typecheck` e `npm run test` (14/14) passaram com `src/types/database.ts` gerado de verdade.
 
 A primeira rodada contra Postgres real encontrou 2 bugs reais, já corrigidos:
 - **`seed.sql`**: um `update` de backfill de `created_by` também sobrescrevia `responsavel_id` de todos os contatos da empresa Alfa, quebrando o teste de carteira compartilhada (Carla via 0 contatos em vez de 3). Corrigido para só tocar `created_by`.
-- **`supabase/tests/*.sql`**: os testes usavam `is(...)` sem o `select` na frente (erro de sintaxe) e o padrão `(update ... returning id) x` como subquery em `FROM`, que o Postgres não aceita — uma CTE que modifica dados (`update`/`delete ... returning`) só pode estar no nível raiz da instrução (`with x as (update ...) select is((select count(*) from x), ...)`), nunca aninhada dentro do argumento de outra função. Também corrigido um teste que esperava exceção (`throws_ok`, SQLSTATE `42501`) num `update` de `nicho_templates` que na verdade é bloqueado silenciosamente (0 linhas afetadas) por não ter nenhuma policy de `update` — `throws_ok` só é o comportamento certo quando há `revoke` explícito no nível de GRANT (caso do `audit_log`) ou em `insert` bloqueado por `with check`.
+- **`supabase/tests/*.sql`**: os testes usavam `is(...)` sem o `select` na frente (erro de sintaxe) e o padrão `(update ... returning id) x` como subquery em `FROM`, que o Postgres não aceita — uma CTE que modifica dados (`update`/`delete ... returning`) só pode estar no nível raiz da instrução. Também corrigido um teste que esperava exceção (`throws_ok`, SQLSTATE `42501`) num `update` de `nicho_templates` que na verdade é bloqueado silenciosamente (0 linhas afetadas) por não ter nenhuma policy de `update`.
+
+</details>
+
+### Pré-requisitos de lançamento (não é dev local — bloqueia qualquer ambiente real)
+
+1. **`supabase/config.toml` → `auth.email.enable_confirmations` precisa ser `true`** no projeto Supabase de staging/produção (o `false` local é intencional, só pra dev). Sem isso, `aceitar_convite` (que compara `auth.email()` com `convites.email`) pode ser contornado por alguém que se cadastra com um e-mail que não possui. Achado 🟠 ALTO do `security-check` em 2026-09-14 — ver detalhes no relatório da sessão (não persistido em arquivo, só no chat; resumo fica aqui).
 
 ### O que existe
 
@@ -42,9 +55,25 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 - `CLAUDE.md` e `README.md` atualizados com o estado atual e os comandos reais.
 - `Makefile` (delega para npm scripts).
 
+**1B — schema** (`supabase/migrations/20260914132658_onboarding.sql`):
+- `perfis` — 1:1 com `auth.users` (nome/telefone do cadastro, que não têm onde morar em `auth.users`). Populada por trigger `criar_perfil()` em `auth.users after insert`. RLS: vê o próprio perfil sempre; vê perfil de quem compartilha empresa.
+- `aplicar_template(empresa_id, nicho)` — copia `nicho_templates` (vencimento_tipos, funis+etapas, motivos_perda, tags, vocabulário) pra dentro da empresa. Não idempotente (nota MÉDIA do security-check — ver acima).
+- `criar_empresa_com_onboarding(nome, nicho, aceite_termos)` — bootstrap: cria empresa, vira dono, aplica template, registra aceite de termos em `audit_log`. `security definer`, só cria empresa nova (nunca aceita `empresa_id` existente).
+- `aceitar_convite(token)` — valida token/expiração/e-mail, cria `empresa_membros`, marca convite como aceito. `security definer`.
+- `nicho_templates.funis` (seed) populado com os funis "Venda nova" (7 etapas) e "Renovação" (5 etapas) do PRD §3.3 — antes estava vazio.
+- `supabase/config.toml`: `auth.site_url`/`additional_redirect_urls` corrigidos de `:3000` pra `:5173` (porta real do Vite).
+
+**1B — frontend:**
+- `src/components/ui/` — primeiros componentes shadcn/ui do projeto (`button`, `input`, `label`, `card`, `select`, `checkbox`), escritos à mão porque o `npx shadcn add` travou numa confirmação interativa (não roda bem via shell não-interativo).
+- `src/features/auth/` — `AuthProvider`/`useAuth()` (sessão via `supabase.auth.onAuthStateChange`), telas `Entrar`/`Cadastro` (e-mail+senha, RHF+Zod).
+- `src/features/onboarding/` — `useEmpresas`/`useEmpresaAtual` (lista + seleção persistida em `localStorage`, só o UUID), `useCriarEmpresa`/`useAceitarConvite`/`useConvites`/`useCriarConvite` (chamam as funções RPC acima), telas `CriarEmpresa`/`Convidar`/`AceitarConvite`.
+- `src/app/RotaProtegida.tsx`/`RotaPublica.tsx` — guards client-side (só UX; a RLS é quem protege de verdade), `paginas/Inicio.tsx` (placeholder pós-login, some no 1D), `paginas/Termos.tsx`/`Privacidade.tsx` (texto legal pendente — PRD §5.4 marca como "fornecido pelo dono do produto", não inventei conteúdo).
+- `providers.tsx` ganhou `AuthProvider` e um `VocabularioProvider` que resolve o vocabulário da empresa atual (`src/lib/vocabulario.ts` ganhou `mesclarVocabulario()`).
+- `src/app/paginas/Smoke.tsx` removida — substituída pela rota `/` de verdade (`Inicio.tsx`).
+
 ### Pendências conhecidas
 
-1. **`.env.example` e `.env.local` ainda não existem no repo/máquina.** O `.claude/settings.json` bloqueia `Write`/`Edit` em qualquer `**/.env.*` — o `deny` sempre vence sobre `allow` neste harness (não é sobre especificidade de glob), então uma exceção só pra `.env.example` exige reescrever o `deny` de um jeito que não afrouxe proteção de outros arquivos (`.env.production`, `.env.staging`) sem essa decisão ser explicitamente sua. Ficou combinado que você cria os dois arquivos manualmente. Conteúdo:
+1. **`.env.example` ainda não existe.** Mesmo motivo da sessão anterior (deny de `.claude/settings.json` bloqueia `Write`/`Edit` em `**/.env.*`, sem distinguir `.env.example`). `.env.local` já foi criado manualmente pelo usuário com os valores do Supabase local (confirmado no chat, não verificável por mim — leitura de `.env.local` também é negada pela mesma regra). Conteúdo do `.env.example` que falta criar:
    ```
    # .env.example (raiz, sem valores, vai pro git)
    # Copie para .env.local (gitignored) e preencha com os valores do seu Supabase
@@ -54,33 +83,29 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
    VITE_SUPABASE_URL=
    VITE_SUPABASE_ANON_KEY=
    ```
-   ```
-   # .env.local (raiz, gitignored, valores do supabase local desta sessão)
-   VITE_SUPABASE_URL=http://127.0.0.1:54321
-   VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
-   ```
-   A `ANON_KEY` acima é a chave de demo fixa que o Supabase CLI sempre usa em ambiente local (não muda entre `db reset`) — só muda se você rodar `supabase start` numa porta/projeto diferente, caso em que a saída do próprio comando traz a chave certa.
-2. **`npm run dev` de ponta a ponta ainda não foi confirmado nesta sessão** — depende do item 1. Depois de criar os `.env*`, rodar `npm run dev` e conferir a rota `/`.
-3. **`aplicar_template()` (função que copia `nicho_templates` para as tabelas da empresa no onboarding) ainda não existe** — planejada para o incremento 1B.
-4. **Decisões de produto não confirmadas** (documentadas na ADR 0001): quem pode criar/editar tags vs. funis/etapas/motivos de perda/tipos de vencimento. Hoje: tags abertas a qualquer membro; o resto restrito a gestor+. Revisável.
+2. **`npm run dev` não foi verificado no navegador nesta sessão** (sem acesso a browser). A API por trás dele foi validada via `curl` direto (signup real, RPCs, convite) — ver "Estado atual" acima — mas isso não prova que as telas React renderizam sem erro. Próxima sessão com acesso a browser: abrir `http://localhost:5173/cadastro`, criar conta, criar empresa, ir em "Convidar equipe", gerar um link, abrir em aba anônima e aceitar.
+3. **Decisões de produto não confirmadas** (documentadas na ADR 0001): quem pode criar/editar tags vs. funis/etapas/motivos de perda/tipos de vencimento. Hoje: tags abertas a qualquer membro; o resto restrito a gestor+. Revisável.
+4. **Trial de 14 dias é placeholder** (`criar_empresa_com_onboarding`) — PRD §7 não define a duração real (`[PREENCHER]`).
+5. **`Convidar.tsx` gera o link mas não envia e-mail** — decisão tomada nesta sessão (entrega manual, sem Edge Function de e-mail no 1B). Revisar quando a infra de mensageria (Fase 2) existir.
 
 ## Próximos passos imediatos (ao retomar, nesta ordem)
 
 1. `git clone` (ou `pull`) o repositório na máquina nova.
 2. Abrir o **Docker Desktop** — pré-requisito para tudo abaixo.
 3. `npm install`.
-4. Criar `.env.example` e `.env.local` manualmente (conteúdo na seção "Pendências conhecidas" acima — se já tiver rodado `supabase start` na máquina nova, use a `ANON_KEY` que ele imprimir).
-5. `npm run db:reset` — aplica as 6 migrations + seed do zero.
-6. `npm run test:db` — roda os 3 arquivos pgTAP (51 asserções). **Isso é o portão de aceite do incremento 1A.**
+4. Criar `.env.example` (conteúdo acima) e `.env.local` (mesmo formato, com valores reais — rode `npm run supabase:start` e use a `API_URL`/`ANON_KEY` que ele imprimir).
+5. `npm run db:reset` — aplica as 7 migrations + seed do zero.
+6. `npm run test:db` — roda os 4 arquivos pgTAP (72 asserções). **Portão de aceite.**
 7. `npm run db:types` — regenera `src/types/database.ts` (já commitado, mas regenere se mudar alguma migration).
-8. `npm run dev` — confirma a rota `/` carregando com Supabase local no ar.
-9. Só depois disso, seguir para o incremento **1B**.
+8. `npm run dev` — testar no navegador o fluxo completo: cadastro → aceitar termos → criar empresa → convidar → aceitar convite em aba anônima (ver pendência 2 acima).
+9. Resolver a pendência de lançamento (`enable_confirmations`) **antes** de criar qualquer projeto Supabase de staging/produção.
+10. Só depois disso, seguir para o incremento **1C** (contatos, vencimentos, importação de planilha).
 
 ## Roteiro dos incrementos da Fase 1
 
 (Como planejado originalmente; 1B–1D ainda não foram detalhados em plano de execução — fazer isso ao chegar em cada um.)
 
 - **1A — fundação** (este documento): schema, RLS, isolamento. Implementado e validado (51/51 pgTAP).
-- **1B — entrada:** auth Supabase, convites, onboarding com `aplicar_template()`, checklist "Primeiros passos".
+- **1B — entrada:** auth Supabase (e-mail+senha), onboarding com `criar_empresa_com_onboarding()`/`aplicar_template()`, convites (link manual). Implementado e validado (72/72 pgTAP + fluxo real via curl). Checklist "Primeiros passos" **adiado pro 1D** de propósito (decisão tomada com o usuário — a maioria dos itens depende de telas que só existem em 1C/1D).
 - **1C — núcleo de dados:** contatos com timeline, vencimentos com recorrência, importação guiada de planilha com deduplicação.
-- **1D — operação:** funis kanban (dnd-kit) com próximo passo obrigatório, tarefas, tela "Hoje", PWA completo com push.
+- **1D — operação:** funis kanban (dnd-kit) com próximo passo obrigatório, tarefas, tela "Hoje" (com o checklist "Primeiros passos" completo), PWA completo com push.

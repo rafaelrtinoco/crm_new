@@ -895,6 +895,30 @@ export type Database = {
         }
         Relationships: []
       }
+      perfis: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          nome: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       plataforma_admins: {
         Row: {
           created_at: string
@@ -1155,9 +1179,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      aceitar_convite: { Args: { p_token: string }; Returns: string }
+      aplicar_template: {
+        Args: { p_empresa_id: string; p_nicho: string }
+        Returns: undefined
+      }
       carteira_compartilhada: {
         Args: { p_empresa_id: string }
         Returns: boolean
+      }
+      criar_empresa_com_onboarding: {
+        Args: { p_aceite_termos: boolean; p_nicho: string; p_nome: string }
+        Returns: string
       }
       is_membro: { Args: { p_empresa_id: string }; Returns: boolean }
       pode_acessar_responsavel: {

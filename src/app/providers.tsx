@@ -1,11 +1,17 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
-import { VocabularioContext, vocabularioPadrao } from "@/lib/vocabulario";
+import { AuthProvider } from "@/features/auth/api/useAuth";
+import { useEmpresaAtual } from "@/features/onboarding/api/useEmpresas";
+import { VocabularioContext, mesclarVocabulario, vocabularioPadrao } from "@/lib/vocabulario";
 
-/**
- * Providers globais da aplicação. `VocabularioContext` recebe o padrão
- * genérico aqui; a Fase 1B substitui pelo vocabulário da empresa logada.
- */
+/** Resolve o vocabulário da empresa selecionada; cai pro padrão genérico sem empresa. */
+function VocabularioProvider({ children }: { children: ReactNode }) {
+  const { atual } = useEmpresaAtual();
+  const vocabulario = atual ? mesclarVocabulario(atual.vocabulario) : vocabularioPadrao;
+  return <VocabularioContext.Provider value={vocabulario}>{children}</VocabularioContext.Provider>;
+}
+
+/** Providers globais da aplicação. */
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
     () =>
@@ -21,9 +27,9 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <VocabularioContext.Provider value={vocabularioPadrao}>
-        {children}
-      </VocabularioContext.Provider>
+      <AuthProvider>
+        <VocabularioProvider>{children}</VocabularioProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
