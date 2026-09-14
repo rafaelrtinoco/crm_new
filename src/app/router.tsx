@@ -9,6 +9,9 @@ import { Cadastro } from "@/features/auth/paginas/Cadastro";
 import { AceitarConvite } from "@/features/onboarding/paginas/AceitarConvite";
 import { Convidar } from "@/features/onboarding/paginas/Convidar";
 import { CriarEmpresa } from "@/features/onboarding/paginas/CriarEmpresa";
+import { DetalheContato } from "@/features/contatos/paginas/DetalheContato";
+import { FormularioContato } from "@/features/contatos/paginas/FormularioContato";
+import { ListaContatos } from "@/features/contatos/paginas/ListaContatos";
 
 export const router = createBrowserRouter([
   {
@@ -27,6 +30,10 @@ export const router = createBrowserRouter([
       { path: "/", element: <Inicio /> },
       { path: "/onboarding", element: <CriarEmpresa /> },
       { path: "/convidar", element: <Convidar /> },
+      { path: "/contatos", element: <ListaContatos /> },
+      { path: "/contatos/novo", element: <FormularioContato /> },
+      { path: "/contatos/:id", element: <DetalheContato /> },
+      { path: "/contatos/:id/editar", element: <FormularioContato /> },
     ],
   },
 ]);

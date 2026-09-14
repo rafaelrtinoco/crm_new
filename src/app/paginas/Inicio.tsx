@@ -21,12 +21,16 @@ export function Inicio() {
     <main className="mx-auto max-w-2xl space-y-4 p-8">
       <h1 className="text-2xl font-semibold">Bem-vindo(a), {nome}</h1>
       <p className="text-muted-foreground">
-        Você está em <strong>{atual?.nome}</strong>. A tela &quot;Hoje&quot; chega no incremento 1D
-        — por enquanto, convide sua equipe.
+        Você está em <strong>{atual?.nome}</strong>. A tela &quot;Hoje&quot; chega no incremento 1D.
       </p>
-      <Button asChild>
-        <Link to="/convidar">Convidar equipe</Link>
-      </Button>
+      <div className="flex gap-2">
+        <Button asChild>
+          <Link to="/contatos">Contatos</Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link to="/convidar">Convidar equipe</Link>
+        </Button>
+      </div>
     </main>
   );
 }

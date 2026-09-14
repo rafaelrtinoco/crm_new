@@ -4,16 +4,27 @@ Log de continuidade entre máquinas/sessões. Atualize a seção "Estado atual" 
 
 ## Estado atual — 2026-09-14
 
-**Fase 1 — Fundação e núcleo, incremento 1B (entrada: auth, onboarding, convites) implementado e validado, inclusive no navegador pelo usuário.** 72/72 asserções pgTAP (51 do 1A + 21 novas), fluxo real via `curl` contra a API do Supabase local, e teste manual no navegador confirmando cadastro → criar empresa → convidar → aceitar convite funcionando de ponta a ponta.
+**Fase 1 — Fundação e núcleo, incremento 1C-1 (Contatos) implementado.** Schema (trigger `ultimo_contato_em`) validado — 75/75 pgTAP. Frontend (lista com filtros, ficha com timeline, formulário com campos personalizados dinâmicos e tags, registro rápido "Como foi?") passa em lint/typecheck/test/build; **ainda não testado no navegador nesta sessão** — próximo passo ao retomar.
 
-Três bugs de UX encontrados e corrigidos durante o teste manual (não pegos pelos testes automatizados, que não cobrem navegação/React Query):
+Dois bugs de tipagem pegos pelo `tsc`, corrigidos antes de rodar qualquer coisa:
+- `useContatos.ts`: filtro por tag usava um `select()` condicional (string muda conforme o filtro) — o supabase-js não consegue tipar isso em tempo de compilação (`ParserError`). Resolvido buscando os ids em `contato_tags` primeiro e filtrando com `.in("id", ids)` depois, em vez de tentar embutir o join na mesma query.
+- `useMembrosEmpresa` (1B, só usado agora): tentava `empresa_membros.select("perfis(nome)")`, mas não há FK direta entre as duas tabelas (as duas só se relacionam via `auth.users`) — o PostgREST não embeda relações transitivas. Resolvido com duas consultas (busca os membros, depois busca os perfis por `id`, junta em memória).
+
+<details>
+<summary>Histórico — 1B: auth, onboarding, convites (2026-09-14)</summary>
+
+72/72 asserções pgTAP (51 do 1A + 21 novas), fluxo real via `curl` contra a API do Supabase local, e teste manual no navegador confirmando cadastro → criar empresa → convidar → aceitar convite funcionando de ponta a ponta.
+
+Quatro bugs de UX encontrados e corrigidos durante o teste manual (não pegos pelos testes automatizados, que não cobrem navegação/React Query):
 - Mensagem de erro genérica em `AceitarConvite.tsx` escondia a causa real (token inválido vs. e-mail errado vs. expirado) — agora mostra a mensagem específica que `aceitar_convite()` devolve.
 - Não havia botão de logout em lugar nenhum — impossível voltar pra `/entrar`/`/cadastro` depois de logado. Adicionado em `RotaProtegida.tsx` (cabeçalho, aparece em toda rota autenticada).
 - Convite pendente não podia ser recuperado nem cancelado depois que o link sumia da tela (ex.: após dar refresh) — `Convidar.tsx` ganhou "Copiar link" e "Cancelar" por convite.
 - Corrida de dados: mutações de `useCriarEmpresa`/`useAceitarConvite` invalidavam a query de empresas sem aguardar (`void queryClient.invalidateQueries(...)`), então `navigate()` acontecia antes da lista atualizar e a tela seguinte via "0 empresas" por um instante. Corrigido pra aguardar a invalidação antes de resolver a mutação.
 - `Cadastro.tsx` ignorava de onde o usuário veio e sempre mandava pra `/onboarding` — quem clicava "Criar conta" a partir de um link de convite perdia o convite e acabava criando a própria empresa por engano. Agora preserva `location.state.de`, igual o `Entrar.tsx` já fazia.
 
-**Achado de segurança a resolver antes de qualquer ambiente real** (skill `security-check`, rodada nesta sessão): `aceitar_convite` confia em `auth.email()`, que só é confiável se o Supabase Auth exigir confirmação de e-mail. Localmente `enable_confirmations = false` (de propósito, pra agilizar dev) — em produção isso **precisa** virar `true`, senão qualquer pessoa pode se cadastrar com um e-mail que não é dela e resgatar convites endereçados a esse e-mail. Ver "Pré-requisitos de lançamento" abaixo.
+**Achado de segurança** (skill `security-check`): `aceitar_convite` confia em `auth.email()`, que só é confiável se o Supabase Auth exigir confirmação de e-mail. Localmente `enable_confirmations = false` (de propósito) — em produção isso **precisa** virar `true`. Ver "Pré-requisitos de lançamento" abaixo.
+
+</details>
 
 <details>
 <summary>Histórico — validação do 1A (2026-09-11)</summary>
@@ -78,6 +89,16 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 - `providers.tsx` ganhou `AuthProvider` e um `VocabularioProvider` que resolve o vocabulário da empresa atual (`src/lib/vocabulario.ts` ganhou `mesclarVocabulario()`).
 - `src/app/paginas/Smoke.tsx` removida — substituída pela rota `/` de verdade (`Inicio.tsx`).
 
+**1C-1 — schema** (`supabase/migrations/20260914163110_contatos_ultimo_contato.sql`):
+- Trigger `atualizar_ultimo_contato()` em `atividades after insert` — atualiza `contatos.ultimo_contato_em` quando a atividade tem `contato_id`. `security invoker` (não precisa bypassar RLS).
+
+**1C-1 — frontend:**
+- `src/components/ui/` ganhou `table`, `dialog`, `tabs`, `textarea`, `badge` (deps novas: `@radix-ui/react-dialog`, `@radix-ui/react-tabs`).
+- `src/features/onboarding/api/useEmpresas.ts` ganhou `useMembrosEmpresa()` — lista membros da empresa com nome, pro seletor de "responsável".
+- `src/features/contatos/` — `api/` (`useContatos` com filtros de status/temperatura/tag/busca, `useContato`, `useCamposPersonalizados`, `useTags`/`useTagsDoContato`/`definirTagsDoContato`, `useAtividades`/`useRegistrarAtividade`, `useMutacoesContato` — criar/atualizar/excluir com soft delete), `schemas.ts` (`construirContatoSchema()` monta a validação em runtime a partir dos `campos_personalizados` da empresa), `components/CampoPersonalizado.tsx` (renderiza texto/número/data/seleção/booleano), `components/TimelineContato.tsx`, `paginas/ListaContatos.tsx`, `paginas/FormularioContato.tsx` (criar e editar), `paginas/DetalheContato.tsx` (ficha com abas Dados/Timeline + modal "Como foi?").
+- Rotas novas: `/contatos`, `/contatos/novo`, `/contatos/:id`, `/contatos/:id/editar`.
+- Fora do escopo, de propósito (ver plano do 1C-1): ações em massa, busca global (Ctrl+K), tarefa real a partir do "próximo passo" do registro rápido (fica texto livre até a tela de tarefas existir no 1D).
+
 ### Pendências conhecidas
 
 1. **`.env.example` ainda não existe.** Mesmo motivo da sessão anterior (deny de `.claude/settings.json` bloqueia `Write`/`Edit` em `**/.env.*`, sem distinguir `.env.example`). `.env.local` já foi criado manualmente pelo usuário com os valores do Supabase local (confirmado no chat, não verificável por mim — leitura de `.env.local` também é negada pela mesma regra). Conteúdo do `.env.example` que falta criar:
@@ -93,6 +114,7 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 2. **Decisões de produto não confirmadas** (documentadas na ADR 0001): quem pode criar/editar tags vs. funis/etapas/motivos de perda/tipos de vencimento. Hoje: tags abertas a qualquer membro; o resto restrito a gestor+. Revisável.
 3. **Trial de 14 dias é placeholder** (`criar_empresa_com_onboarding`) — PRD §7 não define a duração real (`[PREENCHER]`).
 4. **`Convidar.tsx` gera o link mas não envia e-mail** — decisão tomada na sessão do 1B (entrega manual, sem Edge Function de e-mail). Revisar quando a infra de mensageria (Fase 2) existir.
+5. **1C-1 (Contatos) não foi testado no navegador ainda** — passou em lint/typecheck/test/build e o schema tem cobertura pgTAP, mas a UI em si (formulário, filtros, timeline, modal "Como foi?") só foi verificada por leitura de código nesta sessão.
 
 ## Próximos passos imediatos (ao retomar, nesta ordem)
 
@@ -100,18 +122,20 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 2. Abrir o **Docker Desktop** — pré-requisito para tudo abaixo.
 3. `npm install`.
 4. Criar `.env.example` (conteúdo acima) e `.env.local` (mesmo formato, com valores reais — rode `npm run supabase:start` e use a `API_URL`/`ANON_KEY` que ele imprimir).
-5. `npm run db:reset` — aplica as 7 migrations + seed do zero.
-6. `npm run test:db` — roda os 4 arquivos pgTAP (72 asserções). **Portão de aceite.**
+5. `npm run db:reset` — aplica as 8 migrations + seed do zero.
+6. `npm run test:db` — roda os 5 arquivos pgTAP (75 asserções). **Portão de aceite.**
 7. `npm run db:types` — regenera `src/types/database.ts` (já commitado, mas regenere se mudar alguma migration).
-8. `npm run dev` — testar no navegador o fluxo completo: cadastro → aceitar termos → criar empresa → convidar → aceitar convite em aba anônima.
+8. `npm run dev` — testar no navegador o fluxo de Contatos: criar um contato com campo personalizado e tag, ver na lista, filtrar, abrir a ficha, registrar uma nota rápida, conferir que "último contato" mudou, editar, excluir.
 9. Resolver a pendência de lançamento (`enable_confirmations`) **antes** de criar qualquer projeto Supabase de staging/produção.
-10. Só depois disso, seguir para o incremento **1C** (contatos, vencimentos, importação de planilha).
+10. Depois de validar o 1C-1, planejar o **1C-2** (Vencimentos, com a lógica de renovação automática do PRD §6.4).
 
 ## Roteiro dos incrementos da Fase 1
 
-(Como planejado originalmente; 1B–1D ainda não foram detalhados em plano de execução — fazer isso ao chegar em cada um.)
+(1C dividido em três fatias — 1C-1 Contatos, 1C-2 Vencimentos, 1C-3 Importação — cada uma com seu próprio ciclo de plano, como 1A/1B/1C-1 tiveram.)
 
 - **1A — fundação** (este documento): schema, RLS, isolamento. Implementado e validado (51/51 pgTAP).
 - **1B — entrada:** auth Supabase (e-mail+senha), onboarding com `criar_empresa_com_onboarding()`/`aplicar_template()`, convites (link manual). Implementado e validado (72/72 pgTAP + fluxo real via curl). Checklist "Primeiros passos" **adiado pro 1D** de propósito (decisão tomada com o usuário — a maioria dos itens depende de telas que só existem em 1C/1D).
-- **1C — núcleo de dados:** contatos com timeline, vencimentos com recorrência, importação guiada de planilha com deduplicação.
+- **1C-1 — Contatos:** lista com filtros, ficha com timeline, campos personalizados dinâmicos, tags, registro rápido "Como foi?". Implementado, validado por pgTAP + lint/typecheck/test/build; teste no navegador pendente.
+- **1C-2 — Vencimentos:** CRUD, recorrência, renovação automática (PRD §6.4). Não iniciado.
+- **1C-3 — Importação de planilha:** CSV/XLSX, dedup (PRD §6.1). Não iniciado — tem uma decisão de arquitetura própria (processar no navegador vs. Edge Function com `service_role`) a definir quando chegar a vez.
 - **1D — operação:** funis kanban (dnd-kit) com próximo passo obrigatório, tarefas, tela "Hoje" (com o checklist "Primeiros passos" completo), PWA completo com push.

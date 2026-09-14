@@ -64,3 +64,45 @@ export function useEmpresaAtual() {
 
   return { empresas: empresas ?? [], atual, selecionar };
 }
+
+export interface MembroEmpresa {
+  usuarioId: string;
+  nome: string;
+  papel: "dono" | "gestor" | "usuario";
+}
+
+/** Membros da empresa atual, com nome — pra seletores de "responsável". */
+export function useMembrosEmpresa(empresaId: string | null) {
+  return useQuery({
+    queryKey: ["membros-empresa", empresaId],
+    enabled: !!empresaId,
+    queryFn: async (): Promise<MembroEmpresa[]> => {
+      // empresa_membros e perfis só se relacionam via auth.users (sem FK
+      // direta entre os dois), então o PostgREST não consegue embedar —
+      // resolve em duas consultas.
+      const { data: membros, error } = await supabase
+        .from("empresa_membros")
+        .select("usuario_id, papel")
+        .eq("empresa_id", empresaId as string)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      if (!membros || membros.length === 0) return [];
+
+      const { data: perfis, error: erroPerfis } = await supabase
+        .from("perfis")
+        .select("id, nome")
+        .in(
+          "id",
+          membros.map((m) => m.usuario_id),
+        );
+      if (erroPerfis) throw erroPerfis;
+      const nomesPorId = new Map((perfis ?? []).map((p) => [p.id, p.nome]));
+
+      return membros.map((linha) => ({
+        usuarioId: linha.usuario_id,
+        papel: linha.papel as MembroEmpresa["papel"],
+        nome: nomesPorId.get(linha.usuario_id) ?? "—",
+      }));
+    },
+  });
+}
