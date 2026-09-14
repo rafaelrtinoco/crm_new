@@ -4,11 +4,22 @@ Log de continuidade entre máquinas/sessões. Atualize a seção "Estado atual" 
 
 ## Estado atual — 2026-09-14
 
-**Fase 1 — Fundação e núcleo. 1D-3 (Tarefas) implementado.** Sem migration — a tabela `tarefas` já existia desde o 1A (RLS e isolamento já cobertos), então esta fatia foi puramente frontend. `lint`/`typecheck`/`test` (25/25)/`build`/`test:db` (92/92, smoke test sem mudança)/`npm audit` limpos. **Ainda não testado no navegador nesta sessão** — próximo passo ao retomar.
+**Fase 1 — Fundação e núcleo. 1D-4 (Tela "Hoje") implementado — fecha o conteúdo do 1D, só falta o 1D-5 (PWA completo).** Sem migration — tudo leitura sobre tabelas/policies que já existiam. `lint`/`typecheck`/`test` (25/25)/`build`/`npm audit` limpos. **Ainda não testado no navegador nesta sessão** — próximo passo ao retomar.
 
-**Escopo:** CRUD de tarefas (tipo, título, data, responsável, vínculo opcional com contato **ou** negócio) + concluir/reabrir, com destaque de atraso (mesmo `--urgencia`/`hojeNoFuso()` já usados em Funis). Sem página de detalhe própria — tarefa é leve o bastante pra ser criada/editada num diálogo (`DialogoTarefa`, mesmo padrão de `DialogoRenovacao`/`DialogoPerda`), não uma página dedicada como Contato/Vencimento/Negócio. Fora de escopo, de propósito: Cadências (PRD §6.6, dependem de templates de mensagem — Fase 2); tela "Hoje" agregando tudo (1D-4); notificação de tarefa (depende de push, 1D-5).
+**Escopo (PRD §6.2), recortado pro que dá pra construir na Fase 1** — decisão tomada com o usuário sobre o checklist "Primeiros passos": só os 3 itens viáveis agora (importar contatos, cadastrar vencimento, convidar equipe); "conectar WhatsApp" e "ativar régua" ficam fora até a Fase 2 existir, pra não ter uma barra que nunca fecha 100% por falta de feature. `src/app/paginas/Inicio.tsx` (rota `/`, item "Início" na nav) deixou de ser placeholder: barra de progresso "Primeiros passos" (some quando completa) + seções de ação por prioridade (leads sem primeiro contato, follow-ups de hoje/atrasados via `ItemTarefa` do 1D-3, negócios com próximo passo vencido — cruzando todos os funis, vencimentos vencendo/atrasados, aniversariantes do dia) + 4 cards de resumo (leads na semana, negócios abertos, vencimentos em 30 dias, taxa de renovação do mês). Seção vazia simplesmente não aparece; estado "nada pendente" tem mensagem própria em vez de tela em branco.
 
-**Callback do 1D-2:** o `marcar_negocio_perdido` já criava a tarefa de reativação desde o incremento anterior, mas nada exibia isso em lugar nenhum — a aba "Tarefas" em `DetalheNegocio.tsx` é onde essa tarefa finalmente aparece pra alguém.
+Fora de escopo, de propósito: clientes que responderam a lembrete (precisa de inbox WhatsApp, Fase 2); clientes esfriando (o próprio PRD marca como Fase 5); notificação push de resumo diário (PRD §6.8, é o 1D-5).
+
+**Callback do 1D-3:** a lista de follow-ups da tela "Hoje" reusa `ItemTarefa`/`DialogoTarefa` direto — a UX de concluir/editar/excluir tarefa é a mesma da lista dedicada em `/tarefas`.
+
+<details>
+<summary>Histórico — 1D-3: Tarefas (2026-09-14)</summary>
+
+Sem migration — a tabela `tarefas` já existia desde o 1A (RLS e isolamento já cobertos), então essa fatia foi puramente frontend. CRUD de tarefas (tipo, título, data, responsável, vínculo opcional com contato **ou** negócio) + concluir/reabrir, com destaque de atraso (mesmo `--urgencia`/`hojeNoFuso()` já usados em Funis). Sem página de detalhe própria — tarefa é leve o bastante pra ser criada/editada num diálogo (`DialogoTarefa`, mesmo padrão de `DialogoRenovacao`/`DialogoPerda`). Validado no navegador pelo usuário.
+
+O `marcar_negocio_perdido` (1D-2) já criava a tarefa de reativação desde o incremento anterior, mas nada exibia isso em lugar nenhum — a aba "Tarefas" em `DetalheNegocio.tsx` é onde essa tarefa finalmente aparece pra alguém.
+
+</details>
 
 <details>
 <summary>Histórico — 1D-2: Funis de venda + retrabalho visual ui-ux-pro-max (2026-09-14)</summary>
@@ -205,6 +216,13 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 - `DetalheContato.tsx`/`DetalheNegocio.tsx` — aba/seção "Tarefas". É aqui que a tarefa de reativação criada pelo `marcar_negocio_perdido` do 1D-2 finalmente fica visível em algum lugar.
 - Fora de escopo, de propósito: Cadências (PRD §6.6, depende de templates de mensagem — Fase 2); tela "Hoje" (1D-4); notificação de tarefa (depende de push, 1D-5).
 
+**1D-4 — tela "Hoje":**
+- **Sem migration.** Tudo leitura sobre `contatos`/`vencimentos`/`negocios`/`tarefas`/`empresa_membros`, tabelas e RLS que já existiam.
+- `src/features/hoje/` (slice novo) — `api/useResumoHoje.ts` (`useLeadsSemContato`, `useNegociosVencidos` — variante de negócios sem exigir `funilId`, diferente de `useNegocios` que é por funil, `useVencimentosPendentesHoje`, `useAniversariantesHoje` — filtro de mês/dia no cliente, `useResumoNumeros` — 5 contagens via `count: "exact", head: true`, `usePrimeirosPassos` — 3 contagens), `components/` (`SecaoAcoesHoje`/`ItemAcao` — wrapper genérico que some quando a seção está vazia, `CardsResumo`, `BarraPrimeirosPassos` — some quando os 3 itens estão completos).
+- `src/app/paginas/Inicio.tsx` — deixou de ser placeholder; reusa `ItemTarefa`/`DialogoTarefa` do 1D-3 pra seção de follow-ups (mesma UX de `/tarefas`, sem duplicar código).
+- **Decisão tomada com o usuário:** checklist "Primeiros passos" só com os 3 itens viáveis na Fase 1 (importar contatos, cadastrar vencimento, convidar equipe) — "conectar WhatsApp" e "ativar régua" entram quando a Fase 2 existir.
+- Fora de escopo, de propósito: clientes que responderam a lembrete (inbox WhatsApp, Fase 2); clientes esfriando (PRD marca como Fase 5); notificação push do resumo diário (1D-5).
+
 ### Pendências conhecidas
 
 1. **`.env.example` ainda não existe.** Mesmo motivo da sessão anterior (deny de `.claude/settings.json` bloqueia `Write`/`Edit` em `**/.env.*`, sem distinguir `.env.example`). `.env.local` já foi criado manualmente pelo usuário com os valores do Supabase local (confirmado no chat, não verificável por mim — leitura de `.env.local` também é negada pela mesma regra). Conteúdo do `.env.example` que falta criar:
@@ -225,7 +243,8 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 7. **1D-2 (Funis) validado no navegador pelo usuário** — quadro, arrastar card, ganho/perdido confirmados funcionando.
 8. **Achado de UX corrigido:** `/onboarding` não tinha botão de "Sair" (fica fora do `AppShell`, que é quem tem o menu de usuário) — sessão inválida (ex.: usuário apagado por `db:reset` local) prendia quem estava ali sem jeito de deslogar pela interface. Corrigido em `CriarEmpresa.tsx` com um botão "Sair" próprio.
 9. **Retrabalho visual (adoção do `ui-ux-pro-max`) validado no navegador pelo usuário** — paleta, tipografia e alternância de tema claro/escuro confirmados funcionando (o alternador só foi ligado ao menu de usuário depois de o usuário notar que não achava onde trocar — `useTema()` existia desde o 1A mas nunca tinha sido chamado por nenhum componente).
-10. **1D-3 (Tarefas) não foi testado no navegador ainda** — sem migration (schema/RLS já existiam), `lint`/`typecheck`/`test`/`build`/`test:db` passam, mas o fluxo completo (criar/editar/concluir/reabrir tarefa, agrupamento Atrasadas/Hoje/Próximas, abas em Contato/Negócio) só foi verificado por leitura de código nesta sessão.
+10. **1D-3 (Tarefas) validado no navegador pelo usuário.**
+11. **1D-4 (Tela "Hoje") não foi testado no navegador ainda** — sem migration, `lint`/`typecheck`/`test`/`build` passam, mas as seções de ação, a barra "Primeiros passos" e os cards de resumo só foram verificados por leitura de código nesta sessão.
 
 ## Próximos passos imediatos (ao retomar, nesta ordem)
 
@@ -238,9 +257,9 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 7. `npm run db:types` — regenera `src/types/database.ts` (já commitado, mas regenere se mudar alguma migration).
 8. `npm run dev` — testar no navegador o fluxo de Importação: em `/contatos/importar`, baixar o modelo, preencher com uma linha válida + uma com CPF inválido + uma duplicada de um contato do seed, subir o CSV, conferir o mapeamento automático, a prévia com os três status, confirmar, e checar que só a válida virou contato (e vencimento, se a coluna de data foi preenchida).
 9. Resolver a pendência de lançamento (`enable_confirmations`) **antes** de criar qualquer projeto Supabase de staging/produção.
-10. **1D-2 e o retrabalho visual (`ui-ux-pro-max`) já validados no navegador** (quadro, arrastar card, ganho/perdido, tema claro/escuro, paleta, tipografia).
-11. Testar o **1D-3** no navegador: abrir `/tarefas`, conferir os grupos Atrasadas/Hoje/Próximas (o seed tem 3 tarefas, mais a "Reativar: ..." se você tiver testado o marcar-perdido do 1D-2); criar uma tarefa vinculada a um contato; marcar como concluída e reabrir; editar e excluir; conferir a aba "Tarefas" em `DetalheContato` e a seção "Tarefas" em `DetalheNegocio` (é ali que a tarefa de reativação do negócio perdido aparece).
-12. Depois de validado, seguir pro **1D-4** (tela "Hoje") — próximo ciclo de plano.
+10. **1D-2, 1D-3 e o retrabalho visual (`ui-ux-pro-max`) já validados no navegador.**
+11. Testar o **1D-4** no navegador: abrir `/` (empresa Alfa, que tem leads sem contato, negócios vencidos e vencimentos espalhados no tempo); conferir a barra "Primeiros passos" (incompleta com o seed); testar WhatsApp/Ver em um lead sem contato; concluir um follow-up direto da lista; abrir um negócio vencido e um vencimento a partir da tela; conferir os 4 cards de resumo; testar com uma empresa sem pendências pra ver o estado vazio.
+12. Depois de validado, seguir pro **1D-5** (PWA completo com push) — fecha o incremento 1D inteiro.
 
 ## Roteiro dos incrementos da Fase 1
 
@@ -255,7 +274,7 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
   - **1D-1 — Layout geral:** sidebar (desktop)/abas (mobile), trocador de empresa, tema visual do produto inteiro (Fraunces + IBM Plex Sans, paleta papel/teal/âmbar-urgência). Implementado e validado no navegador.
   - **1D-2 — Funis:** kanban com dnd-kit + visão em lista, negócios, próximo passo obrigatório, ganho/perda. Implementado e validado no navegador. Edição de funis/etapas fica pra uma futura fatia de Configurações.
   - **Retrabalho visual (`ui-ux-pro-max`):** depois do 1D-2 validado, o usuário instalou o plugin `ui-ux-pro-max` e pediu pra reconstruir a identidade visual do 1D-1+1D-2 com ele, pra ficar homogêneo desde o início — substitui a direção anterior (Fraunces/IBM Plex Sans) por Calistoga/Inter/JetBrains Mono + paleta teal/laranja. Detalhes no "Estado atual" acima e na memória `project_1d_visual_design`. Aplicado via troca de tokens (`globals.css`/`tailwind.config.ts`), sem reescrever páginas. Implementado e validado no navegador (inclusive o alternador de tema claro/escuro, ligado ao `useTema()` que existia desde o 1A mas nunca tinha sido chamado por nada).
-  - **1D-3 — Tarefas:** CRUD de tarefas (diálogo, não página própria) + concluir/reabrir, vínculo opcional com contato ou negócio, destaque de atraso. Sem migration (schema/RLS já existiam desde o 1A). Implementado, validado por lint/typecheck/test/build/test:db; teste no navegador pendente. Cadências ficam pra Fase 2 (dependem de templates de mensagem).
-  - **1D-4 — Tela "Hoje":** agrega leads/follow-ups/vencimentos/aniversariantes; checklist "Primeiros passos" completo (adiado do 1B). Não iniciado.
-  - **1D-5 — PWA completo com push** (depende de infra de notificação que ainda não existe). Não iniciado.
+  - **1D-3 — Tarefas:** CRUD de tarefas (diálogo, não página própria) + concluir/reabrir, vínculo opcional com contato ou negócio, destaque de atraso. Sem migration (schema/RLS já existiam desde o 1A). Implementado e validado no navegador. Cadências ficam pra Fase 2 (dependem de templates de mensagem).
+  - **1D-4 — Tela "Hoje":** substitui o placeholder de `Inicio.tsx` — leads sem primeiro contato, follow-ups de hoje/atrasados, negócios com próximo passo vencido, vencimentos pendentes, aniversariantes, cards de resumo, checklist "Primeiros passos" (só os 3 itens viáveis na Fase 1 — decisão tomada com o usuário). Sem migration. Implementado, validado por lint/typecheck/test/build; teste no navegador pendente.
+  - **1D-5 — PWA completo com push** (depende de infra de notificação que ainda não existe). Não iniciado. Última fatia do 1D.
   - **Diretriz do usuário pro visual (vale pro 1D inteiro, não só 1D-1):** atual, sem cara de IA, padrão de produto SaaS de verdade — não os defaults genéricos do shadcn/ui. Registrada na memória de projeto `project_1d_visual_design`.
