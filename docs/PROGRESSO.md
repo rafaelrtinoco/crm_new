@@ -4,18 +4,29 @@ Log de continuidade entre máquinas/sessões. Atualize a seção "Estado atual" 
 
 ## Estado atual — 2026-09-14
 
-**Fase 1 — Fundação e núcleo, incremento 1D-1 (Layout geral da plataforma) implementado.** Primeira fatia do 1D — dividido em 1D-1 (layout, este) / 1D-2 (funis) / 1D-3 (tarefas) / 1D-4 (tela "Hoje") / 1D-5 (PWA completo com push). Sem mudança de schema, então nenhum pgTAP novo; `lint`/`typecheck`/`test` (25/25) `/build` limpos. **Ainda não testado no navegador nesta sessão** — próximo passo ao retomar.
+**Fase 1 — Fundação e núcleo, incremento 1D-2 (Funis de venda) implementado.** Segunda fatia do 1D — dividido em 1D-1 (layout) / 1D-2 (funis, este) / 1D-3 (tarefas) / 1D-4 (tela "Hoje") / 1D-5 (PWA completo com push). Schema novo (trigger de `entrou_na_etapa_em` + RPCs `marcar_negocio_ganho`/`marcar_negocio_perdido`) validado — 92/92 pgTAP (82 anteriores + 10 novas em `funis.sql`); `lint`/`typecheck`/`test` (25/25)/`build` limpos. **Ainda não testado no navegador nesta sessão** — próximo passo ao retomar.
 
-**Direção visual** (diretriz do usuário, ver memória `project_1d_visual_design`): tipografia Fraunces (display, self-hosted via `@fontsource-variable/fraunces`) + IBM Plex Sans (corpo, `@fontsource/ibm-plex-sans`) — só os subsets `latin`/`latin-ext` (+ `vietnamese`, que vem junto no pacote variable do Fraunces) importados, não `cyrillic`/`greek`, pra não inflar bundle/precache do PWA com scripts que o produto (só PT-BR) nunca usa. Paleta papel/tinta quase-preta com teal profundo de primária e âmbar reservado só pra urgência de vencimento (tokens novos em `globals.css`: `--urgencia`, `--sidebar`, claro e escuro). Sidebar fixa no desktop (trocador de empresa + nav + menu de usuário, sem cabeçalho duplicado); barra superior fina + abas fixas embaixo no mobile.
+**Decisões de escopo tomadas com o usuário:** edição de funis/etapas fica fora desta fatia (os funis vêm prontos do template do nicho; CRUD de funil/etapa vai pra uma futura fatia de Configurações, PRD §8, junto com tipos de vencimento/campos personalizados/tags/motivos de perda); kanban **e** visão em lista, alternáveis no desktop — no mobile a lista é o padrão (arrastar colunas em tela pequena é ruim).
 
-**Reestruturação de rotas:** `RotaProtegida` virou guarda de autenticação pura (o `<header>` com "Sair" que morava lá foi pro `AppShell`); `/onboarding` ficou fora do shell (não tem empresa ainda, não faz sentido mostrar sidebar com trocador vazio) — a checagem de `empresas.length === 0` → redirect saiu de `Inicio.tsx` e centralizou no `AppShell`, que agora envolve `/`, `/contatos*`, `/vencimentos*` e `/convidar`.
+**Achado da exploração:** `hojeNoFuso(fuso)` existia em `src/lib/datas.ts` desde o 1A e nunca tinha sido usado — `useEmpresas()` não trazia a coluna `fuso` de `empresas`. Funis é a primeira tela que precisa de "hoje" de verdade (destacar próximo passo vencido), então esta fatia ligou isso (`EmpresaMembro.fuso` novo).
 
-**Decisão de arquitetura tomada com o usuário:** processamento no navegador (não Edge Function + Storage) — mesmo raciocínio do convite manual no 1B. Achado no caminho (1C-3): a `xlsx` (SheetJS) do npm registry tem duas vulnerabilidades de severidade alta sem correção (`npm audit`); trocada por duas libs mantidas — `papaparse` (CSV) e `exceljs` (XLSX), ambas carregadas via `import()` dinâmico pra não pesar o bundle principal de quem nunca usa a importação (confirmado no build: chunks separados de 18.68 kB e 929.55 kB, bundle principal cresceu só ~12 kB).
+**Schema:** trigger `atualizar_entrou_na_etapa()` (reseta a coluna quando `etapa_id` muda — PRD §6.5: "tempo parado na etapa visível no card"); `marcar_negocio_ganho(negocio_id)` (fecha o negócio e promove o contato a cliente) e `marcar_negocio_perdido(negocio_id, motivo_perda_id, reativar_em)` (fecha como perdido e, se vier `reativar_em`, cria a tarefa futura) — as duas `security invoker`, mesmo raciocínio do `renovar_vencimento` do 1C-2.
+
+**Bug de teste pgTAP pego antes de fechar** (não é bug de produção): a primeira versão de `funis.sql` simulava a corretora Carla (papel `usuario`), mas dois dos negócios do seed têm responsável Gustavo (gestor) — `pode_acessar_responsavel` bloqueia silenciosamente updates fora do próprio responsável pra quem não é gestor+/carteira compartilhada (RLS não gera erro em UPDATE, só afeta 0 linhas), o que mascarou o teste de "perdido sem motivo" (nunca chegou a tentar o update, então nunca violou o check). Corrigido trocando a simulação pra Gustavo (gestor), que enxerga todos os negócios da empresa.
+
+<details>
+<summary>Histórico — 1D-1: Layout geral da plataforma (2026-09-14)</summary>
+
+Sem mudança de schema. Tipografia Fraunces (display, self-hosted via `@fontsource-variable/fraunces`) + IBM Plex Sans (corpo, `@fontsource/ibm-plex-sans`) — só os subsets `latin`/`latin-ext` (+ `vietnamese`, que vem junto no pacote variable do Fraunces), não `cyrillic`/`greek`, pra não inflar bundle/precache do PWA com scripts que o produto (só PT-BR) nunca usa. Paleta papel/tinta quase-preta com teal profundo de primária e âmbar reservado só pra urgência de vencimento (tokens `--urgencia`, `--sidebar`, claro e escuro). Sidebar fixa no desktop (trocador de empresa + nav + menu de usuário, sem cabeçalho duplicado); barra superior fina + abas fixas embaixo no mobile. `RotaProtegida` virou guarda de autenticação pura; `AppShell` (novo) centraliza o redirect de quem não tem empresa.
+
+</details>
 
 <details>
 <summary>Histórico — 1C-3: Importação de planilha (2026-09-14)</summary>
 
 Schema (policy de insert em `importacao_erros`) validado — 82/82 pgTAP; lógica pura de mapeamento de colunas e deduplicação com 11 testes Vitest próprios (25 no total do projeto); `lint`/`typecheck`/`test`/`build` limpos.
+
+Decisão de arquitetura tomada com o usuário: processamento no navegador (não Edge Function + Storage) — mesmo raciocínio do convite manual no 1B. Achado no caminho: a `xlsx` (SheetJS) do npm registry tem duas vulnerabilidades de severidade alta sem correção (`npm audit`); trocada por duas libs mantidas — `papaparse` (CSV) e `exceljs` (XLSX), ambas carregadas via `import()` dinâmico pra não pesar o bundle principal de quem nunca usa a importação (confirmado no build: chunks separados de 18.68 kB e 929.55 kB, bundle principal cresceu só ~12 kB).
 
 </details>
 
@@ -163,6 +174,17 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 - `src/app/paginas/Inicio.tsx` — removido o redirect (foi pro `AppShell`) e os botões de navegação ad-hoc (viraram nav de verdade na sidebar/abas).
 - Fora de escopo, de propósito: busca global Ctrl+K (PRD §4, ciclo próprio); itens de nav pra Funis/Tarefas (entram só quando essas telas existirem no 1D-2/1D-3, pra não ter link morto).
 
+**1D-2 — funis de venda (kanban):**
+- **Dependência nova:** `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities`. `npm audit` limpo (mesma vulnerabilidade moderada já revisada, nada novo).
+- `supabase/migrations/20260914191220_funis_negocios.sql` — trigger `atualizar_entrou_na_etapa()` (reseta a coluna ao mudar de etapa) + RPCs `marcar_negocio_ganho`/`marcar_negocio_perdido` (ambas `security invoker`, mesmo raciocínio do `renovar_vencimento` do 1C-2).
+- `src/features/onboarding/api/useEmpresas.ts` — `EmpresaMembro` ganhou `fuso` (não era selecionado antes; Funis é a primeira tela que precisa de "hoje" de verdade).
+- `src/features/funis/` — `api/` (`useFunis`, `useEtapas`, `useMotivosPerda`, `useNegocios`/`useNegocio`/`useNegociosDoContato`, `useMutacoesNegocio` — criar/atualizar/excluir, `useMoverNegocio` grava atividade `mudanca_etapa` na timeline, `useMarcarGanho`/`useMarcarPerdido` chamam as RPCs), `schemas.ts`, `components/` (`QuadroFunil` com dnd-kit, `CardNegocio`, `DialogoProximoPasso` — confirma/troca o próximo passo ao mover um card, `DialogoPerda`, `ListaNegocios`), `paginas/` (`Funil` — quadro/lista alternáveis, lista é o padrão no mobile, `FormularioNegocio`, `DetalheNegocio` — ações de ganho/perda).
+- `src/app/AppShell.tsx` — item "Funis" na nav (sidebar e abas).
+- Rotas novas: `/funis`, `/funis/negocios/novo`, `/funis/negocios/:id`, `/funis/negocios/:id/editar`.
+- `DetalheContato.tsx` ganhou aba "Negócios", no mesmo molde da aba "Vencimentos" do 1C-2.
+- Fora de escopo, de propósito (decisão tomada com o usuário): edição de funis/etapas (vai pra uma futura fatia de Configurações, PRD §8, junto com tipos de vencimento/campos personalizados/tags/motivos de perda — mesmo problema, mesma solução).
+- Fora de escopo, estrutural (não é decisão, é dependência): card automático no funil de Renovação a partir de vencimentos (PRD §6.4) — precisa de `pg_cron`, Fase 2.
+
 ### Pendências conhecidas
 
 1. **`.env.example` ainda não existe.** Mesmo motivo da sessão anterior (deny de `.claude/settings.json` bloqueia `Write`/`Edit` em `**/.env.*`, sem distinguir `.env.example`). `.env.local` já foi criado manualmente pelo usuário com os valores do Supabase local (confirmado no chat, não verificável por mim — leitura de `.env.local` também é negada pela mesma regra). Conteúdo do `.env.example` que falta criar:
@@ -179,7 +201,8 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 3. **Trial de 14 dias é placeholder** (`criar_empresa_com_onboarding`) — PRD §7 não define a duração real (`[PREENCHER]`).
 4. **`Convidar.tsx` gera o link mas não envia e-mail** — decisão tomada na sessão do 1B (entrega manual, sem Edge Function de e-mail). Revisar quando a infra de mensageria (Fase 2) existir.
 5. **1C-3 (Importação de planilha) não foi testado no navegador ainda** — a lógica pura (mapeamento, dedup) tem 11 testes Vitest, o schema tem pgTAP, e `lint`/`typecheck`/`build` passam, mas o fluxo completo (upload real de um .csv/.xlsx, mapeamento, prévia, criação em massa) só foi verificado por leitura de código nesta sessão.
-6. **1D-1 (Layout geral) não foi testado no navegador ainda** — `lint`/`typecheck`/`test`/`build` passam, mas sidebar, abas mobile, trocador de empresa, tema claro/escuro e o redirect de `/onboarding` só foram verificados por leitura de código nesta sessão.
+6. **1D-1 (Layout geral) validado no navegador pelo usuário** — sidebar, abas mobile, tema e trocador de empresa confirmados funcionando.
+7. **1D-2 (Funis) não foi testado no navegador ainda** — schema com 10 pgTAP novas (92/92 no total) e `lint`/`typecheck`/`test`/`build` passam, mas o quadro (arrastar card, diálogo de próximo passo, ganho/perda, alternância quadro/lista, aba "Negócios" no contato) só foi verificado por leitura de código nesta sessão.
 
 ## Próximos passos imediatos (ao retomar, nesta ordem)
 
@@ -187,13 +210,13 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 2. Abrir o **Docker Desktop** — pré-requisito para tudo abaixo.
 3. `npm install`.
 4. Criar `.env.example` (conteúdo acima) e `.env.local` (mesmo formato, com valores reais — rode `npm run supabase:start` e use a `API_URL`/`ANON_KEY` que ele imprimir).
-5. `npm run db:reset` — aplica as 10 migrations + seed do zero.
-6. `npm run test:db` — roda os 7 arquivos pgTAP (82 asserções). **Portão de aceite.**
+5. `npm run db:reset` — aplica as 11 migrations + seed do zero.
+6. `npm run test:db` — roda os 8 arquivos pgTAP (92 asserções). **Portão de aceite.**
 7. `npm run db:types` — regenera `src/types/database.ts` (já commitado, mas regenere se mudar alguma migration).
 8. `npm run dev` — testar no navegador o fluxo de Importação: em `/contatos/importar`, baixar o modelo, preencher com uma linha válida + uma com CPF inválido + uma duplicada de um contato do seed, subir o CSV, conferir o mapeamento automático, a prévia com os três status, confirmar, e checar que só a válida virou contato (e vencimento, se a coluna de data foi preenchida).
 9. Resolver a pendência de lançamento (`enable_confirmations`) **antes** de criar qualquer projeto Supabase de staging/produção.
-10. Testar o **1D-1** no navegador: logar, conferir a sidebar (desktop) e as abas inferiores (modo mobile do devtools) mostrando Início/Contatos/Vencimentos; alternar tema claro/escuro e conferir as cores novas (teal primário, âmbar só em urgência); se a conta de teste tiver mais de uma empresa, testar o trocador; conferir que `/onboarding` aparece sem sidebar pra quem não tem empresa ainda; testar "Sair" a partir do menu de usuário (desktop e mobile).
-11. Depois de validado o 1D-1, seguir pro **1D-2** (funis kanban com dnd-kit) — próximo ciclo de plano.
+10. Testar o **1D-2** no navegador (o seed já tem 5 negócios na empresa Alfa, em etapas variadas, um ganho e um perdido): abrir `/funis`, arrastar um card entre etapas e conferir que o diálogo de próximo passo aparece e que cancelar não move; conferir os dias parados na etapa e o destaque em âmbar de um próximo passo vencido; marcar um negócio como ganho e verificar que o contato virou cliente e que foi oferecido cadastrar o vencimento; marcar outro como perdido com motivo + "reativar em" e conferir a tarefa criada; alternar Quadro/Lista; conferir no modo mobile do devtools que abre em Lista; conferir a mudança de etapa na timeline do contato; conferir a aba "Negócios" em `DetalheContato`.
+11. Depois de validado o 1D-2, seguir pro **1D-3** (tarefas) — próximo ciclo de plano.
 
 ## Roteiro dos incrementos da Fase 1
 
@@ -205,8 +228,8 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 - **1C-2 — Vencimentos:** lista com filtros, ficha, renovação (`renovar_vencimento()` + diálogo de confirmação). Implementado e validado (pgTAP + navegador).
 - **1C-3 — Importação de planilha:** CSV/XLSX, mapeamento automático, dedup (PRD §6.1). Processamento no navegador (decisão tomada com o usuário). Implementado, validado por pgTAP + Vitest + lint/typecheck/build; teste no navegador pendente. **1C inteiro fechado com esta fatia.**
 - **1D — operação** (dividido em cinco fatias, mesmo padrão de 1A/1B/1C):
-  - **1D-1 — Layout geral:** sidebar (desktop)/abas (mobile), trocador de empresa, tema visual do produto inteiro (Fraunces + IBM Plex Sans, paleta papel/teal/âmbar-urgência). Implementado, validado por lint/typecheck/test/build; teste no navegador pendente.
-  - **1D-2 — Funis:** kanban com dnd-kit, negócios, próximo passo obrigatório. Não iniciado.
+  - **1D-1 — Layout geral:** sidebar (desktop)/abas (mobile), trocador de empresa, tema visual do produto inteiro (Fraunces + IBM Plex Sans, paleta papel/teal/âmbar-urgência). Implementado e validado no navegador.
+  - **1D-2 — Funis:** kanban com dnd-kit + visão em lista, negócios, próximo passo obrigatório, ganho/perda. Implementado, validado por pgTAP (92/92) + lint/typecheck/test/build; teste no navegador pendente. Edição de funis/etapas fica pra uma futura fatia de Configurações.
   - **1D-3 — Tarefas.** Não iniciado.
   - **1D-4 — Tela "Hoje":** agrega leads/follow-ups/vencimentos/aniversariantes; checklist "Primeiros passos" completo (adiado do 1B). Não iniciado.
   - **1D-5 — PWA completo com push** (depende de infra de notificação que ainda não existe). Não iniciado.

@@ -9,6 +9,7 @@ export interface EmpresaMembro {
   empresaId: string;
   nome: string;
   nicho: string;
+  fuso: string;
   papel: "dono" | "gestor" | "usuario";
   vocabulario: unknown;
 }
@@ -22,7 +23,7 @@ export function useEmpresas() {
     queryFn: async (): Promise<EmpresaMembro[]> => {
       const { data, error } = await supabase
         .from("empresa_membros")
-        .select("empresa_id, papel, empresas(nome, nicho, vocabulario)")
+        .select("empresa_id, papel, empresas(nome, nicho, fuso, vocabulario)")
         .order("created_at", { ascending: true });
       if (error) throw error;
       return (data ?? []).map((linha) => ({
@@ -30,6 +31,7 @@ export function useEmpresas() {
         papel: linha.papel as EmpresaMembro["papel"],
         nome: linha.empresas?.nome ?? "",
         nicho: linha.empresas?.nicho ?? "",
+        fuso: linha.empresas?.fuso ?? "America/Sao_Paulo",
         vocabulario: linha.empresas?.vocabulario,
       }));
     },

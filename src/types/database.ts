@@ -1193,6 +1193,18 @@ export type Database = {
         Returns: string
       }
       is_membro: { Args: { p_empresa_id: string }; Returns: boolean }
+      marcar_negocio_ganho: {
+        Args: { p_negocio_id: string }
+        Returns: undefined
+      }
+      marcar_negocio_perdido: {
+        Args: {
+          p_motivo_perda_id: string
+          p_negocio_id: string
+          p_reativar_em?: string
+        }
+        Returns: undefined
+      }
       pode_acessar_responsavel: {
         Args: { p_empresa_id: string; p_responsavel_id: string }
         Returns: boolean

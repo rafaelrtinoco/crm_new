@@ -1,6 +1,6 @@
 import { type ReactNode } from "react";
 import { NavLink, Navigate, Outlet } from "react-router-dom";
-import { CalendarClock, ChevronsUpDown, Home, LogOut, Users } from "lucide-react";
+import { CalendarClock, ChevronsUpDown, Home, LogOut, Users, Workflow } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/features/auth/api/useAuth";
@@ -18,6 +18,7 @@ const itensNav = [
   { rotulo: "Início", rota: "/", Icone: Home },
   { rotulo: "Contatos", rota: "/contatos", Icone: Users },
   { rotulo: "Vencimentos", rota: "/vencimentos", Icone: CalendarClock },
+  { rotulo: "Funis", rota: "/funis", Icone: Workflow },
 ];
 
 function iniciais(texto: string) {

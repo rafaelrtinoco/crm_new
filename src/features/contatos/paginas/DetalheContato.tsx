@@ -31,6 +31,7 @@ import { useExcluirContato } from "@/features/contatos/api/useMutacoesContato";
 import { useTagsDoContato } from "@/features/contatos/api/useTags";
 import { TimelineContato } from "@/features/contatos/components/TimelineContato";
 import { useVencimentos } from "@/features/vencimentos/api/useVencimentos";
+import { useNegociosDoContato } from "@/features/funis/api/useNegocios";
 
 export function DetalheContato() {
   const { id } = useParams<{ id: string }>();
@@ -41,6 +42,7 @@ export function DetalheContato() {
   const { data: atividades } = useAtividades(id ?? null);
   const { data: tags } = useTagsDoContato(id ?? null);
   const { data: vencimentos } = useVencimentos(atual?.empresaId ?? null, { contatoId: id });
+  const { data: negocios } = useNegociosDoContato(id ?? null);
   const excluirContato = useExcluirContato(atual?.empresaId ?? null);
   const registrarAtividade = useRegistrarAtividade();
 
@@ -187,6 +189,7 @@ export function DetalheContato() {
               <TabsTrigger value="dados">Dados</TabsTrigger>
               <TabsTrigger value="timeline">Timeline</TabsTrigger>
               <TabsTrigger value="vencimentos">Vencimentos</TabsTrigger>
+              <TabsTrigger value="negocios">Negócios</TabsTrigger>
             </TabsList>
             <TabsContent value="dados" className="space-y-2 text-sm">
               <p>
@@ -233,6 +236,26 @@ export function DetalheContato() {
                         {formatarDataBR(vencimento.dataVencimento)}
                       </Link>
                       <Badge variant="secondary">{vencimento.status}</Badge>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </TabsContent>
+            <TabsContent value="negocios" className="space-y-3">
+              <Button size="sm" variant="outline" asChild>
+                <Link to={`/funis/negocios/novo?contatoId=${id}`}>+ Novo negócio</Link>
+              </Button>
+              {(!negocios || negocios.length === 0) && (
+                <p className="text-sm text-muted-foreground">Nenhum negócio cadastrado.</p>
+              )}
+              {negocios && negocios.length > 0 && (
+                <ul className="space-y-2">
+                  {negocios.map((negocio) => (
+                    <li key={negocio.id} className="flex items-center justify-between text-sm">
+                      <Link to={`/funis/negocios/${negocio.id}`} className="hover:underline">
+                        {negocio.proximoPassoAcao} — {formatarDataBR(negocio.proximoPassoEm)}
+                      </Link>
+                      <Badge variant="secondary">{negocio.status}</Badge>
                     </li>
                   ))}
                 </ul>

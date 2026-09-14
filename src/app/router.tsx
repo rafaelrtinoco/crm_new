@@ -17,6 +17,9 @@ import { DetalheVencimento } from "@/features/vencimentos/paginas/DetalheVencime
 import { FormularioVencimento } from "@/features/vencimentos/paginas/FormularioVencimento";
 import { ListaVencimentos } from "@/features/vencimentos/paginas/ListaVencimentos";
 import { ImportarContatos } from "@/features/importacao/paginas/ImportarContatos";
+import { DetalheNegocio } from "@/features/funis/paginas/DetalheNegocio";
+import { FormularioNegocio } from "@/features/funis/paginas/FormularioNegocio";
+import { Funil } from "@/features/funis/paginas/Funil";
 
 export const router = createBrowserRouter([
   {
@@ -47,6 +50,10 @@ export const router = createBrowserRouter([
           { path: "/vencimentos/novo", element: <FormularioVencimento /> },
           { path: "/vencimentos/:id", element: <DetalheVencimento /> },
           { path: "/vencimentos/:id/editar", element: <FormularioVencimento /> },
+          { path: "/funis", element: <Funil /> },
+          { path: "/funis/negocios/novo", element: <FormularioNegocio /> },
+          { path: "/funis/negocios/:id", element: <DetalheNegocio /> },
+          { path: "/funis/negocios/:id/editar", element: <FormularioNegocio /> },
         ],
       },
     ],
