@@ -1,8 +1,18 @@
 import { type ReactNode } from "react";
 import { NavLink, Navigate, Outlet } from "react-router-dom";
-import { CalendarClock, ChevronsUpDown, Home, LogOut, Users, Workflow } from "lucide-react";
+import {
+  CalendarClock,
+  ChevronsUpDown,
+  Home,
+  LogOut,
+  Moon,
+  Sun,
+  Users,
+  Workflow,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
+import { useTema } from "@/app/useTema";
 import { useAuth } from "@/features/auth/api/useAuth";
 import { useEmpresaAtual, useEmpresas } from "@/features/onboarding/api/useEmpresas";
 import {
@@ -73,6 +83,7 @@ function TrocadorEmpresa({ children }: { children: ReactNode }) {
 
 function MenuUsuario({ children }: { children: ReactNode }) {
   const { usuario } = useAuth();
+  const { tema, alternar } = useTema();
   const nome =
     (usuario?.user_metadata as { nome?: string } | undefined)?.nome ?? usuario?.email ?? "";
 
@@ -82,6 +93,10 @@ function MenuUsuario({ children }: { children: ReactNode }) {
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="truncate">{nome}</DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={alternar}>
+          {tema === "escuro" ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+          {tema === "escuro" ? "Modo claro" : "Modo escuro"}
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => supabase.auth.signOut()}>
           <LogOut className="mr-2 h-4 w-4" />
           Sair
