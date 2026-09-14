@@ -19,8 +19,15 @@ export function AceitarConvite() {
     try {
       await aceitarConvite.mutateAsync(token);
       navigate("/", { replace: true });
-    } catch {
-      setErro("Este convite é inválido, expirado ou já foi usado.");
+    } catch (erroCapturado) {
+      // A função aceitar_convite() no banco já devolve uma mensagem
+      // específica (e-mail errado, expirado, já usado) — mostrar essa,
+      // não uma genérica que esconde a causa real.
+      const mensagem =
+        erroCapturado instanceof Error
+          ? erroCapturado.message
+          : "Não foi possível aceitar o convite. Tente de novo em instantes.";
+      setErro(mensagem);
     }
   }
 
@@ -41,7 +48,9 @@ export function AceitarConvite() {
               </Link>
             </Button>
             <Button asChild variant="outline" className="flex-1">
-              <Link to="/cadastro">Criar conta</Link>
+              <Link to="/cadastro" state={{ de: `/convite/${token}` }}>
+                Criar conta
+              </Link>
             </Button>
           </CardContent>
         </Card>

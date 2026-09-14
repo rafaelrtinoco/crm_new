@@ -4,7 +4,14 @@ Log de continuidade entre máquinas/sessões. Atualize a seção "Estado atual" 
 
 ## Estado atual — 2026-09-14
 
-**Fase 1 — Fundação e núcleo, incremento 1B (entrada: auth, onboarding, convites) implementado e validado.** 72/72 asserções pgTAP (51 do 1A + 21 novas). Fluxo completo validado **duas vezes**: via pgTAP (JWT simulado) e via `curl` direto contra a API real do Supabase local (signup de verdade → `criar_empresa_com_onboarding` → convite → segundo signup → `aceitar_convite`) — os dois bateram. `npm run dev` não foi testado no navegador nesta sessão (sem acesso a browser), mas a API por trás dele foi validada ponta a ponta.
+**Fase 1 — Fundação e núcleo, incremento 1B (entrada: auth, onboarding, convites) implementado e validado, inclusive no navegador pelo usuário.** 72/72 asserções pgTAP (51 do 1A + 21 novas), fluxo real via `curl` contra a API do Supabase local, e teste manual no navegador confirmando cadastro → criar empresa → convidar → aceitar convite funcionando de ponta a ponta.
+
+Três bugs de UX encontrados e corrigidos durante o teste manual (não pegos pelos testes automatizados, que não cobrem navegação/React Query):
+- Mensagem de erro genérica em `AceitarConvite.tsx` escondia a causa real (token inválido vs. e-mail errado vs. expirado) — agora mostra a mensagem específica que `aceitar_convite()` devolve.
+- Não havia botão de logout em lugar nenhum — impossível voltar pra `/entrar`/`/cadastro` depois de logado. Adicionado em `RotaProtegida.tsx` (cabeçalho, aparece em toda rota autenticada).
+- Convite pendente não podia ser recuperado nem cancelado depois que o link sumia da tela (ex.: após dar refresh) — `Convidar.tsx` ganhou "Copiar link" e "Cancelar" por convite.
+- Corrida de dados: mutações de `useCriarEmpresa`/`useAceitarConvite` invalidavam a query de empresas sem aguardar (`void queryClient.invalidateQueries(...)`), então `navigate()` acontecia antes da lista atualizar e a tela seguinte via "0 empresas" por um instante. Corrigido pra aguardar a invalidação antes de resolver a mutação.
+- `Cadastro.tsx` ignorava de onde o usuário veio e sempre mandava pra `/onboarding` — quem clicava "Criar conta" a partir de um link de convite perdia o convite e acabava criando a própria empresa por engano. Agora preserva `location.state.de`, igual o `Entrar.tsx` já fazia.
 
 **Achado de segurança a resolver antes de qualquer ambiente real** (skill `security-check`, rodada nesta sessão): `aceitar_convite` confia em `auth.email()`, que só é confiável se o Supabase Auth exigir confirmação de e-mail. Localmente `enable_confirmations = false` (de propósito, pra agilizar dev) — em produção isso **precisa** virar `true`, senão qualquer pessoa pode se cadastrar com um e-mail que não é dela e resgatar convites endereçados a esse e-mail. Ver "Pré-requisitos de lançamento" abaixo.
 
@@ -83,10 +90,9 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
    VITE_SUPABASE_URL=
    VITE_SUPABASE_ANON_KEY=
    ```
-2. **`npm run dev` não foi verificado no navegador nesta sessão** (sem acesso a browser). A API por trás dele foi validada via `curl` direto (signup real, RPCs, convite) — ver "Estado atual" acima — mas isso não prova que as telas React renderizam sem erro. Próxima sessão com acesso a browser: abrir `http://localhost:5173/cadastro`, criar conta, criar empresa, ir em "Convidar equipe", gerar um link, abrir em aba anônima e aceitar.
-3. **Decisões de produto não confirmadas** (documentadas na ADR 0001): quem pode criar/editar tags vs. funis/etapas/motivos de perda/tipos de vencimento. Hoje: tags abertas a qualquer membro; o resto restrito a gestor+. Revisável.
-4. **Trial de 14 dias é placeholder** (`criar_empresa_com_onboarding`) — PRD §7 não define a duração real (`[PREENCHER]`).
-5. **`Convidar.tsx` gera o link mas não envia e-mail** — decisão tomada nesta sessão (entrega manual, sem Edge Function de e-mail no 1B). Revisar quando a infra de mensageria (Fase 2) existir.
+2. **Decisões de produto não confirmadas** (documentadas na ADR 0001): quem pode criar/editar tags vs. funis/etapas/motivos de perda/tipos de vencimento. Hoje: tags abertas a qualquer membro; o resto restrito a gestor+. Revisável.
+3. **Trial de 14 dias é placeholder** (`criar_empresa_com_onboarding`) — PRD §7 não define a duração real (`[PREENCHER]`).
+4. **`Convidar.tsx` gera o link mas não envia e-mail** — decisão tomada na sessão do 1B (entrega manual, sem Edge Function de e-mail). Revisar quando a infra de mensageria (Fase 2) existir.
 
 ## Próximos passos imediatos (ao retomar, nesta ordem)
 
@@ -97,7 +103,7 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 5. `npm run db:reset` — aplica as 7 migrations + seed do zero.
 6. `npm run test:db` — roda os 4 arquivos pgTAP (72 asserções). **Portão de aceite.**
 7. `npm run db:types` — regenera `src/types/database.ts` (já commitado, mas regenere se mudar alguma migration).
-8. `npm run dev` — testar no navegador o fluxo completo: cadastro → aceitar termos → criar empresa → convidar → aceitar convite em aba anônima (ver pendência 2 acima).
+8. `npm run dev` — testar no navegador o fluxo completo: cadastro → aceitar termos → criar empresa → convidar → aceitar convite em aba anônima.
 9. Resolver a pendência de lançamento (`enable_confirmations`) **antes** de criar qualquer projeto Supabase de staging/produção.
 10. Só depois disso, seguir para o incremento **1C** (contatos, vencimentos, importação de planilha).
 

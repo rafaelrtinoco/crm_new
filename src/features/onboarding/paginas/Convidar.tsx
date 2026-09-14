@@ -13,7 +13,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { conviteSchema, type ConviteInput } from "@/features/onboarding/schemas";
-import { useConvites, useCriarConvite } from "@/features/onboarding/api/useOnboarding";
+import {
+  useCancelarConvite,
+  useConvites,
+  useCriarConvite,
+} from "@/features/onboarding/api/useOnboarding";
 import { useEmpresaAtual } from "@/features/onboarding/api/useEmpresas";
 
 const rotuloStatus: Record<string, string> = {
@@ -32,7 +36,9 @@ export function Convidar() {
   const { atual } = useEmpresaAtual();
   const { data: convites } = useConvites(atual?.empresaId ?? null);
   const criarConvite = useCriarConvite(atual?.empresaId ?? null);
+  const cancelarConvite = useCancelarConvite(atual?.empresaId ?? null);
   const [linkGerado, setLinkGerado] = useState<string | null>(null);
+  const [linkCopiado, setLinkCopiado] = useState<string | null>(null);
   const {
     control,
     register,
@@ -45,6 +51,13 @@ export function Convidar() {
     const convite = await criarConvite.mutateAsync(dados);
     setLinkGerado(`${window.location.origin}/convite/${convite.token}`);
     reset();
+  }
+
+  function copiarLink(token: string) {
+    const link = `${window.location.origin}/convite/${token}`;
+    void navigator.clipboard.writeText(link);
+    setLinkCopiado(token);
+    setTimeout(() => setLinkCopiado((atual) => (atual === token ? null : atual)), 2000);
   }
 
   if (atual && atual.papel === "usuario") {
@@ -62,7 +75,10 @@ export function Convidar() {
       <Card>
         <CardHeader>
           <CardTitle>Convidar equipe</CardTitle>
-          <CardDescription>Gera um link pra enviar por WhatsApp ou e-mail.</CardDescription>
+          <CardDescription>
+            O sistema não envia e-mail — gera um link pra você copiar e mandar por WhatsApp, e-mail
+            ou como preferir.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={handleSubmit(aoEnviar)} noValidate>
@@ -92,8 +108,8 @@ export function Convidar() {
             </div>
             {criarConvite.isError && (
               <p className="text-sm text-destructive">
-                Não foi possível criar o convite. Confira se já não existe um convite pendente pra
-                esse e-mail.
+                Já existe um convite pendente pra esse e-mail — copie o link dele na lista abaixo ou
+                cancele antes de criar um novo.
               </p>
             )}
             <Button type="submit" disabled={isSubmitting}>
@@ -127,15 +143,36 @@ export function Convidar() {
           {!convites || convites.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nenhum convite ainda.</p>
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {convites.map((c) => (
-                <li key={c.id} className="flex items-center justify-between text-sm">
-                  <span>
-                    {c.email} · {c.papel}
-                  </span>
-                  <span className="text-muted-foreground">
-                    {rotuloStatus[c.status] ?? c.status}
-                  </span>
+                <li key={c.id} className="flex items-center justify-between gap-2 text-sm">
+                  <div>
+                    <p>
+                      {c.email} · {c.papel}
+                    </p>
+                    <p className="text-muted-foreground">{rotuloStatus[c.status] ?? c.status}</p>
+                  </div>
+                  {c.status === "pendente" && (
+                    <div className="flex shrink-0 gap-1">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => copiarLink(c.token)}
+                      >
+                        {linkCopiado === c.token ? "Copiado!" : "Copiar link"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        disabled={cancelarConvite.isPending}
+                        onClick={() => cancelarConvite.mutate(c.id)}
+                      >
+                        Cancelar
+                      </Button>
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>

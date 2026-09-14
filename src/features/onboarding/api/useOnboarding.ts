@@ -35,7 +35,10 @@ export function useCriarEmpresa() {
       return data;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["empresas"] });
+      // Sem `await` aqui, quem chama mutateAsync() navegaria antes da
+      // lista de empresas atualizar — e cairia numa tela achando que
+      // ainda não tem empresa nenhuma.
+      return queryClient.invalidateQueries({ queryKey: ["empresas"] });
     },
   });
 }
@@ -50,7 +53,10 @@ export function useAceitarConvite() {
       return data;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["empresas"] });
+      // Sem `await` aqui, quem chama mutateAsync() navegaria antes da
+      // lista de empresas atualizar — e cairia numa tela achando que
+      // ainda não tem empresa nenhuma.
+      return queryClient.invalidateQueries({ queryKey: ["empresas"] });
     },
   });
 }
@@ -100,6 +106,23 @@ export function useCriarConvite(empresaId: string | null) {
         .single();
       if (error) throw error;
       return data;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["convites", empresaId] });
+    },
+  });
+}
+
+/** Cancela um convite pendente — libera o e-mail pra receber um novo convite. */
+export function useCancelarConvite(empresaId: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (conviteId: string) => {
+      const { error } = await supabase
+        .from("convites")
+        .update({ status: "cancelado" })
+        .eq("id", conviteId);
+      if (error) throw error;
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["convites", empresaId] });

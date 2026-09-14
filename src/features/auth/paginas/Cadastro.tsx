@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -13,6 +13,7 @@ import { cadastroSchema, type CadastroInput } from "@/features/auth/schemas";
 
 export function Cadastro() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [erro, setErro] = useState<string | null>(null);
   const {
     register,
@@ -36,7 +37,11 @@ export function Cadastro() {
       );
       return;
     }
-    navigate("/onboarding", { replace: true });
+    // Se veio de um link de convite (/convite/:token), volta pra lá em
+    // vez de cair direto em "criar empresa" — senão a pessoa convidada
+    // acaba criando a própria empresa por engano.
+    const destino = (location.state as { de?: string } | null)?.de ?? "/onboarding";
+    navigate(destino, { replace: true });
   }
 
   return (
