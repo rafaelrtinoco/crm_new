@@ -28,6 +28,9 @@ export function Inicio() {
           <Link to="/contatos">Contatos</Link>
         </Button>
         <Button asChild variant="outline">
+          <Link to="/vencimentos">Vencimentos</Link>
+        </Button>
+        <Button asChild variant="outline">
           <Link to="/convidar">Convidar equipe</Link>
         </Button>
       </div>

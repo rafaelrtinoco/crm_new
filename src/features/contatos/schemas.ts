@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { validarCamposPersonalizados } from "@/lib/camposPersonalizados";
 import { validarCNPJ, validarCPF } from "@/lib/formatadores";
 import type { CampoPersonalizado } from "@/features/contatos/api/useCamposPersonalizados";
 
@@ -44,27 +45,6 @@ export type ContatoInput = z.infer<typeof contatoSchemaBase>;
  */
 export function construirContatoSchema(camposPersonalizados: CampoPersonalizado[]) {
   return contatoSchemaBase.superRefine((valores, ctx) => {
-    for (const campo of camposPersonalizados) {
-      const valor = valores.campos[campo.chave];
-      const vazio = valor === undefined || valor === null || valor === "";
-
-      if (campo.obrigatorio && vazio) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["campos", campo.chave],
-          message: `${campo.rotulo} é obrigatório`,
-        });
-        continue;
-      }
-      if (vazio) continue;
-
-      if (campo.tipo === "numero" && Number.isNaN(Number(valor))) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["campos", campo.chave],
-          message: `${campo.rotulo} precisa ser um número`,
-        });
-      }
-    }
+    validarCamposPersonalizados(valores.campos, camposPersonalizados, ctx);
   });
 }

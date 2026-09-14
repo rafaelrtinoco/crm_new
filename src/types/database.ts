@@ -1197,6 +1197,15 @@ export type Database = {
         Args: { p_empresa_id: string; p_responsavel_id: string }
         Returns: boolean
       }
+      renovar_vencimento: {
+        Args: {
+          p_nova_data: string
+          p_novo_valor?: number
+          p_novos_campos?: Json
+          p_vencimento_id: string
+        }
+        Returns: string
+      }
       tem_papel: {
         Args: { p_empresa_id: string; p_papel: string }
         Returns: boolean

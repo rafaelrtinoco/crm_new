@@ -12,6 +12,9 @@ import { CriarEmpresa } from "@/features/onboarding/paginas/CriarEmpresa";
 import { DetalheContato } from "@/features/contatos/paginas/DetalheContato";
 import { FormularioContato } from "@/features/contatos/paginas/FormularioContato";
 import { ListaContatos } from "@/features/contatos/paginas/ListaContatos";
+import { DetalheVencimento } from "@/features/vencimentos/paginas/DetalheVencimento";
+import { FormularioVencimento } from "@/features/vencimentos/paginas/FormularioVencimento";
+import { ListaVencimentos } from "@/features/vencimentos/paginas/ListaVencimentos";
 
 export const router = createBrowserRouter([
   {
@@ -34,6 +37,10 @@ export const router = createBrowserRouter([
       { path: "/contatos/novo", element: <FormularioContato /> },
       { path: "/contatos/:id", element: <DetalheContato /> },
       { path: "/contatos/:id/editar", element: <FormularioContato /> },
+      { path: "/vencimentos", element: <ListaVencimentos /> },
+      { path: "/vencimentos/novo", element: <FormularioVencimento /> },
+      { path: "/vencimentos/:id", element: <DetalheVencimento /> },
+      { path: "/vencimentos/:id/editar", element: <FormularioVencimento /> },
     ],
   },
 ]);

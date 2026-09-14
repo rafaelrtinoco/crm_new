@@ -10,17 +10,20 @@ export interface CampoPersonalizado {
   obrigatorio: boolean;
 }
 
-/** Campos personalizados de contato configurados pela empresa (PRD §3.2). */
-export function useCamposPersonalizados(empresaId: string | null) {
+/** Campos personalizados configurados pela empresa pra contato ou vencimento (PRD §3.2). */
+export function useCamposPersonalizados(
+  empresaId: string | null,
+  entidade: "contato" | "vencimento",
+) {
   return useQuery({
-    queryKey: ["campos-personalizados", empresaId, "contato"],
+    queryKey: ["campos-personalizados", empresaId, entidade],
     enabled: !!empresaId,
     queryFn: async (): Promise<CampoPersonalizado[]> => {
       const { data, error } = await supabase
         .from("campos_personalizados")
         .select("id, chave, rotulo, tipo, opcoes, obrigatorio")
         .eq("empresa_id", empresaId as string)
-        .eq("entidade", "contato")
+        .eq("entidade", entidade)
         .order("ordem", { ascending: true });
       if (error) throw error;
       return (data ?? []).map((c) => ({

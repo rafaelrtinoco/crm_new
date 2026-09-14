@@ -1,4 +1,4 @@
-import { Controller, type Control, type FieldPath } from "react-hook-form";
+import { Controller, type Control, type FieldPath, type FieldValues } from "react-hook-form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,17 +10,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { CampoPersonalizado as CampoPersonalizadoTipo } from "@/features/contatos/api/useCamposPersonalizados";
-import type { ContatoInput } from "@/features/contatos/schemas";
 
-interface Props {
+interface Props<TFormValues extends FieldValues> {
   campo: CampoPersonalizadoTipo;
-  control: Control<ContatoInput>;
+  control: Control<TFormValues>;
   erro?: string;
 }
 
-/** Renderiza um campo dinâmico de `campos_personalizados` conforme o `tipo`. */
-export function CampoPersonalizado({ campo, control, erro }: Props) {
-  const nome = `campos.${campo.chave}` as FieldPath<ContatoInput>;
+/**
+ * Renderiza um campo dinâmico de `campos_personalizados` conforme o `tipo`.
+ * Genérico em `TFormValues` pra servir tanto o formulário de Contatos
+ * quanto o de Vencimentos — o único requisito é ter um campo `campos`.
+ */
+export function CampoPersonalizado<TFormValues extends FieldValues>({
+  campo,
+  control,
+  erro,
+}: Props<TFormValues>) {
+  const nome = `campos.${campo.chave}` as FieldPath<TFormValues>;
   const rotulo = campo.obrigatorio ? `${campo.rotulo} *` : campo.rotulo;
 
   return (

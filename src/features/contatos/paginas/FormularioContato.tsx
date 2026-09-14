@@ -52,7 +52,7 @@ export function FormularioContato() {
   const empresaId = atual?.empresaId ?? null;
 
   const { data: contatoExistente } = useContato(editando ? (id as string) : null);
-  const { data: camposPersonalizados } = useCamposPersonalizados(empresaId);
+  const { data: camposPersonalizados } = useCamposPersonalizados(empresaId, "contato");
   const { data: membros } = useMembrosEmpresa(empresaId);
   const { data: tags } = useTags(empresaId);
   const { data: tagsDoContato } = useTagsDoContato(editando ? (id as string) : null);

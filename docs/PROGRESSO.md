@@ -4,11 +4,20 @@ Log de continuidade entre máquinas/sessões. Atualize a seção "Estado atual" 
 
 ## Estado atual — 2026-09-14
 
-**Fase 1 — Fundação e núcleo, incremento 1C-1 (Contatos) implementado.** Schema (trigger `ultimo_contato_em`) validado — 75/75 pgTAP. Frontend (lista com filtros, ficha com timeline, formulário com campos personalizados dinâmicos e tags, registro rápido "Como foi?") passa em lint/typecheck/test/build; **ainda não testado no navegador nesta sessão** — próximo passo ao retomar.
+**Fase 1 — Fundação e núcleo, incremento 1C-2 (Vencimentos) implementado.** Schema (`renovar_vencimento()`) validado — 80/80 pgTAP; frontend (lista com filtros, ficha com mudança de status, diálogo de renovação que sugere a próxima data pra recorrência mensal/anual) passa em lint/typecheck/test/build. **Ainda não testado no navegador nesta sessão** — próximo passo ao retomar.
+
+Bug de teste pgTAP pego antes de fechar (não é bug do código de produção): a primeira asserção do `vencimentos.sql` filtrava por `descricao` sozinha pra checar o vencimento original — depois de `renovar_vencimento()`, existem *duas* linhas com a mesma descrição de propósito (a função copia a descrição pro próximo), então a query virou ambígua (`more than one row returned by a subquery`). Corrigido combinando `descricao` com o `valor` original do seed pra mirar só na linha antiga.
+
+<details>
+<summary>Histórico — 1C-1: Contatos (2026-09-14)</summary>
+
+Schema (trigger `ultimo_contato_em`) validado — 75/75 pgTAP; frontend (lista com filtros, ficha com timeline, formulário com campos personalizados dinâmicos e tags, registro rápido "Como foi?") confirmado funcionando no navegador pelo usuário.
 
 Dois bugs de tipagem pegos pelo `tsc`, corrigidos antes de rodar qualquer coisa:
 - `useContatos.ts`: filtro por tag usava um `select()` condicional (string muda conforme o filtro) — o supabase-js não consegue tipar isso em tempo de compilação (`ParserError`). Resolvido buscando os ids em `contato_tags` primeiro e filtrando com `.in("id", ids)` depois, em vez de tentar embutir o join na mesma query.
 - `useMembrosEmpresa` (1B, só usado agora): tentava `empresa_membros.select("perfis(nome)")`, mas não há FK direta entre as duas tabelas (as duas só se relacionam via `auth.users`) — o PostgREST não embeda relações transitivas. Resolvido com duas consultas (busca os membros, depois busca os perfis por `id`, junta em memória).
+
+</details>
 
 <details>
 <summary>Histórico — 1B: auth, onboarding, convites (2026-09-14)</summary>
@@ -99,6 +108,18 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 - Rotas novas: `/contatos`, `/contatos/novo`, `/contatos/:id`, `/contatos/:id/editar`.
 - Fora do escopo, de propósito (ver plano do 1C-1): ações em massa, busca global (Ctrl+K), tarefa real a partir do "próximo passo" do registro rápido (fica texto livre até a tela de tarefas existir no 1D).
 
+**1C-2 — schema** (`supabase/migrations/20260914165753_renovar_vencimento.sql`):
+- `renovar_vencimento(vencimento_id, nova_data, novo_valor, novos_campos)` — fecha o vencimento atual (`status = 'renovado'`) e cria o próximo (`status = 'pendente'`) na mesma transação. `security invoker` — não bypassa RLS, o usuário já precisa ter acesso de escrita ao vencimento original.
+
+**1C-2 — frontend:**
+- `src/lib/datas.ts` ganhou `somarPeriodo(data, "mes"|"ano", n)` — sugere a próxima data numa renovação mensal/anual.
+- `src/lib/camposPersonalizados.ts` (novo) — extraído de `contatos/schemas.ts`: a validação dinâmica de campos personalizados (`validarCamposPersonalizados`) agora é compartilhada entre Contatos e Vencimentos, em vez de duplicada.
+- `CampoPersonalizado` (componente) e `useCamposPersonalizados` (hook, ambos em `contatos/`) generalizados: o componente virou genérico em `TFormValues`, o hook ganhou o parâmetro `entidade: "contato" | "vencimento"`. Vencimentos importa os dois de `contatos/` — ainda não relocados pra um lugar neutro (nota de arquitetura, não bloqueante).
+- `src/features/vencimentos/` — `api/` (`useVencimentos` com filtros de status/tipo/responsável/período, `useVencimento`, `useVencimentoTipos`, `useMutacoesVencimento` — criar/atualizar/excluir/mudar status/`useRenovarVencimento`), `schemas.ts`, `components/DialogoRenovacao.tsx` (sugere data pra mensal/anual, pede pra escolher em única/personalizada), `paginas/ListaVencimentos.tsx`, `paginas/FormularioVencimento.tsx` (aceita `?contatoId=` pra pré-preencher), `paginas/DetalheVencimento.tsx`.
+- `DetalheContato.tsx` ganhou uma aba "Vencimentos" listando os vencimentos daquele contato.
+- Rotas novas: `/vencimentos`, `/vencimentos/novo`, `/vencimentos/:id`, `/vencimentos/:id/editar`.
+- Fora do escopo, de propósito (decisão tomada com o usuário): visão de calendário, anexos/Supabase Storage. Fora do escopo estrutural (não é decisão, é dependência): card automático no funil de Renovação (precisa de Funis do 1D + `pg_cron` da Fase 2).
+
 ### Pendências conhecidas
 
 1. **`.env.example` ainda não existe.** Mesmo motivo da sessão anterior (deny de `.claude/settings.json` bloqueia `Write`/`Edit` em `**/.env.*`, sem distinguir `.env.example`). `.env.local` já foi criado manualmente pelo usuário com os valores do Supabase local (confirmado no chat, não verificável por mim — leitura de `.env.local` também é negada pela mesma regra). Conteúdo do `.env.example` que falta criar:
@@ -114,7 +135,7 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 2. **Decisões de produto não confirmadas** (documentadas na ADR 0001): quem pode criar/editar tags vs. funis/etapas/motivos de perda/tipos de vencimento. Hoje: tags abertas a qualquer membro; o resto restrito a gestor+. Revisável.
 3. **Trial de 14 dias é placeholder** (`criar_empresa_com_onboarding`) — PRD §7 não define a duração real (`[PREENCHER]`).
 4. **`Convidar.tsx` gera o link mas não envia e-mail** — decisão tomada na sessão do 1B (entrega manual, sem Edge Function de e-mail). Revisar quando a infra de mensageria (Fase 2) existir.
-5. **1C-1 (Contatos) não foi testado no navegador ainda** — passou em lint/typecheck/test/build e o schema tem cobertura pgTAP, mas a UI em si (formulário, filtros, timeline, modal "Como foi?") só foi verificada por leitura de código nesta sessão.
+5. **1C-2 (Vencimentos) não foi testado no navegador ainda** — passou em lint/typecheck/test/build e o schema tem cobertura pgTAP (incluindo a renovação e isolamento entre empresas), mas a UI (formulário, filtros, diálogo de renovação, aba na ficha do contato) só foi verificada por leitura de código nesta sessão.
 
 ## Próximos passos imediatos (ao retomar, nesta ordem)
 
@@ -122,12 +143,12 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 2. Abrir o **Docker Desktop** — pré-requisito para tudo abaixo.
 3. `npm install`.
 4. Criar `.env.example` (conteúdo acima) e `.env.local` (mesmo formato, com valores reais — rode `npm run supabase:start` e use a `API_URL`/`ANON_KEY` que ele imprimir).
-5. `npm run db:reset` — aplica as 8 migrations + seed do zero.
-6. `npm run test:db` — roda os 5 arquivos pgTAP (75 asserções). **Portão de aceite.**
+5. `npm run db:reset` — aplica as 9 migrations + seed do zero.
+6. `npm run test:db` — roda os 6 arquivos pgTAP (80 asserções). **Portão de aceite.**
 7. `npm run db:types` — regenera `src/types/database.ts` (já commitado, mas regenere se mudar alguma migration).
-8. `npm run dev` — testar no navegador o fluxo de Contatos: criar um contato com campo personalizado e tag, ver na lista, filtrar, abrir a ficha, registrar uma nota rápida, conferir que "último contato" mudou, editar, excluir.
+8. `npm run dev` — testar no navegador o fluxo de Vencimentos: cadastrar um vencimento pra um contato (com o `?contatoId=` vindo da aba "Vencimentos" da ficha), filtrar por status/tipo, abrir a ficha, marcar como renovado (conferir a data sugerida pra recorrência mensal/anual), ver que o antigo virou "renovado" e o novo apareceu "pendente" na lista.
 9. Resolver a pendência de lançamento (`enable_confirmations`) **antes** de criar qualquer projeto Supabase de staging/produção.
-10. Depois de validar o 1C-1, planejar o **1C-2** (Vencimentos, com a lógica de renovação automática do PRD §6.4).
+10. Depois de validar o 1C-2, planejar o **1C-3** (Importação de planilha) — tem uma decisão de arquitetura própria (processar no navegador vs. Edge Function com `service_role`) a levantar quando chegar a vez.
 
 ## Roteiro dos incrementos da Fase 1
 
@@ -135,7 +156,7 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 
 - **1A — fundação** (este documento): schema, RLS, isolamento. Implementado e validado (51/51 pgTAP).
 - **1B — entrada:** auth Supabase (e-mail+senha), onboarding com `criar_empresa_com_onboarding()`/`aplicar_template()`, convites (link manual). Implementado e validado (72/72 pgTAP + fluxo real via curl). Checklist "Primeiros passos" **adiado pro 1D** de propósito (decisão tomada com o usuário — a maioria dos itens depende de telas que só existem em 1C/1D).
-- **1C-1 — Contatos:** lista com filtros, ficha com timeline, campos personalizados dinâmicos, tags, registro rápido "Como foi?". Implementado, validado por pgTAP + lint/typecheck/test/build; teste no navegador pendente.
-- **1C-2 — Vencimentos:** CRUD, recorrência, renovação automática (PRD §6.4). Não iniciado.
+- **1C-1 — Contatos:** lista com filtros, ficha com timeline, campos personalizados dinâmicos, tags, registro rápido "Como foi?". Implementado e validado (pgTAP + navegador).
+- **1C-2 — Vencimentos:** lista com filtros, ficha, renovação (`renovar_vencimento()` + diálogo de confirmação). Implementado, validado por pgTAP + lint/typecheck/test/build; teste no navegador pendente.
 - **1C-3 — Importação de planilha:** CSV/XLSX, dedup (PRD §6.1). Não iniciado — tem uma decisão de arquitetura própria (processar no navegador vs. Edge Function com `service_role`) a definir quando chegar a vez.
 - **1D — operação:** funis kanban (dnd-kit) com próximo passo obrigatório, tarefas, tela "Hoje" (com o checklist "Primeiros passos" completo), PWA completo com push.
