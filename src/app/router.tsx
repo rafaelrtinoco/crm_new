@@ -15,6 +15,7 @@ import { ListaContatos } from "@/features/contatos/paginas/ListaContatos";
 import { DetalheVencimento } from "@/features/vencimentos/paginas/DetalheVencimento";
 import { FormularioVencimento } from "@/features/vencimentos/paginas/FormularioVencimento";
 import { ListaVencimentos } from "@/features/vencimentos/paginas/ListaVencimentos";
+import { ImportarContatos } from "@/features/importacao/paginas/ImportarContatos";
 
 export const router = createBrowserRouter([
   {
@@ -37,6 +38,7 @@ export const router = createBrowserRouter([
       { path: "/contatos/novo", element: <FormularioContato /> },
       { path: "/contatos/:id", element: <DetalheContato /> },
       { path: "/contatos/:id/editar", element: <FormularioContato /> },
+      { path: "/contatos/importar", element: <ImportarContatos /> },
       { path: "/vencimentos", element: <ListaVencimentos /> },
       { path: "/vencimentos/novo", element: <FormularioVencimento /> },
       { path: "/vencimentos/:id", element: <DetalheVencimento /> },

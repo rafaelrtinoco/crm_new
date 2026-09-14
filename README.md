@@ -8,7 +8,7 @@ CRM SaaS multiempresa de relacionamento, focado em leads, funil de vendas, venci
 
 ## Estado atual
 
-**Fase 1 — Fundação e núcleo** (ver `docs/PRD.md` seção 9) em andamento: 1A (schema/RLS), 1B (auth, onboarding, convites) e 1C-1 (Contatos) concluídos e validados no navegador; **1C-2 (Vencimentos)** concluído — 80 testes pgTAP passando — teste no navegador pendente. Faltam 1C-3 (importação) e 1D (funis/tarefas/Hoje/PWA completo).
+**Fase 1 — Fundação e núcleo** (ver `docs/PRD.md` seção 9): **1A, 1B e 1C completos** (schema/RLS; auth/onboarding/convites; contatos, vencimentos e importação de planilha) — 1A/1B/1C-1/1C-2 validados no navegador, **1C-3 (Importação)** concluído com 82 testes pgTAP + 25 Vitest, teste no navegador pendente. Falta o **1D** (funis, tarefas, tela "Hoje", PWA completo e o layout geral da plataforma).
 
 ## Stack
 

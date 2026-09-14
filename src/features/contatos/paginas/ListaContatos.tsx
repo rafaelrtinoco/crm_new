@@ -60,9 +60,14 @@ export function ListaContatos() {
     <main className="mx-auto max-w-5xl space-y-4 p-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">{vocabulario.contatoPlural}</h1>
-        <Button asChild>
-          <Link to="/contatos/novo">Novo {vocabulario.contato.toLowerCase()}</Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link to="/contatos/importar">Importar planilha</Link>
+          </Button>
+          <Button asChild>
+            <Link to="/contatos/novo">Novo {vocabulario.contato.toLowerCase()}</Link>
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2">

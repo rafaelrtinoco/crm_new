@@ -10,7 +10,7 @@ Comentários HTML como este não entram no contexto do Claude.
 
 CRM multiempresa para corretores de seguros (nicho de lançamento) e, depois, outros negócios do ramo administrativo. Foco: leads, funil, vencimentos com lembretes automáticos, follow-up e campanhas. **Não** é sistema de gestão de apólices, financeiro ou comissões.
 
-> **Estado atual:** 1A (fundação), 1B (auth/onboarding/convites) e 1C-1 (Contatos) implementados, validados e testados no navegador. **1C-2 (Vencimentos)** implementado — 80/80 testes pgTAP, lint/typecheck/test/build limpos; teste no navegador ainda pendente. 1C-3 (Importação) e 1D (funis/tarefas/Hoje/PWA completo) ainda não começaram. **Pendência de lançamento:** `auth.email.enable_confirmations` precisa virar `true` antes de qualquer Supabase de staging/produção. Detalhes: `docs/PROGRESSO.md`.
+> **Estado atual:** Fase 1C completa — 1A (fundação), 1B (auth/onboarding/convites), 1C-1 (Contatos) e 1C-2 (Vencimentos) implementados, validados e testados no navegador. **1C-3 (Importação de planilha)** implementado — 82/82 testes pgTAP + 25 Vitest, lint/typecheck/build limpos; teste no navegador ainda pendente. **1D** (funis/tarefas/Hoje/PWA + layout geral da plataforma) ainda não começou — usuário já deixou diretriz de visual registrada (ver `docs/PROGRESSO.md`). **Pendência de lançamento:** `auth.email.enable_confirmations` precisa virar `true` antes de qualquer Supabase de staging/produção. Detalhes: `docs/PROGRESSO.md`.
 
 - **Especificação:** `docs/PRD.md` — leia apenas a seção do que estiver implementando.
 - **Fase atual: 1 — Fundação e núcleo.** Não implemente nada de fases futuras sem eu pedir.
@@ -81,14 +81,14 @@ docs/
   decisoes/
 src/
   app/                  # rotas, layouts, providers globais, guards (RotaProtegida/RotaPublica)
-  features/<slice>/     # api/ (hooks TanStack Query), components/, schemas.ts, páginas — existe: auth, onboarding, contatos, vencimentos
+  features/<slice>/     # api/ (hooks TanStack Query), components/, schemas.ts, páginas — existe: auth, onboarding, contatos, vencimentos, importacao
   components/ui/        # shadcn/ui — existe: button, input, label, card, select, checkbox
   lib/                  # cliente supabase, datas, formatadores BR, vocabulário
   types/database.ts     # GERADO — use npm run db:types
 supabase/
-  migrations/           # 9 migrations (1A: fundação; 1B: onboarding; 1C-1: ultimo_contato_em; 1C-2: renovar_vencimento)
+  migrations/           # 10 migrations (1A: fundação; 1B: onboarding; 1C-1: ultimo_contato_em; 1C-2: renovar_vencimento; 1C-3: importacao_erros insert)
   functions/_shared/    # providers, fila de envios, validação — chega na Fase 2 (WhatsApp)
-  tests/                # pgTAP — isolamento multiempresa, carteira compartilhada, plataforma_admins, onboarding, contatos, vencimentos
+  tests/                # pgTAP — isolamento multiempresa, carteira compartilhada, plataforma_admins, onboarding, contatos, vencimentos, importacao
   seed.sql              # duas empresas fictícias (Alfa e Beta), nenhum dado real
 tests/e2e/              # smoke tests — ainda não existe
 ```

@@ -4,9 +4,18 @@ Log de continuidade entre máquinas/sessões. Atualize a seção "Estado atual" 
 
 ## Estado atual — 2026-09-14
 
-**Fase 1 — Fundação e núcleo, incremento 1C-2 (Vencimentos) implementado.** Schema (`renovar_vencimento()`) validado — 80/80 pgTAP; frontend (lista com filtros, ficha com mudança de status, diálogo de renovação que sugere a próxima data pra recorrência mensal/anual) passa em lint/typecheck/test/build. **Ainda não testado no navegador nesta sessão** — próximo passo ao retomar.
+**Fase 1 — Fundação e núcleo, incremento 1C-3 (Importação de planilha) implementado — fecha o 1C inteiro.** Schema (policy de insert em `importacao_erros`) validado — 82/82 pgTAP; lógica pura de mapeamento de colunas e deduplicação com 11 testes Vitest próprios (25 no total do projeto); `lint`/`typecheck`/`test`/`build` limpos. **Ainda não testado no navegador nesta sessão** — próximo passo ao retomar.
+
+**Decisão de arquitetura tomada com o usuário:** processamento no navegador (não Edge Function + Storage) — mesmo raciocínio do convite manual no 1B. Achado no caminho: a `xlsx` (SheetJS) do npm registry tem duas vulnerabilidades de severidade alta sem correção (`npm audit`); trocada por duas libs mantidas — `papaparse` (CSV) e `exceljs` (XLSX), ambas carregadas via `import()` dinâmico pra não pesar o bundle principal de quem nunca usa a importação (confirmado no build: chunks separados de 18.68 kB e 929.55 kB, bundle principal cresceu só ~12 kB).
+
+<details>
+<summary>Histórico — 1C-2: Vencimentos (2026-09-14)</summary>
+
+Schema (`renovar_vencimento()`) validado — 80/80 pgTAP; frontend (lista com filtros, ficha com mudança de status, diálogo de renovação que sugere a próxima data pra recorrência mensal/anual) confirmado funcionando no navegador pelo usuário.
 
 Bug de teste pgTAP pego antes de fechar (não é bug do código de produção): a primeira asserção do `vencimentos.sql` filtrava por `descricao` sozinha pra checar o vencimento original — depois de `renovar_vencimento()`, existem *duas* linhas com a mesma descrição de propósito (a função copia a descrição pro próximo), então a query virou ambígua (`more than one row returned by a subquery`). Corrigido combinando `descricao` com o `valor` original do seed pra mirar só na linha antiga.
+
+</details>
 
 <details>
 <summary>Histórico — 1C-1: Contatos (2026-09-14)</summary>
@@ -120,6 +129,18 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 - Rotas novas: `/vencimentos`, `/vencimentos/novo`, `/vencimentos/:id`, `/vencimentos/:id/editar`.
 - Fora do escopo, de propósito (decisão tomada com o usuário): visão de calendário, anexos/Supabase Storage. Fora do escopo estrutural (não é decisão, é dependência): card automático no funil de Renovação (precisa de Funis do 1D + `pg_cron` da Fase 2).
 
+**1C-3 — schema** (`supabase/migrations/20260914175322_importacao_erros_insert.sql`):
+- Policy de `insert` em `importacao_erros` pra `authenticated` (`is_membro(empresa_id)`) — a migration original (1A) só tinha `select`, porque presumia um worker `service_role`. Decisão desta fase: processamento no navegador, então precisa da policy de verdade.
+
+**1C-3 — frontend:**
+- **Dependências:** `xlsx` foi cogitada e descartada (2 vulnerabilidades altas sem correção no npm — ver "Estado atual"); `papaparse` (CSV) + `exceljs` (XLSX) no lugar, ambas com `@types` ou tipagem própria, carregadas via `import()` dinâmico só dentro de `parseArquivo.ts`.
+- `src/features/importacao/` — `logica/` (funções puras, sem Supabase, testadas em Vitest): `mapeamentoColunas.ts` (sugestão automática de coluna→campo por sinônimo), `deduplicacao.ts` (compara contra contatos existentes + dedup dentro do próprio arquivo), `processarLinhas.ts` (aplica mapeamento + valida, reusa `validarCPF`/`validarCNPJ`), `parseArquivo.ts` (lê `.csv`/`.xlsx`), `modeloPlanilha.ts` (gera o CSV de exemplo pra download); `api/useImportacao.ts` (cria/finaliza a linha em `importacoes`, registra erro por linha, busca contatos existentes pra dedup); `paginas/ImportarContatos.tsx` (wizard de 4 passos numa página só — Upload → Mapear → Prévia → Resultado — mesmo estilo do `DialogoRenovacao` do 1C-2, sem rota por passo).
+- Rota nova: `/contatos/importar`, com link em `ListaContatos.tsx`.
+- Contato importado nasce com `status: "cliente"` (não "lead") — julgamento de que importação de planilha normalmente é migração de carteira existente, não captação de leads novos. Revisável.
+- Linha com `dataVencimento` preenchida também cria um `vencimento` vinculado (recorrência = a do tipo encontrado por nome, ou "anual" se não achar correspondência).
+- Fora de escopo, de propósito (decisão tomada com o usuário): "dados de exemplo removíveis com um clique" do PRD §6.1 — é uma feature de seed de demonstração, conceitualmente separada de "importar minha planilha real".
+- Inserção linha a linha (não em lote) — simples e correto, mas arquivos muito grandes demoram mais. Otimização de lote fica pra depois, se precisar.
+
 ### Pendências conhecidas
 
 1. **`.env.example` ainda não existe.** Mesmo motivo da sessão anterior (deny de `.claude/settings.json` bloqueia `Write`/`Edit` em `**/.env.*`, sem distinguir `.env.example`). `.env.local` já foi criado manualmente pelo usuário com os valores do Supabase local (confirmado no chat, não verificável por mim — leitura de `.env.local` também é negada pela mesma regra). Conteúdo do `.env.example` que falta criar:
@@ -135,7 +156,7 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 2. **Decisões de produto não confirmadas** (documentadas na ADR 0001): quem pode criar/editar tags vs. funis/etapas/motivos de perda/tipos de vencimento. Hoje: tags abertas a qualquer membro; o resto restrito a gestor+. Revisável.
 3. **Trial de 14 dias é placeholder** (`criar_empresa_com_onboarding`) — PRD §7 não define a duração real (`[PREENCHER]`).
 4. **`Convidar.tsx` gera o link mas não envia e-mail** — decisão tomada na sessão do 1B (entrega manual, sem Edge Function de e-mail). Revisar quando a infra de mensageria (Fase 2) existir.
-5. **1C-2 (Vencimentos) não foi testado no navegador ainda** — passou em lint/typecheck/test/build e o schema tem cobertura pgTAP (incluindo a renovação e isolamento entre empresas), mas a UI (formulário, filtros, diálogo de renovação, aba na ficha do contato) só foi verificada por leitura de código nesta sessão.
+5. **1C-3 (Importação de planilha) não foi testado no navegador ainda** — a lógica pura (mapeamento, dedup) tem 11 testes Vitest, o schema tem pgTAP, e `lint`/`typecheck`/`build` passam, mas o fluxo completo (upload real de um .csv/.xlsx, mapeamento, prévia, criação em massa) só foi verificado por leitura de código nesta sessão.
 
 ## Próximos passos imediatos (ao retomar, nesta ordem)
 
@@ -143,12 +164,12 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 2. Abrir o **Docker Desktop** — pré-requisito para tudo abaixo.
 3. `npm install`.
 4. Criar `.env.example` (conteúdo acima) e `.env.local` (mesmo formato, com valores reais — rode `npm run supabase:start` e use a `API_URL`/`ANON_KEY` que ele imprimir).
-5. `npm run db:reset` — aplica as 9 migrations + seed do zero.
-6. `npm run test:db` — roda os 6 arquivos pgTAP (80 asserções). **Portão de aceite.**
+5. `npm run db:reset` — aplica as 10 migrations + seed do zero.
+6. `npm run test:db` — roda os 7 arquivos pgTAP (82 asserções). **Portão de aceite.**
 7. `npm run db:types` — regenera `src/types/database.ts` (já commitado, mas regenere se mudar alguma migration).
-8. `npm run dev` — testar no navegador o fluxo de Vencimentos: cadastrar um vencimento pra um contato (com o `?contatoId=` vindo da aba "Vencimentos" da ficha), filtrar por status/tipo, abrir a ficha, marcar como renovado (conferir a data sugerida pra recorrência mensal/anual), ver que o antigo virou "renovado" e o novo apareceu "pendente" na lista.
+8. `npm run dev` — testar no navegador o fluxo de Importação: em `/contatos/importar`, baixar o modelo, preencher com uma linha válida + uma com CPF inválido + uma duplicada de um contato do seed, subir o CSV, conferir o mapeamento automático, a prévia com os três status, confirmar, e checar que só a válida virou contato (e vencimento, se a coluna de data foi preenchida).
 9. Resolver a pendência de lançamento (`enable_confirmations`) **antes** de criar qualquer projeto Supabase de staging/produção.
-10. Depois de validar o 1C-2, planejar o **1C-3** (Importação de planilha) — tem uma decisão de arquitetura própria (processar no navegador vs. Edge Function com `service_role`) a levantar quando chegar a vez.
+10. Depois de validar o 1C-3, o **1C inteiro está fechado**. Próximo: planejar o **1D** (funis, tarefas, tela "Hoje" e o **layout geral da plataforma**) — o usuário já deixou registrada a diretriz de visual pro 1D (ver o próprio item do roteiro abaixo e a memória de projeto `project_1d_visual_design`).
 
 ## Roteiro dos incrementos da Fase 1
 
@@ -157,6 +178,6 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 - **1A — fundação** (este documento): schema, RLS, isolamento. Implementado e validado (51/51 pgTAP).
 - **1B — entrada:** auth Supabase (e-mail+senha), onboarding com `criar_empresa_com_onboarding()`/`aplicar_template()`, convites (link manual). Implementado e validado (72/72 pgTAP + fluxo real via curl). Checklist "Primeiros passos" **adiado pro 1D** de propósito (decisão tomada com o usuário — a maioria dos itens depende de telas que só existem em 1C/1D).
 - **1C-1 — Contatos:** lista com filtros, ficha com timeline, campos personalizados dinâmicos, tags, registro rápido "Como foi?". Implementado e validado (pgTAP + navegador).
-- **1C-2 — Vencimentos:** lista com filtros, ficha, renovação (`renovar_vencimento()` + diálogo de confirmação). Implementado, validado por pgTAP + lint/typecheck/test/build; teste no navegador pendente.
-- **1C-3 — Importação de planilha:** CSV/XLSX, dedup (PRD §6.1). Não iniciado — tem uma decisão de arquitetura própria (processar no navegador vs. Edge Function com `service_role`) a definir quando chegar a vez.
+- **1C-2 — Vencimentos:** lista com filtros, ficha, renovação (`renovar_vencimento()` + diálogo de confirmação). Implementado e validado (pgTAP + navegador).
+- **1C-3 — Importação de planilha:** CSV/XLSX, mapeamento automático, dedup (PRD §6.1). Processamento no navegador (decisão tomada com o usuário). Implementado, validado por pgTAP + Vitest + lint/typecheck/build; teste no navegador pendente. **1C inteiro fechado com esta fatia.**
 - **1D — operação:** funis kanban (dnd-kit) com próximo passo obrigatório, tarefas, tela "Hoje" (com o checklist "Primeiros passos" completo), PWA completo com push, e o **layout geral da plataforma** (sidebar/nav, cabeçalho com empresa atual — hoje só existe o botão "Sair"). **Diretriz do usuário pro visual:** atual, sem cara de IA, padrão de produto SaaS de verdade — não os defaults genéricos do shadcn/ui. Invocar `frontend-design`/`frontend-ui-engineering` antes de codar o shell.
