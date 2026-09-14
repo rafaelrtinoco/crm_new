@@ -10,7 +10,7 @@ Comentários HTML como este não entram no contexto do Claude.
 
 CRM multiempresa para corretores de seguros (nicho de lançamento) e, depois, outros negócios do ramo administrativo. Foco: leads, funil, vencimentos com lembretes automáticos, follow-up e campanhas. **Não** é sistema de gestão de apólices, financeiro ou comissões.
 
-> **Estado atual:** incremento **1A** (fundação: schema, RLS, isolamento) implementado — scaffold React/Vite rodando, migrations e seed prontos, testes pgTAP escritos. Ainda não validados contra um Postgres real (`npm run db:reset` / `npm run test:db` pendentes — exigem o Docker Desktop aberto). 1B (auth/onboarding), 1C (contatos/vencimentos/importação) e 1D (funis/tarefas/Hoje/PWA completo) ainda não começaram. Detalhes e próximos passos exatos: `docs/PROGRESSO.md`.
+> **Estado atual:** incremento **1A** (fundação: schema, RLS, isolamento) implementado **e validado** — scaffold React/Vite rodando, migrations+seed aplicados, 51/51 testes pgTAP passando, `src/types/database.ts` gerado. Falta só criar `.env.local` (manual, ver `docs/PROGRESSO.md`) pra confirmar `npm run dev` de ponta a ponta. 1B (auth/onboarding), 1C (contatos/vencimentos/importação) e 1D (funis/tarefas/Hoje/PWA completo) ainda não começaram.
 
 - **Especificação:** `docs/PRD.md` — leia apenas a seção do que estiver implementando.
 - **Fase atual: 1 — Fundação e núcleo.** Não implemente nada de fases futuras sem eu pedir.

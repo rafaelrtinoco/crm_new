@@ -119,9 +119,7 @@ insert into public.contatos (id, empresa_id, nome, status, temperatura, origem, 
   ('b0000000-0000-0000-0000-000000000301', 'b0000000-0000-0000-0000-000000000001', 'Patrícia Nunes', 'cliente', 'morno', 'site', '(21) 97777-0001', 'patricia.nunes@exemplo.test', null, 'b0000000-0000-0000-0000-000000000101', now() - interval '5 days'),
   ('b0000000-0000-0000-0000-000000000302', 'b0000000-0000-0000-0000-000000000001', 'Diego Martins', 'lead', 'quente', 'google_ads', '(21) 97777-0002', 'diego.martins@exemplo.test', null, 'b0000000-0000-0000-0000-000000000101', now() - interval '6 hours');
 
-update public.contatos set responsavel_id = 'a0000000-0000-0000-0000-000000000101',
-  created_by = 'a0000000-0000-0000-0000-000000000101' where empresa_id = 'a0000000-0000-0000-0000-000000000001' and created_by is null;
-update public.contatos set created_by = responsavel_id where empresa_id = 'b0000000-0000-0000-0000-000000000001' and created_by is null;
+update public.contatos set created_by = responsavel_id where created_by is null;
 
 -- ---------------------------------------------------------------------
 -- Vencimentos — espalhados no tempo (vencido, régua de 30/15/7 dias, futuro).

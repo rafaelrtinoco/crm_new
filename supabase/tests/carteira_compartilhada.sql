@@ -32,12 +32,12 @@ values ('b0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-0000000
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "a0000000-0000-0000-0000-000000000103", "role": "authenticated"}';
 
-is(
+select is(
   (select count(*) from public.contatos where empresa_id = 'a0000000-0000-0000-0000-000000000001'),
   3::bigint,
   'Carla (usuario, sem carteira compartilhada) vê só os 3 contatos dela'
 );
-is(
+select is(
   (select count(*) from public.contatos where id = 'a0000000-0000-0000-0000-000000000303'),
   0::bigint,
   'Carla não vê o contato que é do Gustavo (gestor)'
@@ -47,7 +47,7 @@ reset request.jwt.claims;
 
 -- Gustavo (gestor, Alfa) vê todos os contatos da empresa, papel > carteira.
 set local request.jwt.claims = '{"sub": "a0000000-0000-0000-0000-000000000102", "role": "authenticated"}';
-is(
+select is(
   (select count(*) from public.contatos where empresa_id = 'a0000000-0000-0000-0000-000000000001'),
   4::bigint,
   'Gustavo (gestor) vê todos os contatos da empresa, independente do responsável'
@@ -60,12 +60,12 @@ reset request.jwt.claims;
 -- criado, que não é responsável por nenhum contato, vê todos mesmo assim.
 -- ---------------------------------------------------------------------
 set local request.jwt.claims = '{"sub": "b0000000-0000-0000-0000-000000000199", "role": "authenticated"}';
-is(
+select is(
   (select count(*) from public.contatos where empresa_id = 'b0000000-0000-0000-0000-000000000001'),
   2::bigint,
   'usuario comum na empresa Beta vê todos os contatos por causa da carteira compartilhada'
 );
-is(
+select is(
   (select count(*) from public.contatos where empresa_id = 'a0000000-0000-0000-0000-000000000001'),
   0::bigint,
   'carteira compartilhada da Beta não vaza contatos da Alfa'

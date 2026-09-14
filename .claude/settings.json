@@ -6,8 +6,6 @@
         "Read(**)",
         "Glob(**)",
         "Grep(**)",
-        "Write(**/.env.example)",
-        "Edit(**/.env.example)",
         "Bash(git status:*)",
         "Bash(git diff:*)",
         "Bash(git log:*)",
