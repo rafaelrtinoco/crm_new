@@ -46,8 +46,9 @@ export default {
         },
       },
       fontFamily: {
-        display: ["'Fraunces Variable'", "serif"],
-        sans: ["'IBM Plex Sans'", "sans-serif"],
+        display: ["Calistoga", "serif"],
+        sans: ["Inter", "sans-serif"],
+        mono: ["'JetBrains Mono'", "monospace"],
       },
       borderRadius: {
         lg: "var(--radius)",

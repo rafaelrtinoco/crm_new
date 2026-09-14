@@ -25,7 +25,7 @@ export function CardNegocio({ negocio, hoje, diasNaEtapa }: Props) {
       style={{ transform: CSS.Translate.toString(transform) }}
       {...listeners}
       {...attributes}
-      className={`space-y-2 rounded-md border bg-card p-3 text-sm shadow-sm ${
+      className={`space-y-2 rounded-md border bg-card p-3 text-sm ${
         isDragging ? "opacity-50" : ""
       } ${vencido ? "border-urgencia" : "border-border"}`}
     >

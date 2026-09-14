@@ -1,12 +1,15 @@
-@import "@fontsource-variable/fraunces/wght.css";
-@import "@fontsource/ibm-plex-sans/latin-400.css";
-@import "@fontsource/ibm-plex-sans/latin-500.css";
-@import "@fontsource/ibm-plex-sans/latin-600.css";
-@import "@fontsource/ibm-plex-sans/latin-700.css";
-@import "@fontsource/ibm-plex-sans/latin-ext-400.css";
-@import "@fontsource/ibm-plex-sans/latin-ext-500.css";
-@import "@fontsource/ibm-plex-sans/latin-ext-600.css";
-@import "@fontsource/ibm-plex-sans/latin-ext-700.css";
+@import "@fontsource/calistoga/latin-400.css";
+@import "@fontsource/calistoga/latin-ext-400.css";
+@import "@fontsource/inter/latin-400.css";
+@import "@fontsource/inter/latin-500.css";
+@import "@fontsource/inter/latin-600.css";
+@import "@fontsource/inter/latin-700.css";
+@import "@fontsource/inter/latin-ext-400.css";
+@import "@fontsource/inter/latin-ext-500.css";
+@import "@fontsource/inter/latin-ext-600.css";
+@import "@fontsource/inter/latin-ext-700.css";
+@import "@fontsource/jetbrains-mono/latin-400.css";
+@import "@fontsource/jetbrains-mono/latin-500.css";
 
 @tailwind base;
 @tailwind components;
@@ -14,52 +17,52 @@
 
 @layer base {
   :root {
-    --background: 36 33% 97%;
-    --foreground: 222 20% 12%;
+    --background: 166.2 76.5% 96.7%;
+    --foreground: 175.9 60.8% 19%;
     --card: 0 0% 100%;
-    --card-foreground: 222 20% 12%;
-    --primary: 182 55% 22%;
-    --primary-foreground: 40 30% 97%;
-    --secondary: 36 20% 92%;
-    --secondary-foreground: 222 20% 12%;
-    --muted: 36 20% 92%;
-    --muted-foreground: 222 10% 42%;
-    --accent: 182 40% 90%;
-    --accent-foreground: 182 55% 18%;
-    --destructive: 0 72% 42%;
-    --destructive-foreground: 40 30% 97%;
-    --urgencia: 28 85% 46%;
-    --urgencia-foreground: 40 30% 97%;
-    --border: 36 18% 87%;
-    --input: 36 18% 87%;
-    --ring: 182 55% 22%;
+    --card-foreground: 175.9 60.8% 19%;
+    --primary: 174.7 83.9% 31.6%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 173.4 80.4% 40%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 195 35.3% 93.3%;
+    --muted-foreground: 215.3 19.3% 34.5%;
+    --accent: 167.2 85.5% 89.2%;
+    --accent-foreground: 175.9 60.8% 19%;
+    --destructive: 0 72.2% 50.6%;
+    --destructive-foreground: 0 0% 100%;
+    --urgencia: 20.5 90.2% 48.2%;
+    --urgencia-foreground: 222.2 47.4% 11.2%;
+    --border: 168.4 83.8% 78.2%;
+    --input: 168.4 83.8% 78.2%;
+    --ring: 174.7 83.9% 31.6%;
     --radius: 0.625rem;
-    --sidebar: 36 24% 94%;
-    --sidebar-foreground: 222 20% 12%;
+    --sidebar: 166.4 55% 92.2%;
+    --sidebar-foreground: 175.9 60.8% 19%;
   }
 
   .dark {
-    --background: 220 20% 11%;
-    --foreground: 40 20% 94%;
-    --card: 220 18% 14%;
-    --card-foreground: 40 20% 94%;
-    --primary: 174 45% 55%;
-    --primary-foreground: 220 25% 10%;
-    --secondary: 220 15% 19%;
-    --secondary-foreground: 40 20% 94%;
-    --muted: 220 15% 19%;
-    --muted-foreground: 220 10% 65%;
-    --accent: 182 30% 22%;
-    --accent-foreground: 174 45% 85%;
-    --destructive: 0 62% 48%;
-    --destructive-foreground: 40 20% 94%;
-    --urgencia: 32 80% 55%;
-    --urgencia-foreground: 220 25% 10%;
-    --border: 220 15% 22%;
-    --input: 220 15% 22%;
-    --ring: 174 45% 55%;
-    --sidebar: 220 20% 9%;
-    --sidebar-foreground: 40 20% 94%;
+    --background: 170.8 31.7% 8%;
+    --foreground: 165.9 45.9% 92.7%;
+    --card: 170.5 33.3% 11.2%;
+    --card-foreground: 165.9 45.9% 92.7%;
+    --primary: 172.5 66% 50.4%;
+    --primary-foreground: 175.6 80.4% 10%;
+    --secondary: 170.6 37.2% 16.9%;
+    --secondary-foreground: 170.6 76.9% 64.3%;
+    --muted: 167.4 26% 14.3%;
+    --muted-foreground: 168.6 10.9% 62.2%;
+    --accent: 170.6 37.2% 16.9%;
+    --accent-foreground: 170.6 76.9% 64.3%;
+    --destructive: 0 72.2% 50.6%;
+    --destructive-foreground: 0 85.7% 97.3%;
+    --urgencia: 27 96% 61%;
+    --urgencia-foreground: 222.2 47.4% 11.2%;
+    --border: 164 30% 19.6%;
+    --input: 164 30% 19.6%;
+    --ring: 172.5 66% 50.4%;
+    --sidebar: 170 37.5% 6.3%;
+    --sidebar-foreground: 165.9 45.9% 92.7%;
   }
 
   * {
