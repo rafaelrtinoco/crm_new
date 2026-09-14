@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { formatarDataBR } from "@/lib/datas";
+import { formatarDataBR, hojeNoFuso } from "@/lib/datas";
 import { formatarCpfCnpj, formatarTelefone } from "@/lib/formatadores";
 import { useAuth } from "@/features/auth/api/useAuth";
 import { useEmpresaAtual } from "@/features/onboarding/api/useEmpresas";
@@ -32,6 +32,10 @@ import { useTagsDoContato } from "@/features/contatos/api/useTags";
 import { TimelineContato } from "@/features/contatos/components/TimelineContato";
 import { useVencimentos } from "@/features/vencimentos/api/useVencimentos";
 import { useNegociosDoContato } from "@/features/funis/api/useNegocios";
+import { DialogoTarefa } from "@/features/tarefas/components/DialogoTarefa";
+import { ItemTarefa } from "@/features/tarefas/components/ItemTarefa";
+import { useExcluirTarefa } from "@/features/tarefas/api/useMutacoesTarefa";
+import { useTarefas, type Tarefa } from "@/features/tarefas/api/useTarefas";
 
 export function DetalheContato() {
   const { id } = useParams<{ id: string }>();
@@ -43,14 +47,22 @@ export function DetalheContato() {
   const { data: tags } = useTagsDoContato(id ?? null);
   const { data: vencimentos } = useVencimentos(atual?.empresaId ?? null, { contatoId: id });
   const { data: negocios } = useNegociosDoContato(id ?? null);
+  const { data: tarefas } = useTarefas(atual?.empresaId ?? null, {
+    contatoId: id,
+    status: "todas",
+  });
   const excluirContato = useExcluirContato(atual?.empresaId ?? null);
+  const excluirTarefa = useExcluirTarefa();
   const registrarAtividade = useRegistrarAtividade();
+  const hoje = hojeNoFuso(atual?.fuso ?? "America/Sao_Paulo");
 
   const [dialogAberto, setDialogAberto] = useState(false);
   const [tipo, setTipo] = useState<"ligacao" | "nota">("ligacao");
   const [resultado, setResultado] = useState("");
   const [nota, setNota] = useState("");
   const [proximoPasso, setProximoPasso] = useState("");
+  const [dialogoTarefaAberto, setDialogoTarefaAberto] = useState(false);
+  const [tarefaEditando, setTarefaEditando] = useState<Tarefa | null>(null);
 
   if (!isLoading && !contato) return <Navigate to="/contatos" replace />;
 
@@ -76,6 +88,21 @@ export function DetalheContato() {
     if (!window.confirm("Excluir este contato? Essa ação não pode ser desfeita.")) return;
     await excluirContato.mutateAsync(id);
     navigate("/contatos", { replace: true });
+  }
+
+  function abrirNovaTarefa() {
+    setTarefaEditando(null);
+    setDialogoTarefaAberto(true);
+  }
+
+  function abrirEdicaoTarefa(tarefa: Tarefa) {
+    setTarefaEditando(tarefa);
+    setDialogoTarefaAberto(true);
+  }
+
+  async function excluirTarefaDoContato(tarefa: Tarefa) {
+    if (!window.confirm("Excluir esta tarefa? Essa ação não pode ser desfeita.")) return;
+    await excluirTarefa.mutateAsync(tarefa.id);
   }
 
   return (
@@ -190,6 +217,7 @@ export function DetalheContato() {
               <TabsTrigger value="timeline">Timeline</TabsTrigger>
               <TabsTrigger value="vencimentos">Vencimentos</TabsTrigger>
               <TabsTrigger value="negocios">Negócios</TabsTrigger>
+              <TabsTrigger value="tarefas">Tarefas</TabsTrigger>
             </TabsList>
             <TabsContent value="dados" className="space-y-2 text-sm">
               <p>
@@ -261,7 +289,35 @@ export function DetalheContato() {
                 </ul>
               )}
             </TabsContent>
+            <TabsContent value="tarefas" className="space-y-3">
+              <Button size="sm" variant="outline" onClick={abrirNovaTarefa}>
+                + Nova tarefa
+              </Button>
+              {(!tarefas || tarefas.length === 0) && (
+                <p className="text-sm text-muted-foreground">Nenhuma tarefa cadastrada.</p>
+              )}
+              {tarefas && tarefas.length > 0 && (
+                <div className="space-y-2">
+                  {tarefas.map((tarefa) => (
+                    <ItemTarefa
+                      key={tarefa.id}
+                      tarefa={tarefa}
+                      hoje={hoje}
+                      onEditar={() => abrirEdicaoTarefa(tarefa)}
+                      onExcluir={() => excluirTarefaDoContato(tarefa)}
+                    />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
           </Tabs>
+
+          <DialogoTarefa
+            open={dialogoTarefaAberto}
+            onOpenChange={setDialogoTarefaAberto}
+            tarefa={tarefaEditando}
+            contatoIdPadrao={id}
+          />
         </>
       )}
     </main>

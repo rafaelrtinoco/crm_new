@@ -4,20 +4,27 @@ Log de continuidade entre máquinas/sessões. Atualize a seção "Estado atual" 
 
 ## Estado atual — 2026-09-14
 
-**Fase 1 — Fundação e núcleo. 1D-2 (Funis de venda) implementado e validado no navegador pelo usuário** (quadro, arrastar card, ganho/perdido, alternância quadro/lista). **Em seguida, retrabalho visual completo do 1D-1+1D-2** pra adotar o plugin `ui-ux-pro-max` desde a base — ver detalhes abaixo. `lint`/`typecheck`/`test` (25/25)/`build`/`npm audit` limpos após o retrabalho. **Novo tema ainda não testado no navegador nesta sessão** — próximo passo ao retomar.
+**Fase 1 — Fundação e núcleo. 1D-3 (Tarefas) implementado.** Sem migration — a tabela `tarefas` já existia desde o 1A (RLS e isolamento já cobertos), então esta fatia foi puramente frontend. `lint`/`typecheck`/`test` (25/25)/`build`/`test:db` (92/92, smoke test sem mudança)/`npm audit` limpos. **Ainda não testado no navegador nesta sessão** — próximo passo ao retomar.
 
-**Retrabalho visual — adoção do `ui-ux-pro-max` (plugin instalado pelo usuário nesta sessão):** depois de validar o 1D-2, o usuário pediu pra reconstruir a identidade visual do zero usando esse plugin, "para que fique um projeto homogêneo desde o começo" — decisão registrada na memória de projeto `project_1d_visual_design` (substitui a direção anterior desenhada via `frontend-design` no 1D-1: Fraunces + IBM Plex Sans, papel/teal/âmbar). Pesquisa feita com `search.py --design-system`/`--domain style,color,typography` do plugin:
-- **Cor:** convergiu de forma independente em duas buscas diferentes no mesmo par **teal `#0D9488` (primária) + laranja `#EA580C` (accent/CTA)** — próximo do que já existia, então baixo risco de ruptura visual.
-- **Estilo:** `data-dense-dashboard` + `Flat Design` (sem sombra decorativa em superfície — `Card` e `CardNegocio` perderam `shadow-sm`, elevação só por borda; overlays como `Dialog`/`DropdownMenu`/`Select` mantiveram sombra, que ali é pista funcional de "flutua por cima", não decoração).
-- **Tipografia:** conflito real entre "seguir o plugin" e a diretriz anterior de evitar fontes genéricas de IA (a skill `frontend-design` cita Inter/Space Grotesk nominalmente como exemplo do que evitar) — perguntei ao usuário, que escolheu **seguir o plugin integralmente**: **Calistoga** (display) + **Inter** (corpo) + **JetBrains Mono** (rótulos/dados), todos self-hosted via `@fontsource` (mesmo padrão anterior, offline-friendly pro PWA).
-- **Tokens:** `accent` do shadcn (hover sutil de menu/select) ficou um teal claro — **não** o laranja do plugin, que mapeia pro token `urgencia` já existente (destaque de próximo-passo vencido em Funis). O plugin não devolveu valores de dark mode pra esse estilo; o dark mode foi derivado mantendo a mesma família de matiz (teal/laranja) sobre fundo neutro escuro.
-- Arquivos tocados: `package.json` (troca de deps de fonte), `src/app/globals.css` (tokens + imports de fonte), `tailwind.config.ts` (`fontFamily`), `src/components/ui/card.tsx`, `src/features/funis/components/CardNegocio.tsx`. Nenhuma página foi reescrita — todas já usam os tokens semânticos, então herdaram a nova identidade automaticamente.
+**Escopo:** CRUD de tarefas (tipo, título, data, responsável, vínculo opcional com contato **ou** negócio) + concluir/reabrir, com destaque de atraso (mesmo `--urgencia`/`hojeNoFuso()` já usados em Funis). Sem página de detalhe própria — tarefa é leve o bastante pra ser criada/editada num diálogo (`DialogoTarefa`, mesmo padrão de `DialogoRenovacao`/`DialogoPerda`), não uma página dedicada como Contato/Vencimento/Negócio. Fora de escopo, de propósito: Cadências (PRD §6.6, dependem de templates de mensagem — Fase 2); tela "Hoje" agregando tudo (1D-4); notificação de tarefa (depende de push, 1D-5).
 
-**Achado da exploração:** `hojeNoFuso(fuso)` existia em `src/lib/datas.ts` desde o 1A e nunca tinha sido usado — `useEmpresas()` não trazia a coluna `fuso` de `empresas`. Funis é a primeira tela que precisa de "hoje" de verdade (destacar próximo passo vencido), então esta fatia ligou isso (`EmpresaMembro.fuso` novo).
+**Callback do 1D-2:** o `marcar_negocio_perdido` já criava a tarefa de reativação desde o incremento anterior, mas nada exibia isso em lugar nenhum — a aba "Tarefas" em `DetalheNegocio.tsx` é onde essa tarefa finalmente aparece pra alguém.
 
-**Schema:** trigger `atualizar_entrou_na_etapa()` (reseta a coluna quando `etapa_id` muda — PRD §6.5: "tempo parado na etapa visível no card"); `marcar_negocio_ganho(negocio_id)` (fecha o negócio e promove o contato a cliente) e `marcar_negocio_perdido(negocio_id, motivo_perda_id, reativar_em)` (fecha como perdido e, se vier `reativar_em`, cria a tarefa futura) — as duas `security invoker`, mesmo raciocínio do `renovar_vencimento` do 1C-2.
+<details>
+<summary>Histórico — 1D-2: Funis de venda + retrabalho visual ui-ux-pro-max (2026-09-14)</summary>
 
-**Bug de teste pgTAP pego antes de fechar** (não é bug de produção): a primeira versão de `funis.sql` simulava a corretora Carla (papel `usuario`), mas dois dos negócios do seed têm responsável Gustavo (gestor) — `pode_acessar_responsavel` bloqueia silenciosamente updates fora do próprio responsável pra quem não é gestor+/carteira compartilhada (RLS não gera erro em UPDATE, só afeta 0 linhas), o que mascarou o teste de "perdido sem motivo" (nunca chegou a tentar o update, então nunca violou o check). Corrigido trocando a simulação pra Gustavo (gestor), que enxerga todos os negócios da empresa.
+**Funis:** validado no navegador pelo usuário (quadro, arrastar card, ganho/perdido, alternância quadro/lista). Schema: trigger `atualizar_entrou_na_etapa()` (reseta a coluna quando `etapa_id` muda — PRD §6.5) + RPCs `marcar_negocio_ganho`/`marcar_negocio_perdido` (`security invoker`, mesmo raciocínio do `renovar_vencimento` do 1C-2). `hojeNoFuso(fuso)` existia desde o 1A e nunca tinha sido usado — `useEmpresas()` ganhou o campo `fuso`.
+
+Bug de teste pgTAP pego antes de fechar (não é bug de produção): a primeira versão de `funis.sql` simulava a corretora Carla (papel `usuario`), mas dois dos negócios do seed têm responsável Gustavo (gestor) — `pode_acessar_responsavel` bloqueia silenciosamente updates fora do próprio responsável pra quem não é gestor+/carteira compartilhada (RLS não gera erro em UPDATE, só afeta 0 linhas), o que mascarou o teste de "perdido sem motivo". Corrigido trocando a simulação pra Gustavo.
+
+**Retrabalho visual — adoção do `ui-ux-pro-max`:** depois de validar o 1D-2, o usuário instalou esse plugin e pediu pra reconstruir a identidade visual do zero com ele, "para que fique um projeto homogêneo desde o começo" — substitui a direção anterior (Fraunces + IBM Plex Sans, desenhada via `frontend-design` no 1D-1). Pesquisa com `search.py --design-system`/`--domain style,color,typography`:
+- **Cor:** convergiu de forma independente em duas buscas diferentes no mesmo par **teal `#0D9488` + laranja `#EA580C`** — próximo do que já existia.
+- **Estilo:** `data-dense-dashboard` + `Flat Design` (sem sombra decorativa em superfície — `Card`/`CardNegocio` perderam `shadow-sm`; overlays mantiveram sombra funcional).
+- **Tipografia:** conflito real entre "seguir o plugin" e a diretriz anterior de evitar fontes genéricas de IA (Inter é citado nominalmente pela skill `frontend-design`) — usuário escolheu seguir o plugin integralmente: **Calistoga** (display) + **Inter** (corpo) + **JetBrains Mono** (rótulos), self-hosted via `@fontsource`.
+- **Tokens:** `accent` do shadcn (hover de menu) ficou teal claro — não o laranja do plugin, que mapeia pro token `urgencia` já existente. Dark mode derivado por mim (o plugin não devolveu valores), mesma família de matiz.
+- Nenhuma página foi reescrita — todas já usam os tokens semânticos, herdaram a nova identidade só com a troca de `globals.css`/`tailwind.config.ts`.
+
+</details>
 
 <details>
 <summary>Histórico — 1D-1: Layout geral da plataforma (2026-09-14)</summary>
@@ -190,6 +197,14 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 - Fora de escopo, de propósito (decisão tomada com o usuário): edição de funis/etapas (vai pra uma futura fatia de Configurações, PRD §8, junto com tipos de vencimento/campos personalizados/tags/motivos de perda — mesmo problema, mesma solução).
 - Fora de escopo, estrutural (não é decisão, é dependência): card automático no funil de Renovação a partir de vencimentos (PRD §6.4) — precisa de `pg_cron`, Fase 2.
 
+**1D-3 — tarefas:**
+- **Sem migration.** `tarefas` já existia desde o 1A (RLS `tarefas_por_responsavel` + isolamento em `isolamento_multiempresa.sql`) — fatia puramente frontend.
+- `src/lib/vocabulario.ts` — ganhou `tarefa`/`tarefaPlural`.
+- `src/features/tarefas/` (slice novo) — `api/` (`useTarefas`/`useTarefa` com filtros de status/tipo/responsável/contato/negócio, `useMutacoesTarefa` — criar/atualizar/excluir e `useAlternarConclusaoTarefa`, update direto de `concluida_em`, sem RPC porque é escrita de uma coluna só), `schemas.ts`, `components/` (`DialogoTarefa` — criar/editar em diálogo, não página própria; `ItemTarefa` — checkbox de concluir/reabrir, ícone por tipo, destaque em `--urgencia` quando atrasada), `paginas/ListaTarefas.tsx` (agrupada em Atrasadas/Hoje/Próximas quando o filtro é "pendentes").
+- `src/app/AppShell.tsx` — item "Tarefas" na nav. Rota nova: `/tarefas`.
+- `DetalheContato.tsx`/`DetalheNegocio.tsx` — aba/seção "Tarefas". É aqui que a tarefa de reativação criada pelo `marcar_negocio_perdido` do 1D-2 finalmente fica visível em algum lugar.
+- Fora de escopo, de propósito: Cadências (PRD §6.6, depende de templates de mensagem — Fase 2); tela "Hoje" (1D-4); notificação de tarefa (depende de push, 1D-5).
+
 ### Pendências conhecidas
 
 1. **`.env.example` ainda não existe.** Mesmo motivo da sessão anterior (deny de `.claude/settings.json` bloqueia `Write`/`Edit` em `**/.env.*`, sem distinguir `.env.example`). `.env.local` já foi criado manualmente pelo usuário com os valores do Supabase local (confirmado no chat, não verificável por mim — leitura de `.env.local` também é negada pela mesma regra). Conteúdo do `.env.example` que falta criar:
@@ -209,7 +224,8 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 6. **1D-1 (Layout geral) validado no navegador pelo usuário** — sidebar, abas mobile, tema e trocador de empresa confirmados funcionando.
 7. **1D-2 (Funis) validado no navegador pelo usuário** — quadro, arrastar card, ganho/perdido confirmados funcionando.
 8. **Achado de UX corrigido:** `/onboarding` não tinha botão de "Sair" (fica fora do `AppShell`, que é quem tem o menu de usuário) — sessão inválida (ex.: usuário apagado por `db:reset` local) prendia quem estava ali sem jeito de deslogar pela interface. Corrigido em `CriarEmpresa.tsx` com um botão "Sair" próprio.
-9. **Retrabalho visual (adoção do `ui-ux-pro-max`) não foi testado no navegador ainda** — tokens de cor/fonte novos, `lint`/`typecheck`/`test`/`build` passam, mas o tema (claro/escuro, tipografia Calistoga/Inter, paleta teal/laranja) só foi verificado por leitura de código nesta sessão.
+9. **Retrabalho visual (adoção do `ui-ux-pro-max`) validado no navegador pelo usuário** — paleta, tipografia e alternância de tema claro/escuro confirmados funcionando (o alternador só foi ligado ao menu de usuário depois de o usuário notar que não achava onde trocar — `useTema()` existia desde o 1A mas nunca tinha sido chamado por nenhum componente).
+10. **1D-3 (Tarefas) não foi testado no navegador ainda** — sem migration (schema/RLS já existiam), `lint`/`typecheck`/`test`/`build`/`test:db` passam, mas o fluxo completo (criar/editar/concluir/reabrir tarefa, agrupamento Atrasadas/Hoje/Próximas, abas em Contato/Negócio) só foi verificado por leitura de código nesta sessão.
 
 ## Próximos passos imediatos (ao retomar, nesta ordem)
 
@@ -222,9 +238,9 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 7. `npm run db:types` — regenera `src/types/database.ts` (já commitado, mas regenere se mudar alguma migration).
 8. `npm run dev` — testar no navegador o fluxo de Importação: em `/contatos/importar`, baixar o modelo, preencher com uma linha válida + uma com CPF inválido + uma duplicada de um contato do seed, subir o CSV, conferir o mapeamento automático, a prévia com os três status, confirmar, e checar que só a válida virou contato (e vencimento, se a coluna de data foi preenchida).
 9. Resolver a pendência de lançamento (`enable_confirmations`) **antes** de criar qualquer projeto Supabase de staging/produção.
-10. **1D-2 já validado no navegador** (quadro, arrastar card, ganho/perdido).
-11. Testar o **retrabalho visual** (`ui-ux-pro-max`) no navegador: conferir a paleta teal/laranja e a tipografia Calistoga (títulos)/Inter (corpo) no shell e no quadro de Funis, em claro e escuro; conferir que hover de menu/select continua um tom neutro (não laranja) e que só o destaque de próximo-passo-vencido usa laranja; conferir que `Card`/`CardNegocio` ficaram sem sombra decorativa (só borda).
-12. Depois de validado, seguir pro **1D-3** (tarefas) — próximo ciclo de plano, já usando `ui-ux-pro-max` desde o início.
+10. **1D-2 e o retrabalho visual (`ui-ux-pro-max`) já validados no navegador** (quadro, arrastar card, ganho/perdido, tema claro/escuro, paleta, tipografia).
+11. Testar o **1D-3** no navegador: abrir `/tarefas`, conferir os grupos Atrasadas/Hoje/Próximas (o seed tem 3 tarefas, mais a "Reativar: ..." se você tiver testado o marcar-perdido do 1D-2); criar uma tarefa vinculada a um contato; marcar como concluída e reabrir; editar e excluir; conferir a aba "Tarefas" em `DetalheContato` e a seção "Tarefas" em `DetalheNegocio` (é ali que a tarefa de reativação do negócio perdido aparece).
+12. Depois de validado, seguir pro **1D-4** (tela "Hoje") — próximo ciclo de plano.
 
 ## Roteiro dos incrementos da Fase 1
 
@@ -238,8 +254,8 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 - **1D — operação** (dividido em cinco fatias, mesmo padrão de 1A/1B/1C):
   - **1D-1 — Layout geral:** sidebar (desktop)/abas (mobile), trocador de empresa, tema visual do produto inteiro (Fraunces + IBM Plex Sans, paleta papel/teal/âmbar-urgência). Implementado e validado no navegador.
   - **1D-2 — Funis:** kanban com dnd-kit + visão em lista, negócios, próximo passo obrigatório, ganho/perda. Implementado e validado no navegador. Edição de funis/etapas fica pra uma futura fatia de Configurações.
-  - **Retrabalho visual (`ui-ux-pro-max`):** depois do 1D-2 validado, o usuário instalou o plugin `ui-ux-pro-max` e pediu pra reconstruir a identidade visual do 1D-1+1D-2 com ele, pra ficar homogêneo desde o início — substitui a direção anterior (Fraunces/IBM Plex Sans) por Calistoga/Inter/JetBrains Mono + paleta teal/laranja. Detalhes no "Estado atual" acima e na memória `project_1d_visual_design`. Aplicado via troca de tokens (`globals.css`/`tailwind.config.ts`), sem reescrever páginas. Teste no navegador pendente.
-  - **1D-3 — Tarefas.** Não iniciado.
+  - **Retrabalho visual (`ui-ux-pro-max`):** depois do 1D-2 validado, o usuário instalou o plugin `ui-ux-pro-max` e pediu pra reconstruir a identidade visual do 1D-1+1D-2 com ele, pra ficar homogêneo desde o início — substitui a direção anterior (Fraunces/IBM Plex Sans) por Calistoga/Inter/JetBrains Mono + paleta teal/laranja. Detalhes no "Estado atual" acima e na memória `project_1d_visual_design`. Aplicado via troca de tokens (`globals.css`/`tailwind.config.ts`), sem reescrever páginas. Implementado e validado no navegador (inclusive o alternador de tema claro/escuro, ligado ao `useTema()` que existia desde o 1A mas nunca tinha sido chamado por nada).
+  - **1D-3 — Tarefas:** CRUD de tarefas (diálogo, não página própria) + concluir/reabrir, vínculo opcional com contato ou negócio, destaque de atraso. Sem migration (schema/RLS já existiam desde o 1A). Implementado, validado por lint/typecheck/test/build/test:db; teste no navegador pendente. Cadências ficam pra Fase 2 (dependem de templates de mensagem).
   - **1D-4 — Tela "Hoje":** agrega leads/follow-ups/vencimentos/aniversariantes; checklist "Primeiros passos" completo (adiado do 1B). Não iniciado.
   - **1D-5 — PWA completo com push** (depende de infra de notificação que ainda não existe). Não iniciado.
   - **Diretriz do usuário pro visual (vale pro 1D inteiro, não só 1D-1):** atual, sem cara de IA, padrão de produto SaaS de verdade — não os defaults genéricos do shadcn/ui. Registrada na memória de projeto `project_1d_visual_design`.

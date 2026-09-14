@@ -20,6 +20,7 @@ import { ImportarContatos } from "@/features/importacao/paginas/ImportarContatos
 import { DetalheNegocio } from "@/features/funis/paginas/DetalheNegocio";
 import { FormularioNegocio } from "@/features/funis/paginas/FormularioNegocio";
 import { Funil } from "@/features/funis/paginas/Funil";
+import { ListaTarefas } from "@/features/tarefas/paginas/ListaTarefas";
 
 export const router = createBrowserRouter([
   {
@@ -54,6 +55,7 @@ export const router = createBrowserRouter([
           { path: "/funis/negocios/novo", element: <FormularioNegocio /> },
           { path: "/funis/negocios/:id", element: <DetalheNegocio /> },
           { path: "/funis/negocios/:id/editar", element: <FormularioNegocio /> },
+          { path: "/tarefas", element: <ListaTarefas /> },
         ],
       },
     ],

@@ -4,6 +4,7 @@ import {
   CalendarClock,
   ChevronsUpDown,
   Home,
+  ListChecks,
   LogOut,
   Moon,
   Sun,
@@ -29,6 +30,7 @@ const itensNav = [
   { rotulo: "Contatos", rota: "/contatos", Icone: Users },
   { rotulo: "Vencimentos", rota: "/vencimentos", Icone: CalendarClock },
   { rotulo: "Funis", rota: "/funis", Icone: Workflow },
+  { rotulo: "Tarefas", rota: "/tarefas", Icone: ListChecks },
 ];
 
 function iniciais(texto: string) {

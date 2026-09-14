@@ -15,6 +15,8 @@ export interface Vocabulario {
   vencimentoPlural: string;
   negocio: string;
   negocioPlural: string;
+  tarefa: string;
+  tarefaPlural: string;
 }
 
 /** Rótulos genéricos, usados antes de uma empresa aplicar seu template. */
@@ -25,6 +27,8 @@ export const vocabularioPadrao: Vocabulario = {
   vencimentoPlural: "Vencimentos",
   negocio: "Negócio",
   negocioPlural: "Negócios",
+  tarefa: "Tarefa",
+  tarefaPlural: "Tarefas",
 };
 
 export const VocabularioContext = createContext<Vocabulario>(vocabularioPadrao);
@@ -45,5 +49,7 @@ export function mesclarVocabulario(parcial: unknown): Vocabulario {
     vencimentoPlural: valores.vencimentoPlural || vocabularioPadrao.vencimentoPlural,
     negocio: valores.negocio || vocabularioPadrao.negocio,
     negocioPlural: valores.negocioPlural || vocabularioPadrao.negocioPlural,
+    tarefa: valores.tarefa || vocabularioPadrao.tarefa,
+    tarefaPlural: valores.tarefaPlural || vocabularioPadrao.tarefaPlural,
   };
 }

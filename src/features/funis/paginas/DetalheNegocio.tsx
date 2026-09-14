@@ -15,6 +15,11 @@ import {
   useMarcarPerdido,
 } from "@/features/funis/api/useMutacoesNegocio";
 import { useNegocio } from "@/features/funis/api/useNegocios";
+import { hojeNoFuso } from "@/lib/datas";
+import { DialogoTarefa } from "@/features/tarefas/components/DialogoTarefa";
+import { ItemTarefa } from "@/features/tarefas/components/ItemTarefa";
+import { useExcluirTarefa } from "@/features/tarefas/api/useMutacoesTarefa";
+import { useTarefas, type Tarefa } from "@/features/tarefas/api/useTarefas";
 
 const rotuloStatus: Record<string, string> = {
   aberto: "Aberto",
@@ -35,7 +40,12 @@ export function DetalheNegocio() {
   const marcarGanho = useMarcarGanho(empresaId, negocio?.funilId ?? null);
   const marcarPerdido = useMarcarPerdido(empresaId, negocio?.funilId ?? null);
   const excluirNegocio = useExcluirNegocio(empresaId);
+  const { data: tarefas } = useTarefas(empresaId, { negocioId: id, status: "todas" });
+  const excluirTarefa = useExcluirTarefa();
+  const hoje = hojeNoFuso(atual?.fuso ?? "America/Sao_Paulo");
   const [dialogoPerdaAberto, setDialogoPerdaAberto] = useState(false);
+  const [dialogoTarefaAberto, setDialogoTarefaAberto] = useState(false);
+  const [tarefaEditando, setTarefaEditando] = useState<Tarefa | null>(null);
 
   if (!isLoading && !negocio) return <Navigate to="/funis" replace />;
 
@@ -57,6 +67,21 @@ export function DetalheNegocio() {
       return;
     await excluirNegocio.mutateAsync(id);
     navigate("/funis", { replace: true });
+  }
+
+  function abrirNovaTarefa() {
+    setTarefaEditando(null);
+    setDialogoTarefaAberto(true);
+  }
+
+  function abrirEdicaoTarefa(tarefa: Tarefa) {
+    setTarefaEditando(tarefa);
+    setDialogoTarefaAberto(true);
+  }
+
+  async function excluirTarefaDoNegocio(tarefa: Tarefa) {
+    if (!window.confirm("Excluir esta tarefa? Essa ação não pode ser desfeita.")) return;
+    await excluirTarefa.mutateAsync(tarefa.id);
   }
 
   return (
@@ -151,6 +176,41 @@ export function DetalheNegocio() {
             />
           </CardContent>
         </Card>
+      )}
+
+      {negocio && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-lg">Tarefas</CardTitle>
+            <Button size="sm" variant="outline" onClick={abrirNovaTarefa}>
+              + Nova tarefa
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {(!tarefas || tarefas.length === 0) && (
+              <p className="text-sm text-muted-foreground">Nenhuma tarefa cadastrada.</p>
+            )}
+            {tarefas?.map((tarefa) => (
+              <ItemTarefa
+                key={tarefa.id}
+                tarefa={tarefa}
+                hoje={hoje}
+                onEditar={() => abrirEdicaoTarefa(tarefa)}
+                onExcluir={() => excluirTarefaDoNegocio(tarefa)}
+              />
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {negocio && (
+        <DialogoTarefa
+          open={dialogoTarefaAberto}
+          onOpenChange={setDialogoTarefaAberto}
+          tarefa={tarefaEditando}
+          negocioIdPadrao={id}
+          negocioAcaoPadrao={negocio.proximoPassoAcao}
+        />
       )}
     </main>
   );
