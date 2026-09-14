@@ -4,9 +4,20 @@ Log de continuidade entre máquinas/sessões. Atualize a seção "Estado atual" 
 
 ## Estado atual — 2026-09-14
 
-**Fase 1 — Fundação e núcleo, incremento 1C-3 (Importação de planilha) implementado — fecha o 1C inteiro.** Schema (policy de insert em `importacao_erros`) validado — 82/82 pgTAP; lógica pura de mapeamento de colunas e deduplicação com 11 testes Vitest próprios (25 no total do projeto); `lint`/`typecheck`/`test`/`build` limpos. **Ainda não testado no navegador nesta sessão** — próximo passo ao retomar.
+**Fase 1 — Fundação e núcleo, incremento 1D-1 (Layout geral da plataforma) implementado.** Primeira fatia do 1D — dividido em 1D-1 (layout, este) / 1D-2 (funis) / 1D-3 (tarefas) / 1D-4 (tela "Hoje") / 1D-5 (PWA completo com push). Sem mudança de schema, então nenhum pgTAP novo; `lint`/`typecheck`/`test` (25/25) `/build` limpos. **Ainda não testado no navegador nesta sessão** — próximo passo ao retomar.
 
-**Decisão de arquitetura tomada com o usuário:** processamento no navegador (não Edge Function + Storage) — mesmo raciocínio do convite manual no 1B. Achado no caminho: a `xlsx` (SheetJS) do npm registry tem duas vulnerabilidades de severidade alta sem correção (`npm audit`); trocada por duas libs mantidas — `papaparse` (CSV) e `exceljs` (XLSX), ambas carregadas via `import()` dinâmico pra não pesar o bundle principal de quem nunca usa a importação (confirmado no build: chunks separados de 18.68 kB e 929.55 kB, bundle principal cresceu só ~12 kB).
+**Direção visual** (diretriz do usuário, ver memória `project_1d_visual_design`): tipografia Fraunces (display, self-hosted via `@fontsource-variable/fraunces`) + IBM Plex Sans (corpo, `@fontsource/ibm-plex-sans`) — só os subsets `latin`/`latin-ext` (+ `vietnamese`, que vem junto no pacote variable do Fraunces) importados, não `cyrillic`/`greek`, pra não inflar bundle/precache do PWA com scripts que o produto (só PT-BR) nunca usa. Paleta papel/tinta quase-preta com teal profundo de primária e âmbar reservado só pra urgência de vencimento (tokens novos em `globals.css`: `--urgencia`, `--sidebar`, claro e escuro). Sidebar fixa no desktop (trocador de empresa + nav + menu de usuário, sem cabeçalho duplicado); barra superior fina + abas fixas embaixo no mobile.
+
+**Reestruturação de rotas:** `RotaProtegida` virou guarda de autenticação pura (o `<header>` com "Sair" que morava lá foi pro `AppShell`); `/onboarding` ficou fora do shell (não tem empresa ainda, não faz sentido mostrar sidebar com trocador vazio) — a checagem de `empresas.length === 0` → redirect saiu de `Inicio.tsx` e centralizou no `AppShell`, que agora envolve `/`, `/contatos*`, `/vencimentos*` e `/convidar`.
+
+**Decisão de arquitetura tomada com o usuário:** processamento no navegador (não Edge Function + Storage) — mesmo raciocínio do convite manual no 1B. Achado no caminho (1C-3): a `xlsx` (SheetJS) do npm registry tem duas vulnerabilidades de severidade alta sem correção (`npm audit`); trocada por duas libs mantidas — `papaparse` (CSV) e `exceljs` (XLSX), ambas carregadas via `import()` dinâmico pra não pesar o bundle principal de quem nunca usa a importação (confirmado no build: chunks separados de 18.68 kB e 929.55 kB, bundle principal cresceu só ~12 kB).
+
+<details>
+<summary>Histórico — 1C-3: Importação de planilha (2026-09-14)</summary>
+
+Schema (policy de insert em `importacao_erros`) validado — 82/82 pgTAP; lógica pura de mapeamento de colunas e deduplicação com 11 testes Vitest próprios (25 no total do projeto); `lint`/`typecheck`/`test`/`build` limpos.
+
+</details>
 
 <details>
 <summary>Histórico — 1C-2: Vencimentos (2026-09-14)</summary>
@@ -141,6 +152,17 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 - Fora de escopo, de propósito (decisão tomada com o usuário): "dados de exemplo removíveis com um clique" do PRD §6.1 — é uma feature de seed de demonstração, conceitualmente separada de "importar minha planilha real".
 - Inserção linha a linha (não em lote) — simples e correto, mas arquivos muito grandes demoram mais. Otimização de lote fica pra depois, se precisar.
 
+**1D-1 — layout geral da plataforma:**
+- **Dependências:** `@fontsource-variable/fraunces`, `@fontsource/ibm-plex-sans`, `@radix-ui/react-dropdown-menu`. `npm audit` limpo (só a vulnerabilidade moderada já revisada do `uuid` via `exceljs`, sem nada novo).
+- `src/app/globals.css` — tokens de cor novos (`--urgencia`, `--sidebar`, claro/escuro) + `@import` dos subsets `latin`/`latin-ext` das fontes (sem `cyrillic`/`greek`, produto é só PT-BR).
+- `tailwind.config.ts` — `fontFamily.display` (Fraunces) e `fontFamily.sans` (IBM Plex Sans, substitui o sans padrão), cores `urgencia`/`sidebar`.
+- `src/components/ui/dropdown-menu.tsx` (novo, escrito à mão como os outros).
+- `src/app/AppShell.tsx` (novo) — sidebar fixa no desktop (trocador de empresa só aparece com mais de uma empresa, nav Início/Contatos/Vencimentos, menu de usuário com "Sair"); barra superior + abas fixas no mobile. Redireciona pra `/onboarding` se `empresas.length === 0`.
+- `src/app/RotaProtegida.tsx` — simplificado pra guarda de autenticação pura.
+- `src/app/router.tsx` — reestruturado: `RotaProtegida` (auth) por fora; dentro, `/onboarding` solto e um segundo nível `AppShell` envolvendo `/`, `/contatos*`, `/vencimentos*`, `/convidar`.
+- `src/app/paginas/Inicio.tsx` — removido o redirect (foi pro `AppShell`) e os botões de navegação ad-hoc (viraram nav de verdade na sidebar/abas).
+- Fora de escopo, de propósito: busca global Ctrl+K (PRD §4, ciclo próprio); itens de nav pra Funis/Tarefas (entram só quando essas telas existirem no 1D-2/1D-3, pra não ter link morto).
+
 ### Pendências conhecidas
 
 1. **`.env.example` ainda não existe.** Mesmo motivo da sessão anterior (deny de `.claude/settings.json` bloqueia `Write`/`Edit` em `**/.env.*`, sem distinguir `.env.example`). `.env.local` já foi criado manualmente pelo usuário com os valores do Supabase local (confirmado no chat, não verificável por mim — leitura de `.env.local` também é negada pela mesma regra). Conteúdo do `.env.example` que falta criar:
@@ -157,6 +179,7 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 3. **Trial de 14 dias é placeholder** (`criar_empresa_com_onboarding`) — PRD §7 não define a duração real (`[PREENCHER]`).
 4. **`Convidar.tsx` gera o link mas não envia e-mail** — decisão tomada na sessão do 1B (entrega manual, sem Edge Function de e-mail). Revisar quando a infra de mensageria (Fase 2) existir.
 5. **1C-3 (Importação de planilha) não foi testado no navegador ainda** — a lógica pura (mapeamento, dedup) tem 11 testes Vitest, o schema tem pgTAP, e `lint`/`typecheck`/`build` passam, mas o fluxo completo (upload real de um .csv/.xlsx, mapeamento, prévia, criação em massa) só foi verificado por leitura de código nesta sessão.
+6. **1D-1 (Layout geral) não foi testado no navegador ainda** — `lint`/`typecheck`/`test`/`build` passam, mas sidebar, abas mobile, trocador de empresa, tema claro/escuro e o redirect de `/onboarding` só foram verificados por leitura de código nesta sessão.
 
 ## Próximos passos imediatos (ao retomar, nesta ordem)
 
@@ -169,7 +192,8 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 7. `npm run db:types` — regenera `src/types/database.ts` (já commitado, mas regenere se mudar alguma migration).
 8. `npm run dev` — testar no navegador o fluxo de Importação: em `/contatos/importar`, baixar o modelo, preencher com uma linha válida + uma com CPF inválido + uma duplicada de um contato do seed, subir o CSV, conferir o mapeamento automático, a prévia com os três status, confirmar, e checar que só a válida virou contato (e vencimento, se a coluna de data foi preenchida).
 9. Resolver a pendência de lançamento (`enable_confirmations`) **antes** de criar qualquer projeto Supabase de staging/produção.
-10. Depois de validar o 1C-3, o **1C inteiro está fechado**. Próximo: planejar o **1D** (funis, tarefas, tela "Hoje" e o **layout geral da plataforma**) — o usuário já deixou registrada a diretriz de visual pro 1D (ver o próprio item do roteiro abaixo e a memória de projeto `project_1d_visual_design`).
+10. Testar o **1D-1** no navegador: logar, conferir a sidebar (desktop) e as abas inferiores (modo mobile do devtools) mostrando Início/Contatos/Vencimentos; alternar tema claro/escuro e conferir as cores novas (teal primário, âmbar só em urgência); se a conta de teste tiver mais de uma empresa, testar o trocador; conferir que `/onboarding` aparece sem sidebar pra quem não tem empresa ainda; testar "Sair" a partir do menu de usuário (desktop e mobile).
+11. Depois de validado o 1D-1, seguir pro **1D-2** (funis kanban com dnd-kit) — próximo ciclo de plano.
 
 ## Roteiro dos incrementos da Fase 1
 
@@ -180,4 +204,10 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 - **1C-1 — Contatos:** lista com filtros, ficha com timeline, campos personalizados dinâmicos, tags, registro rápido "Como foi?". Implementado e validado (pgTAP + navegador).
 - **1C-2 — Vencimentos:** lista com filtros, ficha, renovação (`renovar_vencimento()` + diálogo de confirmação). Implementado e validado (pgTAP + navegador).
 - **1C-3 — Importação de planilha:** CSV/XLSX, mapeamento automático, dedup (PRD §6.1). Processamento no navegador (decisão tomada com o usuário). Implementado, validado por pgTAP + Vitest + lint/typecheck/build; teste no navegador pendente. **1C inteiro fechado com esta fatia.**
-- **1D — operação:** funis kanban (dnd-kit) com próximo passo obrigatório, tarefas, tela "Hoje" (com o checklist "Primeiros passos" completo), PWA completo com push, e o **layout geral da plataforma** (sidebar/nav, cabeçalho com empresa atual — hoje só existe o botão "Sair"). **Diretriz do usuário pro visual:** atual, sem cara de IA, padrão de produto SaaS de verdade — não os defaults genéricos do shadcn/ui. Invocar `frontend-design`/`frontend-ui-engineering` antes de codar o shell.
+- **1D — operação** (dividido em cinco fatias, mesmo padrão de 1A/1B/1C):
+  - **1D-1 — Layout geral:** sidebar (desktop)/abas (mobile), trocador de empresa, tema visual do produto inteiro (Fraunces + IBM Plex Sans, paleta papel/teal/âmbar-urgência). Implementado, validado por lint/typecheck/test/build; teste no navegador pendente.
+  - **1D-2 — Funis:** kanban com dnd-kit, negócios, próximo passo obrigatório. Não iniciado.
+  - **1D-3 — Tarefas.** Não iniciado.
+  - **1D-4 — Tela "Hoje":** agrega leads/follow-ups/vencimentos/aniversariantes; checklist "Primeiros passos" completo (adiado do 1B). Não iniciado.
+  - **1D-5 — PWA completo com push** (depende de infra de notificação que ainda não existe). Não iniciado.
+  - **Diretriz do usuário pro visual (vale pro 1D inteiro, não só 1D-1):** atual, sem cara de IA, padrão de produto SaaS de verdade — não os defaults genéricos do shadcn/ui. Registrada na memória de projeto `project_1d_visual_design`.

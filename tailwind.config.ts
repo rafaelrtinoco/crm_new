@@ -36,6 +36,18 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        urgencia: {
+          DEFAULT: "hsl(var(--urgencia))",
+          foreground: "hsl(var(--urgencia-foreground))",
+        },
+        sidebar: {
+          DEFAULT: "hsl(var(--sidebar))",
+          foreground: "hsl(var(--sidebar-foreground))",
+        },
+      },
+      fontFamily: {
+        display: ["'Fraunces Variable'", "serif"],
+        sans: ["'IBM Plex Sans'", "sans-serif"],
       },
       borderRadius: {
         lg: "var(--radius)",

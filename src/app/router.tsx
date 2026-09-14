@@ -1,4 +1,5 @@
 import { createBrowserRouter } from "react-router-dom";
+import { AppShell } from "@/app/AppShell";
 import { RotaProtegida } from "@/app/RotaProtegida";
 import { RotaPublica } from "@/app/RotaPublica";
 import { Inicio } from "@/app/paginas/Inicio";
@@ -31,18 +32,23 @@ export const router = createBrowserRouter([
   {
     element: <RotaProtegida />,
     children: [
-      { path: "/", element: <Inicio /> },
       { path: "/onboarding", element: <CriarEmpresa /> },
-      { path: "/convidar", element: <Convidar /> },
-      { path: "/contatos", element: <ListaContatos /> },
-      { path: "/contatos/novo", element: <FormularioContato /> },
-      { path: "/contatos/:id", element: <DetalheContato /> },
-      { path: "/contatos/:id/editar", element: <FormularioContato /> },
-      { path: "/contatos/importar", element: <ImportarContatos /> },
-      { path: "/vencimentos", element: <ListaVencimentos /> },
-      { path: "/vencimentos/novo", element: <FormularioVencimento /> },
-      { path: "/vencimentos/:id", element: <DetalheVencimento /> },
-      { path: "/vencimentos/:id/editar", element: <FormularioVencimento /> },
+      {
+        element: <AppShell />,
+        children: [
+          { path: "/", element: <Inicio /> },
+          { path: "/convidar", element: <Convidar /> },
+          { path: "/contatos", element: <ListaContatos /> },
+          { path: "/contatos/novo", element: <FormularioContato /> },
+          { path: "/contatos/:id", element: <DetalheContato /> },
+          { path: "/contatos/:id/editar", element: <FormularioContato /> },
+          { path: "/contatos/importar", element: <ImportarContatos /> },
+          { path: "/vencimentos", element: <ListaVencimentos /> },
+          { path: "/vencimentos/novo", element: <FormularioVencimento /> },
+          { path: "/vencimentos/:id", element: <DetalheVencimento /> },
+          { path: "/vencimentos/:id/editar", element: <FormularioVencimento /> },
+        ],
+      },
     ],
   },
 ]);

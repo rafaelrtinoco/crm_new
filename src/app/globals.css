@@ -1,47 +1,65 @@
+@import "@fontsource-variable/fraunces/wght.css";
+@import "@fontsource/ibm-plex-sans/latin-400.css";
+@import "@fontsource/ibm-plex-sans/latin-500.css";
+@import "@fontsource/ibm-plex-sans/latin-600.css";
+@import "@fontsource/ibm-plex-sans/latin-700.css";
+@import "@fontsource/ibm-plex-sans/latin-ext-400.css";
+@import "@fontsource/ibm-plex-sans/latin-ext-500.css";
+@import "@fontsource/ibm-plex-sans/latin-ext-600.css";
+@import "@fontsource/ibm-plex-sans/latin-ext-700.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 36 33% 97%;
+    --foreground: 222 20% 12%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --radius: 0.5rem;
+    --card-foreground: 222 20% 12%;
+    --primary: 182 55% 22%;
+    --primary-foreground: 40 30% 97%;
+    --secondary: 36 20% 92%;
+    --secondary-foreground: 222 20% 12%;
+    --muted: 36 20% 92%;
+    --muted-foreground: 222 10% 42%;
+    --accent: 182 40% 90%;
+    --accent-foreground: 182 55% 18%;
+    --destructive: 0 72% 42%;
+    --destructive-foreground: 40 30% 97%;
+    --urgencia: 28 85% 46%;
+    --urgencia-foreground: 40 30% 97%;
+    --border: 36 18% 87%;
+    --input: 36 18% 87%;
+    --ring: 182 55% 22%;
+    --radius: 0.625rem;
+    --sidebar: 36 24% 94%;
+    --sidebar-foreground: 222 20% 12%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --background: 220 20% 11%;
+    --foreground: 40 20% 94%;
+    --card: 220 18% 14%;
+    --card-foreground: 40 20% 94%;
+    --primary: 174 45% 55%;
+    --primary-foreground: 220 25% 10%;
+    --secondary: 220 15% 19%;
+    --secondary-foreground: 40 20% 94%;
+    --muted: 220 15% 19%;
+    --muted-foreground: 220 10% 65%;
+    --accent: 182 30% 22%;
+    --accent-foreground: 174 45% 85%;
+    --destructive: 0 62% 48%;
+    --destructive-foreground: 40 20% 94%;
+    --urgencia: 32 80% 55%;
+    --urgencia-foreground: 220 25% 10%;
+    --border: 220 15% 22%;
+    --input: 220 15% 22%;
+    --ring: 174 45% 55%;
+    --sidebar: 220 20% 9%;
+    --sidebar-foreground: 40 20% 94%;
   }
 
   * {
@@ -49,6 +67,6 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
   }
 }
