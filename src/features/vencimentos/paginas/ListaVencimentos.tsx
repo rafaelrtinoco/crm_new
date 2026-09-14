@@ -51,7 +51,7 @@ export function ListaVencimentos() {
   const { data: tipos } = useVencimentoTipos(atual?.empresaId ?? null);
 
   return (
-    <main className="mx-auto max-w-5xl space-y-4 p-4">
+    <main className="mx-auto max-w-7xl space-y-4 p-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">{vocabulario.vencimentoPlural}</h1>
         <Button asChild>

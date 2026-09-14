@@ -16,7 +16,7 @@ function Coluna({ etapa, negocios, hoje }: ColunaProps) {
   return (
     <div
       ref={setNodeRef}
-      className={`flex w-72 shrink-0 flex-col rounded-lg border border-border bg-secondary/40 ${
+      className={`flex w-72 shrink-0 flex-col rounded-lg border border-border bg-muted/60 ${
         isOver ? "ring-2 ring-primary" : ""
       }`}
     >

@@ -85,7 +85,7 @@ export function DetalheNegocio() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl space-y-4 p-4">
+    <main className="mx-auto max-w-3xl space-y-4 p-4">
       <div className="flex items-center justify-between">
         <Link to="/funis" className="text-sm text-muted-foreground hover:underline">
           ← {vocabulario.negocioPlural}

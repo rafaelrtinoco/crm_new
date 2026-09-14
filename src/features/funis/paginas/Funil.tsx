@@ -58,7 +58,7 @@ export function Funil() {
   const etapaDestino = etapas?.find((e) => e.id === movimento?.etapaId) ?? null;
 
   return (
-    <main className="mx-auto max-w-6xl space-y-4 p-4">
+    <main className="w-full space-y-4 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-semibold">{vocabulario.negocioPlural}</h1>
         <Button asChild>

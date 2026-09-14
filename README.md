@@ -8,7 +8,7 @@ CRM SaaS multiempresa de relacionamento, focado em leads, funil de vendas, venci
 
 ## Estado atual
 
-**Fase 1 — Fundação e núcleo** (ver `docs/PRD.md` seção 9): **1A, 1B e 1C completos** (schema/RLS; auth/onboarding/convites; contatos, vencimentos e importação de planilha) — 1A/1B/1C-1/1C-2 validados no navegador, **1C-3 (Importação)** concluído com 82 testes pgTAP + 25 Vitest, teste no navegador pendente. Do **1D** (funis, tarefas, tela "Hoje", PWA completo e layout geral da plataforma): **1D-1 (layout)**, **1D-2 (Funis de venda)**, a identidade visual (plugin `ui-ux-pro-max`) e **1D-3 (Tarefas)** implementados e validados no navegador. **1D-4 (Tela "Hoje")** implementado, teste no navegador pendente. Falta só 1D-5 (PWA completo com push).
+**Fase 1 — Fundação e núcleo** (ver `docs/PRD.md` seção 9): **1A, 1B e 1C completos** (schema/RLS; auth/onboarding/convites; contatos, vencimentos e importação de planilha) — 1A/1B/1C-1/1C-2 validados no navegador, **1C-3 (Importação)** concluído com 82 testes pgTAP + 25 Vitest, teste no navegador pendente. Do **1D** (funis, tarefas, tela "Hoje", PWA completo e layout geral da plataforma): **1D-1**, **1D-2**, a identidade visual (plugin `ui-ux-pro-max`), **1D-3** e **1D-4** implementados e validados no navegador. Correções de layout reportadas pelo usuário (selects transparentes, paleta, largura de conteúdo) aplicadas, teste no navegador pendente. Falta só 1D-5 (PWA completo com push).
 
 ## Stack
 

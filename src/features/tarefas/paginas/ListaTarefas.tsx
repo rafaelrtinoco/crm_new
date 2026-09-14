@@ -76,7 +76,7 @@ export function ListaTarefas() {
   }
 
   return (
-    <main className="mx-auto max-w-3xl space-y-4 p-4">
+    <main className="mx-auto max-w-7xl space-y-4 p-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">{vocabulario.tarefaPlural}</h1>
         <Button onClick={abrirNova}>Nova {vocabulario.tarefa.toLowerCase()}</Button>

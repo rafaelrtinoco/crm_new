@@ -51,7 +51,7 @@ export function DetalheVencimento() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl space-y-4 p-4">
+    <main className="mx-auto max-w-3xl space-y-4 p-4">
       <div className="flex items-center justify-between">
         <Link to="/vencimentos" className="text-sm text-muted-foreground hover:underline">
           ← Vencimentos

@@ -69,7 +69,7 @@ export function Inicio() {
     (aniversariantes?.length ?? 0);
 
   return (
-    <main className="mx-auto max-w-3xl space-y-6 p-4">
+    <main className="mx-auto max-w-7xl space-y-6 p-4">
       <div>
         <h1 className="font-display text-2xl font-medium">Bem-vindo(a), {nome}</h1>
         <p className="text-sm text-muted-foreground">

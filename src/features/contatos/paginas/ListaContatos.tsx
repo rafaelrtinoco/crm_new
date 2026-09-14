@@ -57,7 +57,7 @@ export function ListaContatos() {
   const { data: tags } = useTags(atual?.empresaId ?? null);
 
   return (
-    <main className="mx-auto max-w-5xl space-y-4 p-4">
+    <main className="mx-auto max-w-7xl space-y-4 p-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">{vocabulario.contatoPlural}</h1>
         <div className="flex gap-2">
