@@ -73,38 +73,35 @@ export interface MembroEmpresa {
   papel: "dono" | "gestor" | "usuario";
 }
 
-/** Membros da empresa atual, com nome — pra seletores de "responsável". */
+/**
+ * Membros da empresa atual, com nome — pra seletores de "responsável".
+ * `membros_empresa` é uma view que já junta `empresa_membros` + `perfis`
+ * (as duas só se relacionam via `auth.users`, sem FK direta — o
+ * PostgREST não conseguia embedar, por isso antes eram duas consultas).
+ */
 export function useMembrosEmpresa(empresaId: string | null) {
   return useQuery({
     queryKey: ["membros-empresa", empresaId],
     enabled: !!empresaId,
     queryFn: async (): Promise<MembroEmpresa[]> => {
-      // empresa_membros e perfis só se relacionam via auth.users (sem FK
-      // direta entre os dois), então o PostgREST não consegue embedar —
-      // resolve em duas consultas.
-      const { data: membros, error } = await supabase
-        .from("empresa_membros")
-        .select("usuario_id, papel")
+      const { data, error } = await supabase
+        .from("membros_empresa")
+        .select("usuario_id, papel, nome")
         .eq("empresa_id", empresaId as string)
-        .order("created_at", { ascending: true });
+        .order("nome", { ascending: true });
       if (error) throw error;
-      if (!membros || membros.length === 0) return [];
-
-      const { data: perfis, error: erroPerfis } = await supabase
-        .from("perfis")
-        .select("id, nome")
-        .in(
-          "id",
-          membros.map((m) => m.usuario_id),
-        );
-      if (erroPerfis) throw erroPerfis;
-      const nomesPorId = new Map((perfis ?? []).map((p) => [p.id, p.nome]));
-
-      return membros.map((linha) => ({
-        usuarioId: linha.usuario_id,
-        papel: linha.papel as MembroEmpresa["papel"],
-        nome: nomesPorId.get(linha.usuario_id) ?? "—",
-      }));
+      // As colunas da view vêm tipadas como nullable (o gerador de tipos
+      // não enxerga os "not null" das tabelas de origem através de uma
+      // view), mas usuario_id nunca é nulo de fato — filtra defensivo.
+      return (data ?? [])
+        .filter(
+          (linha): linha is typeof linha & { usuario_id: string } => linha.usuario_id !== null,
+        )
+        .map((linha) => ({
+          usuarioId: linha.usuario_id,
+          papel: linha.papel as MembroEmpresa["papel"],
+          nome: linha.nome ?? "—",
+        }));
     },
   });
 }

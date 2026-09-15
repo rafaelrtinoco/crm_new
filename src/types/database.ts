@@ -43,8 +43,11 @@ export type Database = {
           empresa_id: string
           id: string
           negocio_id: string | null
+          organizacao_id: string | null
           responsavel_id: string | null
+          tarefa_id: string | null
           tipo: string
+          vencimento_id: string | null
         }
         Insert: {
           contato_id?: string | null
@@ -54,8 +57,11 @@ export type Database = {
           empresa_id: string
           id?: string
           negocio_id?: string | null
+          organizacao_id?: string | null
           responsavel_id?: string | null
+          tarefa_id?: string | null
           tipo: string
+          vencimento_id?: string | null
         }
         Update: {
           contato_id?: string | null
@@ -65,16 +71,19 @@ export type Database = {
           empresa_id?: string
           id?: string
           negocio_id?: string | null
+          organizacao_id?: string | null
           responsavel_id?: string | null
+          tarefa_id?: string | null
           tipo?: string
+          vencimento_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "atividades_contato_id_fkey"
-            columns: ["contato_id"]
+            foreignKeyName: "atividades_empresa_contato_id_fkey"
+            columns: ["empresa_id", "contato_id"]
             isOneToOne: false
             referencedRelation: "contatos"
-            referencedColumns: ["id"]
+            referencedColumns: ["empresa_id", "id"]
           },
           {
             foreignKeyName: "atividades_empresa_id_fkey"
@@ -84,11 +93,46 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "atividades_negocio_id_fkey"
-            columns: ["negocio_id"]
+            foreignKeyName: "atividades_empresa_negocio_id_fkey"
+            columns: ["empresa_id", "negocio_id"]
             isOneToOne: false
             referencedRelation: "negocios"
-            referencedColumns: ["id"]
+            referencedColumns: ["empresa_id", "id"]
+          },
+          {
+            foreignKeyName: "atividades_empresa_organizacao_id_fkey"
+            columns: ["empresa_id", "organizacao_id"]
+            isOneToOne: false
+            referencedRelation: "organizacoes"
+            referencedColumns: ["empresa_id", "id"]
+          },
+          {
+            foreignKeyName: "atividades_empresa_responsavel_id_fkey"
+            columns: ["empresa_id", "responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "empresa_membros"
+            referencedColumns: ["empresa_id", "usuario_id"]
+          },
+          {
+            foreignKeyName: "atividades_empresa_responsavel_id_fkey"
+            columns: ["empresa_id", "responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "membros_empresa"
+            referencedColumns: ["empresa_id", "usuario_id"]
+          },
+          {
+            foreignKeyName: "atividades_empresa_tarefa_id_fkey"
+            columns: ["empresa_id", "tarefa_id"]
+            isOneToOne: false
+            referencedRelation: "tarefas"
+            referencedColumns: ["empresa_id", "id"]
+          },
+          {
+            foreignKeyName: "atividades_empresa_vencimento_id_fkey"
+            columns: ["empresa_id", "vencimento_id"]
+            isOneToOne: false
+            referencedRelation: "vencimentos"
+            referencedColumns: ["empresa_id", "id"]
           },
         ]
       }
@@ -225,11 +269,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "consentimentos_contato_id_fkey"
-            columns: ["contato_id"]
+            foreignKeyName: "consentimentos_empresa_contato_id_fkey"
+            columns: ["empresa_id", "contato_id"]
             isOneToOne: false
             referencedRelation: "contatos"
-            referencedColumns: ["id"]
+            referencedColumns: ["empresa_id", "id"]
           },
           {
             foreignKeyName: "consentimentos_empresa_id_fkey"
@@ -267,11 +311,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "contato_tags_contato_id_fkey"
-            columns: ["contato_id"]
+            foreignKeyName: "contato_tags_empresa_contato_id_fkey"
+            columns: ["empresa_id", "contato_id"]
             isOneToOne: false
             referencedRelation: "contatos"
-            referencedColumns: ["id"]
+            referencedColumns: ["empresa_id", "id"]
           },
           {
             foreignKeyName: "contato_tags_empresa_id_fkey"
@@ -281,11 +325,11 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "contato_tags_tag_id_fkey"
-            columns: ["tag_id"]
+            foreignKeyName: "contato_tags_empresa_tag_id_fkey"
+            columns: ["empresa_id", "tag_id"]
             isOneToOne: false
             referencedRelation: "tags"
-            referencedColumns: ["id"]
+            referencedColumns: ["empresa_id", "id"]
           },
         ]
       }
@@ -302,6 +346,7 @@ export type Database = {
           id: string
           nascimento: string | null
           nome: string
+          organizacao_id: string | null
           origem: string | null
           responsavel_id: string | null
           status: string
@@ -327,6 +372,7 @@ export type Database = {
           id?: string
           nascimento?: string | null
           nome: string
+          organizacao_id?: string | null
           origem?: string | null
           responsavel_id?: string | null
           status?: string
@@ -352,6 +398,7 @@ export type Database = {
           id?: string
           nascimento?: string | null
           nome?: string
+          organizacao_id?: string | null
           origem?: string | null
           responsavel_id?: string | null
           status?: string
@@ -372,6 +419,27 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "empresas"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contatos_empresa_organizacao_id_fkey"
+            columns: ["empresa_id", "organizacao_id"]
+            isOneToOne: false
+            referencedRelation: "organizacoes"
+            referencedColumns: ["empresa_id", "id"]
+          },
+          {
+            foreignKeyName: "contatos_empresa_responsavel_id_fkey"
+            columns: ["empresa_id", "responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "empresa_membros"
+            referencedColumns: ["empresa_id", "usuario_id"]
+          },
+          {
+            foreignKeyName: "contatos_empresa_responsavel_id_fkey"
+            columns: ["empresa_id", "responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "membros_empresa"
+            referencedColumns: ["empresa_id", "usuario_id"]
           },
         ]
       }
@@ -527,6 +595,7 @@ export type Database = {
           id: string
           nome: string
           ordem: number
+          tipo: string
           updated_at: string
         }
         Insert: {
@@ -538,6 +607,7 @@ export type Database = {
           id?: string
           nome: string
           ordem?: number
+          tipo?: string
           updated_at?: string
         }
         Update: {
@@ -549,21 +619,22 @@ export type Database = {
           id?: string
           nome?: string
           ordem?: number
+          tipo?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "etapas_empresa_funil_id_fkey"
+            columns: ["empresa_id", "funil_id"]
+            isOneToOne: false
+            referencedRelation: "funis"
+            referencedColumns: ["empresa_id", "id"]
+          },
           {
             foreignKeyName: "etapas_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "etapas_funil_id_fkey"
-            columns: ["funil_id"]
-            isOneToOne: false
-            referencedRelation: "funis"
             referencedColumns: ["id"]
           },
         ]
@@ -763,14 +834,17 @@ export type Database = {
           funil_id: string
           id: string
           motivo_perda_id: string | null
+          organizacao_id: string | null
           previsao_fechamento: string | null
           proximo_passo_acao: string
           proximo_passo_em: string
           reativar_em: string | null
           responsavel_id: string | null
           status: string
+          titulo: string | null
           updated_at: string
           valor_estimado: number | null
+          vencimento_id: string | null
         }
         Insert: {
           contato_id: string
@@ -783,14 +857,17 @@ export type Database = {
           funil_id: string
           id?: string
           motivo_perda_id?: string | null
+          organizacao_id?: string | null
           previsao_fechamento?: string | null
           proximo_passo_acao: string
           proximo_passo_em: string
           reativar_em?: string | null
           responsavel_id?: string | null
           status?: string
+          titulo?: string | null
           updated_at?: string
           valor_estimado?: number | null
+          vencimento_id?: string | null
         }
         Update: {
           contato_id?: string
@@ -803,22 +880,39 @@ export type Database = {
           funil_id?: string
           id?: string
           motivo_perda_id?: string | null
+          organizacao_id?: string | null
           previsao_fechamento?: string | null
           proximo_passo_acao?: string
           proximo_passo_em?: string
           reativar_em?: string | null
           responsavel_id?: string | null
           status?: string
+          titulo?: string | null
           updated_at?: string
           valor_estimado?: number | null
+          vencimento_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "negocios_contato_id_fkey"
-            columns: ["contato_id"]
+            foreignKeyName: "negocios_empresa_contato_id_fkey"
+            columns: ["empresa_id", "contato_id"]
             isOneToOne: false
             referencedRelation: "contatos"
-            referencedColumns: ["id"]
+            referencedColumns: ["empresa_id", "id"]
+          },
+          {
+            foreignKeyName: "negocios_empresa_etapa_id_fkey"
+            columns: ["empresa_id", "etapa_id"]
+            isOneToOne: false
+            referencedRelation: "etapas"
+            referencedColumns: ["empresa_id", "id"]
+          },
+          {
+            foreignKeyName: "negocios_empresa_funil_id_fkey"
+            columns: ["empresa_id", "funil_id"]
+            isOneToOne: false
+            referencedRelation: "funis"
+            referencedColumns: ["empresa_id", "id"]
           },
           {
             foreignKeyName: "negocios_empresa_id_fkey"
@@ -828,25 +922,46 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "negocios_etapa_id_fkey"
-            columns: ["etapa_id"]
-            isOneToOne: false
-            referencedRelation: "etapas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "negocios_funil_id_fkey"
-            columns: ["funil_id"]
-            isOneToOne: false
-            referencedRelation: "funis"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "negocios_motivo_perda_id_fkey"
-            columns: ["motivo_perda_id"]
+            foreignKeyName: "negocios_empresa_motivo_perda_id_fkey"
+            columns: ["empresa_id", "motivo_perda_id"]
             isOneToOne: false
             referencedRelation: "motivos_perda"
-            referencedColumns: ["id"]
+            referencedColumns: ["empresa_id", "id"]
+          },
+          {
+            foreignKeyName: "negocios_empresa_organizacao_id_fkey"
+            columns: ["empresa_id", "organizacao_id"]
+            isOneToOne: false
+            referencedRelation: "organizacoes"
+            referencedColumns: ["empresa_id", "id"]
+          },
+          {
+            foreignKeyName: "negocios_empresa_responsavel_id_fkey"
+            columns: ["empresa_id", "responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "empresa_membros"
+            referencedColumns: ["empresa_id", "usuario_id"]
+          },
+          {
+            foreignKeyName: "negocios_empresa_responsavel_id_fkey"
+            columns: ["empresa_id", "responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "membros_empresa"
+            referencedColumns: ["empresa_id", "usuario_id"]
+          },
+          {
+            foreignKeyName: "negocios_empresa_vencimento_id_fkey"
+            columns: ["empresa_id", "vencimento_id"]
+            isOneToOne: false
+            referencedRelation: "vencimentos"
+            referencedColumns: ["empresa_id", "id"]
+          },
+          {
+            foreignKeyName: "negocios_funil_etapa_fkey"
+            columns: ["funil_id", "etapa_id"]
+            isOneToOne: false
+            referencedRelation: "etapas"
+            referencedColumns: ["funil_id", "id"]
           },
         ]
       }
@@ -939,6 +1054,76 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "empresas"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizacoes: {
+        Row: {
+          campos: Json
+          cnpj: string | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          empresa_id: string
+          endereco: Json | null
+          id: string
+          nome: string
+          responsavel_id: string | null
+          site: string | null
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          campos?: Json
+          cnpj?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          empresa_id: string
+          endereco?: Json | null
+          id?: string
+          nome: string
+          responsavel_id?: string | null
+          site?: string | null
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          campos?: Json
+          cnpj?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          empresa_id?: string
+          endereco?: Json | null
+          id?: string
+          nome?: string
+          responsavel_id?: string | null
+          site?: string | null
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organizacoes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organizacoes_empresa_responsavel_id_fkey"
+            columns: ["empresa_id", "responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "empresa_membros"
+            referencedColumns: ["empresa_id", "usuario_id"]
+          },
+          {
+            foreignKeyName: "organizacoes_empresa_responsavel_id_fkey"
+            columns: ["empresa_id", "responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "membros_empresa"
+            referencedColumns: ["empresa_id", "usuario_id"]
           },
         ]
       }
@@ -1076,6 +1261,7 @@ export type Database = {
           tipo: string
           titulo: string
           updated_at: string
+          vencimento_id: string | null
         }
         Insert: {
           concluida_em?: string | null
@@ -1091,6 +1277,7 @@ export type Database = {
           tipo: string
           titulo: string
           updated_at?: string
+          vencimento_id?: string | null
         }
         Update: {
           concluida_em?: string | null
@@ -1106,14 +1293,15 @@ export type Database = {
           tipo?: string
           titulo?: string
           updated_at?: string
+          vencimento_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "tarefas_contato_id_fkey"
-            columns: ["contato_id"]
+            foreignKeyName: "tarefas_empresa_contato_id_fkey"
+            columns: ["empresa_id", "contato_id"]
             isOneToOne: false
             referencedRelation: "contatos"
-            referencedColumns: ["id"]
+            referencedColumns: ["empresa_id", "id"]
           },
           {
             foreignKeyName: "tarefas_empresa_id_fkey"
@@ -1123,11 +1311,32 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "tarefas_negocio_id_fkey"
-            columns: ["negocio_id"]
+            foreignKeyName: "tarefas_empresa_negocio_id_fkey"
+            columns: ["empresa_id", "negocio_id"]
             isOneToOne: false
             referencedRelation: "negocios"
-            referencedColumns: ["id"]
+            referencedColumns: ["empresa_id", "id"]
+          },
+          {
+            foreignKeyName: "tarefas_empresa_responsavel_id_fkey"
+            columns: ["empresa_id", "responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "empresa_membros"
+            referencedColumns: ["empresa_id", "usuario_id"]
+          },
+          {
+            foreignKeyName: "tarefas_empresa_responsavel_id_fkey"
+            columns: ["empresa_id", "responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "membros_empresa"
+            referencedColumns: ["empresa_id", "usuario_id"]
+          },
+          {
+            foreignKeyName: "tarefas_empresa_vencimento_id_fkey"
+            columns: ["empresa_id", "vencimento_id"]
+            isOneToOne: false
+            referencedRelation: "vencimentos"
+            referencedColumns: ["empresa_id", "id"]
           },
         ]
       }
@@ -1194,6 +1403,7 @@ export type Database = {
           status: string
           updated_at: string
           valor: number | null
+          vencimento_anterior_id: string | null
           vencimento_tipo_id: string | null
         }
         Insert: {
@@ -1211,6 +1421,7 @@ export type Database = {
           status?: string
           updated_at?: string
           valor?: number | null
+          vencimento_anterior_id?: string | null
           vencimento_tipo_id?: string | null
         }
         Update: {
@@ -1228,15 +1439,23 @@ export type Database = {
           status?: string
           updated_at?: string
           valor?: number | null
+          vencimento_anterior_id?: string | null
           vencimento_tipo_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "vencimentos_contato_id_fkey"
-            columns: ["contato_id"]
+            foreignKeyName: "vencimentos_empresa_anterior_id_fkey"
+            columns: ["empresa_id", "vencimento_anterior_id"]
+            isOneToOne: false
+            referencedRelation: "vencimentos"
+            referencedColumns: ["empresa_id", "id"]
+          },
+          {
+            foreignKeyName: "vencimentos_empresa_contato_id_fkey"
+            columns: ["empresa_id", "contato_id"]
             isOneToOne: false
             referencedRelation: "contatos"
-            referencedColumns: ["id"]
+            referencedColumns: ["empresa_id", "id"]
           },
           {
             foreignKeyName: "vencimentos_empresa_id_fkey"
@@ -1246,23 +1465,70 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "vencimentos_vencimento_tipo_id_fkey"
-            columns: ["vencimento_tipo_id"]
+            foreignKeyName: "vencimentos_empresa_responsavel_id_fkey"
+            columns: ["empresa_id", "responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "empresa_membros"
+            referencedColumns: ["empresa_id", "usuario_id"]
+          },
+          {
+            foreignKeyName: "vencimentos_empresa_responsavel_id_fkey"
+            columns: ["empresa_id", "responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "membros_empresa"
+            referencedColumns: ["empresa_id", "usuario_id"]
+          },
+          {
+            foreignKeyName: "vencimentos_empresa_vencimento_tipo_id_fkey"
+            columns: ["empresa_id", "vencimento_tipo_id"]
             isOneToOne: false
             referencedRelation: "vencimento_tipos"
-            referencedColumns: ["id"]
+            referencedColumns: ["empresa_id", "id"]
           },
         ]
       }
     }
     Views: {
-      [_ in never]: never
+      membros_empresa: {
+        Row: {
+          empresa_id: string | null
+          nome: string | null
+          papel: string | null
+          telefone: string | null
+          usuario_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "empresa_membros_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       aceitar_convite: { Args: { p_token: string }; Returns: string }
       aplicar_template: {
         Args: { p_empresa_id: string; p_nicho: string }
         Returns: undefined
+      }
+      buscar_possiveis_duplicatas: {
+        Args: {
+          p_cpf_cnpj?: string
+          p_email?: string
+          p_empresa_id: string
+          p_telefone?: string
+        }
+        Returns: {
+          cpf_cnpj: string
+          email: string
+          id: string
+          motivo: string
+          nome: string
+          telefone: string
+        }[]
       }
       carteira_compartilhada: {
         Args: { p_empresa_id: string }
@@ -1271,6 +1537,10 @@ export type Database = {
       criar_empresa_com_onboarding: {
         Args: { p_aceite_termos: boolean; p_nicho: string; p_nome: string }
         Returns: string
+      }
+      excluir_registro: {
+        Args: { p_id: string; p_tabela: string }
+        Returns: undefined
       }
       gerar_notificacoes_diarias: {
         Args: { p_agora?: string }
@@ -1289,6 +1559,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      mover_negocio_etapa: {
+        Args: {
+          p_etapa_id: string
+          p_negocio_id: string
+          p_proximo_passo_acao: string
+          p_proximo_passo_em: string
+        }
+        Returns: undefined
+      }
       pode_acessar_responsavel: {
         Args: { p_empresa_id: string; p_responsavel_id: string }
         Returns: boolean
@@ -1301,6 +1580,10 @@ export type Database = {
           p_vencimento_id: string
         }
         Returns: string
+      }
+      restaurar_registro: {
+        Args: { p_id: string; p_tabela: string }
+        Returns: undefined
       }
       tem_papel: {
         Args: { p_empresa_id: string; p_papel: string }

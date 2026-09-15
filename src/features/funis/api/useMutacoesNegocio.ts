@@ -61,14 +61,15 @@ export function useAtualizarNegocio(empresaId: string | null, negocioId: string)
   });
 }
 
+/** Exclusão via RPC — ver o comentário equivalente em useMutacoesContato.ts. */
 export function useExcluirNegocio(empresaId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (negocioId: string) => {
-      const { error } = await supabase
-        .from("negocios")
-        .update({ deleted_at: new Date().toISOString() })
-        .eq("id", negocioId);
+      const { error } = await supabase.rpc("excluir_registro", {
+        p_tabela: "negocios",
+        p_id: negocioId,
+      });
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["negocios", empresaId] }),
@@ -79,50 +80,35 @@ export interface MoverNegocioInput extends ProximoPassoInput {
   negocioId: string;
   contatoId: string;
   etapaId: string;
-  etapaNome: string;
 }
 
 /**
  * PRD §6.5: mover um card exige confirmar/definir o próximo passo — as
  * duas colunas são `not null` no banco, então a UX não pode contornar
- * isso enviando só a mudança de etapa. Grava a mudança de etapa como
- * atividade na timeline do contato (tipo `mudanca_etapa`, já previsto
- * no check de `atividades`).
+ * isso enviando só a mudança de etapa. Uma chamada só: o RPC
+ * `mover_negocio_etapa` faz o update do negócio, e o registro na
+ * timeline (e a sincronização de status se a etapa de destino for
+ * `tipo = 'ganho'`/`'perdido'`) acontecem sozinhos no banco.
  */
 export function useMoverNegocio(empresaId: string | null, funilId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (input: MoverNegocioInput) => {
       if (!empresaId) throw new Error("Selecione uma empresa antes de mover um negócio.");
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      const { error } = await supabase
-        .from("negocios")
-        .update({
-          etapa_id: input.etapaId,
-          proximo_passo_em: input.proximoPassoEm,
-          proximo_passo_acao: input.proximoPassoAcao,
-        })
-        .eq("id", input.negocioId);
-      if (error) throw error;
-
-      const { error: erroAtividade } = await supabase.from("atividades").insert({
-        empresa_id: empresaId,
-        contato_id: input.contatoId,
-        negocio_id: input.negocioId,
-        tipo: "mudanca_etapa",
-        responsavel_id: user?.id,
-        created_by: user?.id,
-        conteudo: { etapa: input.etapaNome },
+      const { error } = await supabase.rpc("mover_negocio_etapa", {
+        p_negocio_id: input.negocioId,
+        p_etapa_id: input.etapaId,
+        p_proximo_passo_em: input.proximoPassoEm,
+        p_proximo_passo_acao: input.proximoPassoAcao,
       });
-      if (erroAtividade) throw erroAtividade;
+      if (error) throw error;
     },
     onSuccess: (_dados, variaveis) =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: ["negocios", empresaId, funilId] }),
         queryClient.invalidateQueries({ queryKey: ["negocio", variaveis.negocioId] }),
         queryClient.invalidateQueries({ queryKey: ["atividades", variaveis.contatoId] }),
+        queryClient.invalidateQueries({ queryKey: ["contatos"] }),
       ]),
   });
 }

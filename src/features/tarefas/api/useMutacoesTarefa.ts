@@ -56,14 +56,15 @@ export function useAtualizarTarefa(empresaId: string | null, tarefaId: string) {
   });
 }
 
+/** Exclusão via RPC — ver o comentário equivalente em useMutacoesContato.ts. */
 export function useExcluirTarefa() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (tarefaId: string) => {
-      const { error } = await supabase
-        .from("tarefas")
-        .update({ deleted_at: new Date().toISOString() })
-        .eq("id", tarefaId);
+      const { error } = await supabase.rpc("excluir_registro", {
+        p_tabela: "tarefas",
+        p_id: tarefaId,
+      });
       if (error) throw error;
     },
     onSuccess: () => invalidarTudo(queryClient),

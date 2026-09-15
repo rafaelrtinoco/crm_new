@@ -30,12 +30,16 @@ values (
     {
       "nome": "Venda nova",
       "tipo": "venda_nova",
-      "etapas": ["Novo lead", "Primeiro contato", "Cotação", "Proposta enviada", "Negociação", "Ganho", "Perdido"]
+      "etapas": ["Novo lead", "Primeiro contato", "Cotação", "Proposta enviada", "Negociação", "Ganho", "Perdido"],
+      "etapa_ganho": "Ganho",
+      "etapa_perdida": "Perdido"
     },
     {
       "nome": "Renovação",
       "tipo": "renovacao",
-      "etapas": ["A contatar", "Em contato", "Proposta de renovação", "Renovado", "Não renovado"]
+      "etapas": ["A contatar", "Em contato", "Proposta de renovação", "Renovado", "Não renovado"],
+      "etapa_ganho": "Renovado",
+      "etapa_perdida": "Não renovado"
     }
   ]'::jsonb,
   '["Preço", "Fechou com outro", "Sem retorno", "Desistiu", "Sem perfil"]'::jsonb,

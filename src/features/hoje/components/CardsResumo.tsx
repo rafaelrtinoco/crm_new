@@ -5,7 +5,7 @@ interface Props {
   resumo: ResumoNumeros;
 }
 
-/** Cards resumidos abaixo da lista de ações (PRD §6.2). */
+/** Cards resumidos no topo da tela "Hoje" (PRD §6.2). */
 export function CardsResumo({ resumo }: Props) {
   const itens = [
     { rotulo: "Leads na semana", valor: String(resumo.leadsNaSemana) },
@@ -23,7 +23,7 @@ export function CardsResumo({ resumo }: Props) {
       {itens.map((item) => (
         <Card key={item.rotulo}>
           <CardHeader className="pb-1">
-            <CardTitle className="font-display text-2xl font-normal">{item.valor}</CardTitle>
+            <CardTitle>{item.valor}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-xs text-muted-foreground">{item.rotulo}</p>

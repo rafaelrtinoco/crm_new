@@ -11,6 +11,7 @@ import { useExcluirTarefa } from "@/features/tarefas/api/useMutacoesTarefa";
 import { useTarefas, type Tarefa } from "@/features/tarefas/api/useTarefas";
 import { BarraPrimeirosPassos } from "@/features/hoje/components/BarraPrimeirosPassos";
 import { CardsResumo } from "@/features/hoje/components/CardsResumo";
+import { GraficoResumo } from "@/features/hoje/components/GraficoResumo";
 import { ItemAcao, SecaoAcoesHoje } from "@/features/hoje/components/SecaoAcoesHoje";
 import {
   useAniversariantesHoje,
@@ -19,6 +20,7 @@ import {
   usePrimeirosPassos,
   useResumoNumeros,
   useVencimentosPendentesHoje,
+  useVencimentosPorSemana,
 } from "@/features/hoje/api/useResumoHoje";
 
 function linkWhatsApp(telefone: string) {
@@ -45,6 +47,7 @@ export function Inicio() {
   const { data: vencimentos } = useVencimentosPendentesHoje(empresaId, hoje);
   const { data: aniversariantes } = useAniversariantesHoje(empresaId, hoje);
   const { data: resumo } = useResumoNumeros(empresaId, hoje);
+  const { data: vencimentosPorSemana } = useVencimentosPorSemana(empresaId, hoje);
   const { data: primeirosPassos } = usePrimeirosPassos(empresaId);
 
   const excluirTarefa = useExcluirTarefa();
@@ -76,6 +79,11 @@ export function Inicio() {
           Você está em <strong>{atual?.nome}</strong>.
         </p>
       </div>
+
+      {resumo && <CardsResumo resumo={resumo} />}
+      {resumo && (
+        <GraficoResumo resumo={resumo} vencimentosPorSemana={vencimentosPorSemana ?? []} />
+      )}
 
       {primeirosPassos && <BarraPrimeirosPassos passos={primeirosPassos} />}
 
@@ -191,8 +199,6 @@ export function Inicio() {
           />
         ))}
       </SecaoAcoesHoje>
-
-      {resumo && <CardsResumo resumo={resumo} />}
 
       <DialogoTarefa
         open={dialogoTarefaAberto}

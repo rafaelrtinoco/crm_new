@@ -17,7 +17,7 @@ function Coluna({ etapa, negocios, hoje, corIndex }: ColunaProps) {
   return (
     <div
       ref={setNodeRef}
-      className={`flex w-72 shrink-0 flex-col rounded-lg border border-border bg-muted/60 ${
+      className={`flex w-60 shrink-0 flex-col rounded-lg border border-border bg-muted/60 ${
         isOver ? "ring-2 ring-primary" : ""
       }`}
     >
@@ -62,7 +62,7 @@ export function QuadroFunil({ etapas, negocios, hoje, onSoltar }: Props) {
 
   return (
     <DndContext onDragEnd={aoSoltar}>
-      <div className="flex gap-3 overflow-x-auto pb-2">
+      <div className="flex gap-2 overflow-x-auto pb-2">
         {etapas.map((etapa, indice) => (
           <Coluna
             key={etapa.id}

@@ -59,14 +59,20 @@ export function useAtualizarContato(empresaId: string | null, contatoId: string)
   });
 }
 
+/**
+ * Exclusão passa por `excluir_registro` (RPC), não por UPDATE direto: a
+ * RLS de leitura filtra `deleted_at is null` e o Postgres reaplica essa
+ * mesma checagem contra a linha nova em todo UPDATE — a própria escrita
+ * do soft delete se bloquearia sozinha se tentasse ir direto.
+ */
 export function useExcluirContato(empresaId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (contatoId: string) => {
-      const { error } = await supabase
-        .from("contatos")
-        .update({ deleted_at: new Date().toISOString() })
-        .eq("id", contatoId);
+      const { error } = await supabase.rpc("excluir_registro", {
+        p_tabela: "contatos",
+        p_id: contatoId,
+      });
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["contatos", empresaId] }),

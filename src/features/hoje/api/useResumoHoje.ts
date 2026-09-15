@@ -140,6 +140,8 @@ export interface ResumoNumeros {
   negociosAbertos: number;
   vencimentosProximos30Dias: number;
   taxaRenovacaoMes: number | null;
+  renovadosMes: number;
+  naoRenovadosMes: number;
 }
 
 /** Cards resumidos abaixo da lista de ações (PRD §6.2). */
@@ -196,7 +198,45 @@ export function useResumoNumeros(empresaId: string | null, hoje: string) {
         negociosAbertos: negocios.count ?? 0,
         vencimentosProximos30Dias: vencimentos.count ?? 0,
         taxaRenovacaoMes: totalFinalizados > 0 ? (renovados.count ?? 0) / totalFinalizados : null,
+        renovadosMes: renovados.count ?? 0,
+        naoRenovadosMes: naoRenovados.count ?? 0,
       };
+    },
+  });
+}
+
+export interface VencimentoPorSemana {
+  semana: string;
+  quantidade: number;
+}
+
+/** Distribuição semanal dos vencimentos dos próximos 30 dias — para o gráfico da tela "Hoje". */
+export function useVencimentosPorSemana(empresaId: string | null, hoje: string) {
+  return useQuery({
+    queryKey: ["hoje-vencimentos-por-semana", empresaId, hoje],
+    enabled: !!empresaId,
+    queryFn: async (): Promise<VencimentoPorSemana[]> => {
+      const em30Dias = new Date(`${hoje}T00:00:00Z`);
+      em30Dias.setUTCDate(em30Dias.getUTCDate() + 30);
+
+      const { data, error } = await supabase
+        .from("vencimentos")
+        .select("data_vencimento")
+        .eq("empresa_id", empresaId as string)
+        .gte("data_vencimento", hoje)
+        .lte("data_vencimento", em30Dias.toISOString().slice(0, 10));
+      if (error) throw error;
+
+      const baldes = [0, 0, 0, 0];
+      for (const linha of data ?? []) {
+        const dias = diferencaEmDias(hoje, linha.data_vencimento);
+        const indice = Math.min(3, Math.floor(dias / 7));
+        baldes[indice] = (baldes[indice] ?? 0) + 1;
+      }
+      return baldes.map((quantidade, indice) => ({
+        semana: `Sem ${indice + 1}`,
+        quantidade,
+      }));
     },
   });
 }

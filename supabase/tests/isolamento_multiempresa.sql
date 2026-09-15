@@ -47,6 +47,10 @@ insert into public.audit_log (id, empresa_id, usuario_id, acao, entidade) values
   ('e0000000-0000-0000-0000-000000000071', 'a0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000101', 'exportacao', 'contatos'),
   ('e0000000-0000-0000-0000-000000000072', 'b0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000101', 'exportacao', 'contatos');
 
+insert into public.organizacoes (id, empresa_id, nome, responsavel_id) values
+  ('e0000000-0000-0000-0000-000000000081', 'a0000000-0000-0000-0000-000000000001', 'Padaria Alfa Ltda', 'a0000000-0000-0000-0000-000000000101'),
+  ('e0000000-0000-0000-0000-000000000082', 'b0000000-0000-0000-0000-000000000001', 'Mercado Beta Ltda', 'b0000000-0000-0000-0000-000000000101');
+
 -- ---------------------------------------------------------------------
 -- A partir daqui, age como Carla (usuario, empresa Alfa).
 -- ---------------------------------------------------------------------
@@ -74,8 +78,15 @@ select is((select count(*) from public.contatos where id = 'b0000000-0000-0000-0
 select is((select count(*) from public.contatos where empresa_id = 'a0000000-0000-0000-0000-000000000001'), 3::bigint, 'usuario vê os contatos sob sua responsabilidade na própria empresa');
 with x as (update public.contatos set nome = nome where id = 'b0000000-0000-0000-0000-000000000301' returning id)
 select is((select count(*) from x), 0::bigint, 'não altera contato da empresa Beta');
-with x as (delete from public.contatos where id = 'b0000000-0000-0000-0000-000000000301' returning id)
-select is((select count(*) from x), 0::bigint, 'não apaga contato da empresa Beta');
+-- DELETE físico é revogado do papel authenticated pra todas as tabelas
+-- com dono (exclusão sempre passa por excluir_registro) — ninguém
+-- alcança nem a própria empresa, muito menos a de outra.
+select throws_ok(
+  $$ delete from public.contatos where id = 'b0000000-0000-0000-0000-000000000301' $$,
+  '42501',
+  null,
+  'não apaga contato da empresa Beta (DELETE físico revogado do papel authenticated)'
+);
 select throws_ok(
   $$ insert into public.contatos (empresa_id, nome, responsavel_id) values ('b0000000-0000-0000-0000-000000000001', 'Invasor', 'a0000000-0000-0000-0000-000000000103') $$,
   '42501',
@@ -153,15 +164,14 @@ select is(
   0::bigint,
   'não altera negócio da empresa Beta'
 );
-with x as (
-  delete from public.negocios
-  where id = (select id from public.negocios where proximo_passo_acao = 'Enviar cotação por WhatsApp')
-  returning id
-)
-select is(
-  (select count(*) from x),
-  0::bigint,
-  'não apaga negócio da empresa Beta'
+select throws_ok(
+  $$
+    delete from public.negocios
+    where id = (select id from public.negocios where proximo_passo_acao = 'Enviar cotação por WhatsApp')
+  $$,
+  '42501',
+  null,
+  'não apaga negócio da empresa Beta (DELETE físico revogado do papel authenticated)'
 );
 
 -- atividades
@@ -195,6 +205,17 @@ select throws_ok(
 -- importacoes / importacao_erros
 select is((select count(*) from public.importacoes where id = 'e0000000-0000-0000-0000-000000000052'), 0::bigint, 'não vê importação da empresa Beta');
 select is((select count(*) from public.importacao_erros where id = 'e0000000-0000-0000-0000-000000000062'), 0::bigint, 'não vê erro de importação da empresa Beta');
+
+-- organizacoes
+select is((select count(*) from public.organizacoes where id = 'e0000000-0000-0000-0000-000000000082'), 0::bigint, 'não vê organização da empresa Beta');
+with x as (update public.organizacoes set nome = nome where id = 'e0000000-0000-0000-0000-000000000082' returning id)
+select is((select count(*) from x), 0::bigint, 'não altera organização da empresa Beta');
+select throws_ok(
+  $$ insert into public.organizacoes (empresa_id, nome) values ('b0000000-0000-0000-0000-000000000001', 'Invasora Ltda') $$,
+  '42501',
+  null,
+  'não insere organização na empresa Beta'
+);
 
 -- nicho_templates: dado global, deve ser visível para qualquer autenticado,
 -- mas não editável por quem não é service_role.

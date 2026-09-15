@@ -62,14 +62,15 @@ export function useAtualizarVencimento(empresaId: string | null, vencimentoId: s
   });
 }
 
+/** Exclusão via RPC — ver o comentário equivalente em useMutacoesContato.ts. */
 export function useExcluirVencimento(empresaId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (vencimentoId: string) => {
-      const { error } = await supabase
-        .from("vencimentos")
-        .update({ deleted_at: new Date().toISOString() })
-        .eq("id", vencimentoId);
+      const { error } = await supabase.rpc("excluir_registro", {
+        p_tabela: "vencimentos",
+        p_id: vencimentoId,
+      });
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["vencimentos", empresaId] }),

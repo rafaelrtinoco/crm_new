@@ -162,6 +162,53 @@ select is(
   12::bigint,
   'aplicar_template populou as 12 etapas (7 + 5) dos dois funis'
 );
+-- Achado de revisão adversarial: aplicar_template criava as etapas
+-- "Ganho"/"Perdido"/"Renovado"/"Não renovado" sempre com `tipo =
+-- 'normal'` (default) — o trigger que sincroniza status por etapa nunca
+-- tinha uma etapa especial de verdade pra agir. Prova que agora tem.
+select is(
+  (
+    select e.tipo from public.etapas e
+    join public.funis f on f.id = e.funil_id
+    join public.empresa_membros em on em.empresa_id = f.empresa_id
+    where em.usuario_id = 'd0000000-0000-0000-0000-000000000003'
+      and f.tipo = 'venda_nova' and e.nome = 'Ganho'
+  ),
+  'ganho',
+  'aplicar_template marca a etapa "Ganho" do funil de venda nova com tipo=ganho'
+);
+select is(
+  (
+    select e.tipo from public.etapas e
+    join public.funis f on f.id = e.funil_id
+    join public.empresa_membros em on em.empresa_id = f.empresa_id
+    where em.usuario_id = 'd0000000-0000-0000-0000-000000000003'
+      and f.tipo = 'venda_nova' and e.nome = 'Perdido'
+  ),
+  'perdido',
+  'aplicar_template marca a etapa "Perdido" do funil de venda nova com tipo=perdido'
+);
+select is(
+  (
+    select e.tipo from public.etapas e
+    join public.funis f on f.id = e.funil_id
+    join public.empresa_membros em on em.empresa_id = f.empresa_id
+    where em.usuario_id = 'd0000000-0000-0000-0000-000000000003'
+      and f.tipo = 'renovacao' and e.nome = 'Renovado'
+  ),
+  'ganho',
+  'aplicar_template marca a etapa "Renovado" do funil de renovação com tipo=ganho'
+);
+select is(
+  (
+    select count(*) from public.etapas e
+    join public.funis f on f.id = e.funil_id
+    join public.empresa_membros em on em.empresa_id = f.empresa_id
+    where em.usuario_id = 'd0000000-0000-0000-0000-000000000003' and e.tipo = 'normal'
+  ),
+  8::bigint,
+  'as demais 8 etapas (12 - 2 pares de etapa especial) continuam tipo=normal'
+);
 select is(
   (
     select count(*) from public.motivos_perda mp

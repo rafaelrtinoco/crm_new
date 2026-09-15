@@ -166,7 +166,6 @@ export function Funil() {
               negocioId: negocioEmMovimento.id,
               contatoId: negocioEmMovimento.contatoId,
               etapaId: movimento.etapaId,
-              etapaNome: etapaDestino.nome,
               ...input,
             },
             { onSuccess: () => setMovimento(null) },
