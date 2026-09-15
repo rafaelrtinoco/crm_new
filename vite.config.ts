@@ -9,6 +9,15 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
+      // injectManifest (não generateSW) porque o service worker precisa de
+      // comportamento customizado — ouvir `push` e `notificationclick`
+      // (PRD §6.14) — que o modo automático não permite estender.
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.ts",
+      injectManifest: {
+        globPatterns: ["**/*.{js,css,html,svg,png,ico,woff,woff2}"],
+      },
       includeAssets: ["favicon.svg"],
       manifest: {
         name: "Facility",

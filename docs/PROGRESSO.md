@@ -2,13 +2,36 @@
 
 Log de continuidade entre máquinas/sessões. Atualize a seção "Estado atual" a cada incremento entregue; não precisa reescrever o histórico abaixo dela.
 
-## Estado atual — 2026-09-14
+## Estado atual — 2026-09-15
 
-**Fase 1 — Fundação e núcleo. Segunda rodada de correções de layout, reportadas pelo usuário testando em tela grande.** Sem migration. `lint`/`typecheck`/`test` (25/25)/`build` limpos. **Ainda não testado no navegador nesta sessão** — próximo passo ao retomar.
+**Fase 1 — Fundação e núcleo. 1D-5 (Notificações: central no app + push) implementado — fecha o incremento 1D e a Fase 1 inteira.** Schema novo validado — 102/102 pgTAP (92 anteriores + 10 novas em `notificacoes.sql`); `lint`/`typecheck`/`test` (25/25)/`build` limpos; `npm audit` sem nada novo. **Ainda não testado no navegador nesta sessão** — próximo passo ao retomar. Precisa de configuração manual antes do teste (ver "Pendências conhecidas").
 
-**Bug real encontrado e corrigido:** faltava `min-w-0` na cadeia flex do `AppShell.tsx` (a `<div>` de conteúdo e o `<main>` que envolve o `<Outlet/>`) — item flex tem `min-width: auto` por padrão, recusa encolher abaixo do próprio conteúdo. Quando o kanban de Funis tinha colunas suficientes pra passar da largura da tela, era o container do conteúdo inteiro que se recusava a encolher (em vez de só a faixa de colunas rolar via `overflow-x-auto`, que já existia em `QuadroFunil.tsx`) — por isso a última coluna sumia sem scrollbar. Não era falta de espaço, era esse bug clássico de flexbox.
+**Achado da pesquisa, antes de começar:** o PRD (§9) fecha a Fase 1 só com "PWA instalável" — já pronto desde o 1A. Push de verdade (§6.14) está listado dentro da **Fase 2**, junto com WhatsApp, e boa parte dos gatilhos que o PRD lista ali depende do WhatsApp (que não existe). Perguntei ao usuário como tratar isso — **decisão: construir a central de notificações + push agora, só pros gatilhos que não dependem de WhatsApp** (lead novo, follow-up vencido, resumo diário da tela "Hoje"); os gatilhos dependentes de WhatsApp entram na Fase 2, reaproveitando a mesma tabela.
 
-**Ajustes de gosto do usuário, também aplicados:** `Funil.tsx` voltou a ter a mesma largura das outras telas de navegação (`max-w-7xl`, igual `Inicio`/`ListaContatos`/`ListaVencimentos`/`ListaTarefas`) — o `w-full` sem teto da rodada anterior tinha sido a tentativa errada de resolver o bug do scroll acima, e quebrou a consistência entre telas. Cards de negócio (`CardNegocio.tsx`) ganharam cor por fase — como as etapas são dinâmicas por empresa (vêm do template do nicho), a cor é escolhida pela posição da etapa no funil (não pelo nome), ciclando por 6 matizes do Tailwind (violet/pink/amber/emerald/cyan/fuchsia) que não colidem com os tokens da marca — faixa colorida na borda esquerda + fundo bem sutil da mesma cor, claro e escuro. O destaque de "próximo passo vencido" continua como estava (chip interno em `--urgencia`), os dois sinais convivem sem se atropelar.
+**Primeira vez que o projeto usa Edge Functions, `pg_cron` e `pg_net`** — nenhum dos três existia até agora.
+
+**Schema** (`supabase/migrations/20260915142929_notificacoes.sql`):
+- `push_subscriptions` — 1:1 com o dispositivo do usuário (sem `empresa_id`, mesmo raciocínio de `perfis`), RLS por `usuario_id = auth.uid()`.
+- `notificacoes` — dado de empresa; só criada por funções `security definer` (quem dispara o evento nem sempre é o destinatário). RLS: só o próprio destinatário lê/marca como lida, mesmo dentro da mesma empresa (notificação é pessoal, não por papel).
+- Trigger `notificar_lead_novo()` em `contatos after insert` (status='lead') — notifica o responsável, ou todo dono/gestor se não tiver responsável.
+- Função `gerar_notificacoes_diarias(p_agora timestamptz default now())` — agendada de hora em hora via `cron.schedule`, só age nas empresas cuja hora local (`empresas.fuso`) bate com 8h (evita mandar tudo num horário UTC fixo pra empresas em fusos diferentes); gera resumo diário + follow-up vencido, idempotente (não duplica no mesmo dia). O parâmetro `p_agora` existe só pra viabilizar teste determinístico — pgTAP não tem como "congelar" `now()`.
+
+**Edge Function** (`supabase/functions/enviar-notificacoes-push/`, primeira do projeto) — varre `notificacoes` com `enviada_push_em is null`, resolve as `push_subscriptions` do destinatário e envia via Web Push (`npm:web-push`, Deno via `npm:` specifier — testado e confirmado funcionando: a function sobe, o import resolve, e a cadeia de autorização responde certo em cada etapa). Remove inscrições expiradas (404/410) automaticamente. Protegida por checagem própria de `service_role` (não é rota pra usuário comum disparar).
+
+**Decisão consciente de escopo, não pendência técnica:** o agendamento automático que chamaria essa Edge Function periodicamente (`pg_cron` + `pg_net`) **não foi wireado nesta sessão** — a URL interna que o `pg_net` precisa pra alcançar a function varia de verdade entre local (rede Docker interna do stack) e um projeto hospedado real (que ainda não existe, nem staging nem produção), e eu não tinha como testar essa parte com confiança nesta sessão. Documentado como pendência explícita abaixo, não escondido.
+
+**Service worker customizado:** `VitePWA` migrou de `generateSW` pra `injectManifest` (`src/sw.ts` novo) — o modo automático não permite estender com `push`/`notificationclick`. `src/sw.ts` ficou fora do `tsconfig.app.json` (precisa da lib `WebWorker`, incompatível com a lib `DOM` do resto do app) — `tsconfig.sw.json` novo, referenciado no `tsconfig.json` raiz.
+
+**Frontend:** `src/features/notificacoes/` (slice novo) — sino de notificações no `AppShell` (desktop e mobile), botão "Ativar notificações push" (pede permissão do navegador, assina `PushManager`, salva em `push_subscriptions`).
+
+<details>
+<summary>Histórico — Correções de layout, rodada 2 (2026-09-14)</summary>
+
+Bug real: faltava `min-w-0` na cadeia flex do `AppShell.tsx` (a `<div>` de conteúdo e o `<main>` que envolve o `<Outlet/>`) — item flex tem `min-width: auto` por padrão, recusa encolher abaixo do próprio conteúdo. Quando o kanban de Funis tinha colunas suficientes pra passar da largura da tela, era o container do conteúdo inteiro que se recusava a encolher (em vez de só a faixa de colunas rolar via `overflow-x-auto`, que já existia em `QuadroFunil.tsx`) — por isso a última coluna sumia sem scrollbar.
+
+`Funil.tsx` voltou a ter a mesma largura das outras telas de navegação (`max-w-7xl`) — o `w-full` sem teto da rodada anterior tinha sido a tentativa errada de resolver o bug do scroll acima, e quebrou a consistência entre telas. Cards de negócio (`CardNegocio.tsx`) ganharam cor por fase — como as etapas são dinâmicas por empresa, a cor é escolhida pela posição da etapa no funil, ciclando por 6 matizes do Tailwind que não colidem com os tokens da marca.
+
+</details>
 
 <details>
 <summary>Histórico — Correções de layout, rodada 1 (2026-09-14)</summary>
@@ -248,6 +271,14 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 - `Funil.tsx` voltou a `max-w-7xl` — o `w-full` da rodada 1 tinha sido a tentativa errada de resolver o bug do scroll acima (achava que era falta de espaço), e quebrava a consistência de largura com as outras telas.
 - `CardNegocio.tsx`: cor por fase — 6 matizes do Tailwind (violet/pink/amber/emerald/cyan/fuchsia) ciclando pela **posição** da etapa no funil (etapas são dinâmicas por empresa, não dá pra colorir por nome), faixa na borda esquerda + fundo sutil, claro e escuro. Destaque de "próximo passo vencido" (chip interno `--urgencia`) não mudou.
 
+**1D-5 — notificações (central no app + push):**
+- **Schema novo** (`supabase/migrations/20260915142929_notificacoes.sql`) — `push_subscriptions`, `notificacoes`, trigger `notificar_lead_novo()`, função `gerar_notificacoes_diarias(p_agora timestamptz default now())` + `cron.schedule` de hora em hora. Habilita `pg_cron`/`pg_net` (primeira vez que o projeto usa qualquer um dos dois).
+- **Edge Function nova** (`supabase/functions/enviar-notificacoes-push/`, primeira do projeto) + `supabase/functions/_shared/supabaseAdmin.ts` — envia Web Push via `npm:web-push` (Deno). Testada manualmente com `supabase functions serve` + `curl`: sobe sem erro de import, e a cadeia de autorização responde certo (gateway rejeita JWT malformado → função rejeita quem não é `service_role` → função acusa VAPID não configurado quando chamada como `service_role` de verdade).
+- `vite.config.ts`/`src/sw.ts` (novo) — `VitePWA` migrou de `generateSW` pra `injectManifest`, service worker customizado ouve `push`/`notificationclick`. `tsconfig.sw.json` novo (lib `WebWorker`, incompatível com a lib `DOM` do resto do app).
+- `src/features/notificacoes/` (slice novo) — `api/` (`useNotificacoes`/`useMarcarNotificacaoLida`/`useMarcarTodasLidas`, `usePush` — gerencia a inscrição do `PushManager`), `components/SinoNotificacoes.tsx` (integrado no `AppShell`, desktop e mobile).
+- Fora de escopo, de propósito: gatilhos dependentes de WhatsApp (Fase 2); preferências de notificação por tipo; retry sofisticado de envio (o cron reprocessa pendentes no próximo ciclo, é idempotente).
+- **Decisão consciente, não pendência técnica:** o agendamento automático `pg_cron`→`pg_net` chamando a Edge Function não foi wireado — a URL interna varia entre local e um projeto hospedado real (que ainda não existe), não dava pra testar com confiança nesta sessão. Ver pendência abaixo.
+
 ### Pendências conhecidas
 
 1. **`.env.example` ainda não existe.** Mesmo motivo da sessão anterior (deny de `.claude/settings.json` bloqueia `Write`/`Edit` em `**/.env.*`, sem distinguir `.env.example`). `.env.local` já foi criado manualmente pelo usuário com os valores do Supabase local (confirmado no chat, não verificável por mim — leitura de `.env.local` também é negada pela mesma regra). Conteúdo do `.env.example` que falta criar:
@@ -270,6 +301,16 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 9. **Retrabalho visual (adoção do `ui-ux-pro-max`) validado no navegador pelo usuário** — paleta, tipografia e alternância de tema claro/escuro confirmados funcionando (o alternador só foi ligado ao menu de usuário depois de o usuário notar que não achava onde trocar — `useTema()` existia desde o 1A mas nunca tinha sido chamado por nenhum componente).
 10. **1D-3 (Tarefas) e 1D-4 (Tela "Hoje") validados no navegador pelo usuário.**
 11. **Correções de layout pós-1D-4 (duas rodadas: bug do `--popover`, paleta azul, colunas do kanban sem tingimento, bug do `min-w-0`/scroll do kanban, largura consistente entre telas, cor por fase nos cards de negócio) não foram testadas no navegador ainda** — `lint`/`typecheck`/`test`/`build` passam, mas só foram verificadas por leitura de código nesta sessão.
+12. **1D-5 (Notificações) precisa de configuração manual antes de testar no navegador** — eu não posso criar/editar arquivo `.env*` (mesma regra de permissão de sempre):
+    - `.env.local` (raiz) precisa ganhar `VITE_VAPID_PUBLIC_KEY=BP3YYuwXd-Th9oWilqJBd3LG8zE7wr1ntwjTvOV_v0nJ3crExUgo21hj5KFKhE1RQc7mB4OirYf50ZBu0J1erh8`.
+    - `supabase/functions/.env` (novo arquivo, local-only) precisa existir com:
+      ```
+      VAPID_PUBLIC_KEY=BP3YYuwXd-Th9oWilqJBd3LG8zE7wr1ntwjTvOV_v0nJ3crExUgo21hj5KFKhE1RQc7mB4OirYf50ZBu0J1erh8
+      VAPID_PRIVATE_KEY=8N_eg_ot1EX4uohRZkssE-gVKjRqY12X3PIGThkjpv4
+      VAPID_SUBJECT=mailto:suporte@facility.app
+      ```
+      (chaves geradas nesta sessão via `npx web-push generate-vapid-keys` — únicas pra este projeto, mas ainda assim só pra dev local; gerar um par novo pra staging/produção quando existirem.)
+13. **Agendamento automático da Edge Function de push não foi wireado** (decisão consciente, não bug) — falta um `pg_cron` chamando `enviar-notificacoes-push` via `pg_net`, o que depende da URL interna do stack (diferente em local vs. um projeto hospedado real, que ainda não existe). Até lá, dá pra disparar manualmente: `curl -X POST http://127.0.0.1:54321/functions/v1/enviar-notificacoes-push -H "Authorization: Bearer <service_role key do `supabase status`>"` (com `supabase functions serve` rodando).
 
 ## Próximos passos imediatos (ao retomar, nesta ordem)
 
@@ -277,14 +318,16 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
 2. Abrir o **Docker Desktop** — pré-requisito para tudo abaixo.
 3. `npm install`.
 4. Criar `.env.example` (conteúdo acima) e `.env.local` (mesmo formato, com valores reais — rode `npm run supabase:start` e use a `API_URL`/`ANON_KEY` que ele imprimir).
-5. `npm run db:reset` — aplica as 11 migrations + seed do zero.
-6. `npm run test:db` — roda os 8 arquivos pgTAP (92 asserções). **Portão de aceite.**
+5. `npm run db:reset` — aplica as 12 migrations + seed do zero.
+6. `npm run test:db` — roda os 9 arquivos pgTAP (102 asserções). **Portão de aceite.**
 7. `npm run db:types` — regenera `src/types/database.ts` (já commitado, mas regenere se mudar alguma migration).
 8. `npm run dev` — testar no navegador o fluxo de Importação: em `/contatos/importar`, baixar o modelo, preencher com uma linha válida + uma com CPF inválido + uma duplicada de um contato do seed, subir o CSV, conferir o mapeamento automático, a prévia com os três status, confirmar, e checar que só a válida virou contato (e vencimento, se a coluna de data foi preenchida).
 9. Resolver a pendência de lançamento (`enable_confirmations`) **antes** de criar qualquer projeto Supabase de staging/produção.
 10. **1D-2, 1D-3, 1D-4 e o retrabalho visual (`ui-ux-pro-max`) já validados no navegador.**
 11. Testar as **correções de layout pós-1D-4** no navegador (numa tela grande, é onde o bug de largura apareceu): abrir um `Select`/`DropdownMenu` em claro e escuro — fundo sólido e legível; conferir a paleta azul; abrir `/funis` e conferir que a largura é igual à de `/`, `/contatos`, `/vencimentos`, `/tarefas`, e que — se o funil tiver etapas suficientes — a faixa de colunas rola horizontalmente *dentro* da tela, sem empurrar a página nem cortar a sidebar; conferir que cada etapa colore os cards de negócio de forma diferente (claro e escuro) e que o destaque de próximo-passo-vencido continua visível.
-12. Depois de validado, seguir pro **1D-5** (PWA completo com push) — fecha o incremento 1D inteiro.
+12. Criar `.env.local`/`supabase/functions/.env` com as chaves VAPID (conteúdo na pendência 12 acima) antes de testar o **1D-5**.
+13. Testar o **1D-5** no navegador: logar, clicar no sino → "Ativar notificações push" (o navegador vai pedir permissão); criar um lead sem responsável (como gestor) → conferir notificação na central pro dono e pro gestor; rodar `supabase functions serve` + o `curl` da pendência 13 → conferir que a notificação chega como push do SO e some da lista de pendentes; marcar uma notificação como lida e testar "marcar todas como lidas".
+14. Depois de validado, o **1D inteiro fecha a Fase 1**. Próximo: Fase 2 (WhatsApp e réguas) — precisa de spec própria antes de codar (o PRD já lista os módulos em alto nível, mas os detalhes de conexão com a Meta exigem levantamento à parte, como o próprio PRD pede em §6.7).
 
 ## Roteiro dos incrementos da Fase 1
 
@@ -302,5 +345,5 @@ Toda tabela de dados tem RLS habilitada e política — nenhuma usa `using (true
   - **1D-3 — Tarefas:** CRUD de tarefas (diálogo, não página própria) + concluir/reabrir, vínculo opcional com contato ou negócio, destaque de atraso. Sem migration (schema/RLS já existiam desde o 1A). Implementado e validado no navegador. Cadências ficam pra Fase 2 (dependem de templates de mensagem).
   - **1D-4 — Tela "Hoje":** substitui o placeholder de `Inicio.tsx` — leads sem primeiro contato, follow-ups de hoje/atrasados, negócios com próximo passo vencido, vencimentos pendentes, aniversariantes, cards de resumo, checklist "Primeiros passos" (só os 3 itens viáveis na Fase 1 — decisão tomada com o usuário). Sem migration. Implementado e validado no navegador.
   - **Correções de layout pós-1D-4** (duas rodadas, reportadas pelo usuário): bug do `--popover` faltando (selects/menus transparentes), paleta reclarada pra azul, colunas do kanban sem tingimento de cor; depois, bug do `min-w-0` faltando no `AppShell` (kanban empurrava a página em vez de rolar), largura consistente entre todas as telas de navegação, cor por fase nos cards de negócio. Teste no navegador pendente.
-  - **1D-5 — PWA completo com push** (depende de infra de notificação que ainda não existe). Não iniciado. Última fatia do 1D.
+  - **1D-5 — Notificações (central no app + push):** escopo recortado — só os gatilhos que não dependem de WhatsApp (lead novo, follow-up vencido, resumo diário). Primeira vez que o projeto usa Edge Functions/`pg_cron`/`pg_net`. Implementado, validado por pgTAP (102/102) + lint/typecheck/build; teste no navegador pendente (precisa das chaves VAPID em `.env.local`/`supabase/functions/.env` primeiro). Agendamento automático da Edge Function via `pg_cron`→`pg_net` fica pendente de propósito — depende da URL de um projeto Supabase hospedado real, que ainda não existe. **Fecha o 1D inteiro — e a Fase 1.**
   - **Diretriz do usuário pro visual (vale pro 1D inteiro, não só 1D-1):** atual, sem cara de IA, padrão de produto SaaS de verdade — não os defaults genéricos do shadcn/ui. Registrada na memória de projeto `project_1d_visual_design`.

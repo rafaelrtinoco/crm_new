@@ -895,6 +895,53 @@ export type Database = {
         }
         Relationships: []
       }
+      notificacoes: {
+        Row: {
+          corpo: string
+          created_at: string
+          destinatario_id: string
+          empresa_id: string
+          enviada_push_em: string | null
+          id: string
+          lida_em: string | null
+          tipo: string
+          titulo: string
+          url: string | null
+        }
+        Insert: {
+          corpo: string
+          created_at?: string
+          destinatario_id: string
+          empresa_id: string
+          enviada_push_em?: string | null
+          id?: string
+          lida_em?: string | null
+          tipo: string
+          titulo: string
+          url?: string | null
+        }
+        Update: {
+          corpo?: string
+          created_at?: string
+          destinatario_id?: string
+          empresa_id?: string
+          enviada_push_em?: string | null
+          id?: string
+          lida_em?: string | null
+          tipo?: string
+          titulo?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notificacoes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       perfis: {
         Row: {
           created_at: string
@@ -936,6 +983,39 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          usuario_id?: string
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          updated_at: string
+          user_agent: string | null
+          usuario_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          updated_at?: string
+          user_agent?: string | null
+          usuario_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          updated_at?: string
+          user_agent?: string | null
           usuario_id?: string
         }
         Relationships: []
@@ -1191,6 +1271,10 @@ export type Database = {
       criar_empresa_com_onboarding: {
         Args: { p_aceite_termos: boolean; p_nicho: string; p_nome: string }
         Returns: string
+      }
+      gerar_notificacoes_diarias: {
+        Args: { p_agora?: string }
+        Returns: undefined
       }
       is_membro: { Args: { p_empresa_id: string }; Returns: boolean }
       marcar_negocio_ganho: {

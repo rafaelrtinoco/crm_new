@@ -16,6 +16,7 @@ import { supabase } from "@/lib/supabase";
 import { useTema } from "@/app/useTema";
 import { useAuth } from "@/features/auth/api/useAuth";
 import { useEmpresaAtual, useEmpresas } from "@/features/onboarding/api/useEmpresas";
+import { SinoNotificacoes } from "@/features/notificacoes/components/SinoNotificacoes";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -148,11 +149,11 @@ export function AppShell() {
           ))}
         </nav>
 
-        <div className="border-t border-border p-3">
+        <div className="flex items-center gap-1 border-t border-border p-3">
           <MenuUsuario>
             <button
               type="button"
-              className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left hover:bg-accent"
+              className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-2 text-left hover:bg-accent"
             >
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
                 {iniciais(nomeUsuario)}
@@ -162,6 +163,7 @@ export function AppShell() {
               </span>
             </button>
           </MenuUsuario>
+          <SinoNotificacoes empresaId={atual?.empresaId ?? null} />
         </div>
       </aside>
 
@@ -171,14 +173,17 @@ export function AppShell() {
           <p className="font-display text-base font-medium text-sidebar-foreground">
             {atual?.nome}
           </p>
-          <MenuUsuario>
-            <button
-              type="button"
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground"
-            >
-              {iniciais(nomeUsuario)}
-            </button>
-          </MenuUsuario>
+          <div className="flex items-center gap-1">
+            <SinoNotificacoes empresaId={atual?.empresaId ?? null} />
+            <MenuUsuario>
+              <button
+                type="button"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground"
+              >
+                {iniciais(nomeUsuario)}
+              </button>
+            </MenuUsuario>
+          </div>
         </header>
 
         <main className="min-w-0 flex-1 pb-16 md:pb-0">
