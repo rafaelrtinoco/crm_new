@@ -18,7 +18,7 @@ Aprovado pelo usuário em 2026-09-16. Escopo e o que fica de fora: `docs/decisoe
 
 ## Specs dos módulos
 
-- `SPEC-fila-envios.md` — escrito e aprovado (2026-09-16); ver também `docs/decisoes/0005-fila-envios-worker-em-postgres.md`
+- `SPEC-fila-envios.md` — **implementado** (2026-09-16); ver também `docs/decisoes/0005-fila-envios-worker-em-postgres.md` e a seção "Correções aplicadas na implementação" no próprio spec
 - `SPEC-segmentos.md` — escrito e aprovado (2026-09-16)
 - `SPEC-captura-leads.md` — escrito e aprovado (2026-09-16)
 - `SPEC-campanhas.md` — escrito e aprovado (2026-09-16)

@@ -29,6 +29,7 @@ import { useAtividades, useRegistrarAtividade } from "@/features/contatos/api/us
 import { useContato } from "@/features/contatos/api/useContatos";
 import { useExcluirContato } from "@/features/contatos/api/useMutacoesContato";
 import { useTagsDoContato } from "@/features/contatos/api/useTags";
+import { CardConsentimento } from "@/features/contatos/components/CardConsentimento";
 import { TimelineContato } from "@/features/contatos/components/TimelineContato";
 import { useVencimentos } from "@/features/vencimentos/api/useVencimentos";
 import { useNegociosDoContato } from "@/features/funis/api/useNegocios";
@@ -244,6 +245,9 @@ export function DetalheContato() {
                   ? formatarDataBR(contato.ultimoContatoEm.slice(0, 10))
                   : "—"}
               </p>
+              {atual?.empresaId && id && (
+                <CardConsentimento empresaId={atual.empresaId} contatoId={id} />
+              )}
             </TabsContent>
             <TabsContent value="timeline">
               <TimelineContato atividades={atividades ?? []} />

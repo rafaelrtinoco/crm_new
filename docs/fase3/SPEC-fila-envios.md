@@ -86,3 +86,15 @@ pgTAP (`supabase/tests/fila_envios.sql`), cobrindo pelo menos:
 ## Open Questions
 
 Nenhuma pendente — as três decisões de arquitetura (checagens de plano, status do mock, agendamento) foram fechadas com o usuário antes deste spec (ver ADR 0005 e o resumo em "Decisões que fecham este spec").
+
+## Correções aplicadas na implementação (2026-09-16)
+
+A exploração de código antes de implementar encontrou 5 pontos que este spec não previu corretamente. Documentado aqui porque o spec é um documento vivo — a migration `20260916192944_fila_envios.sql` é a fonte da verdade final.
+
+1. **`enfileirar_envio` é `security definer`, não `security invoker`.** O texto original se contradizia (tabela sem policy de `insert` pra `authenticated`, mas função `invoker` seria barrada pela própria RLS). Corrigido pro mesmo padrão de `excluir_registro`: `security definer` + checagem explícita de `pode_acessar_responsavel` no corpo.
+2. **Consentimento por finalidade, decidido com o usuário:** `marketing` exige registro `concedido = true`; `atendimento` passa salvo opt-out explícito (`concedido = false` mais recente). Dois motivos de bloqueio distintos: `sem_consentimento_marketing` (sem registro nenhum) e `optout` (registro mais recente negativo).
+3. **Nada no produto criava registros em `consentimentos`** antes desta implementação — a tabela existia desde o 1A sem hook/tela/seed. Resolvido como fatia extra deste módulo: `CardConsentimento` na ficha do contato (`src/features/contatos/components/CardConsentimento.tsx`), com `useConsentimentos`/`useRegistrarConsentimento` em `src/features/contatos/api/useConsentimentos.ts`.
+4. **`processar_fila_envios` processa em lote**, `p_limite integer default 200` — decidido com o usuário, evita transação longa e entrega o limite de velocidade do PRD §6.9 de graça.
+5. **Dois bloqueios que o spec não previu**, mesma família do bug que a revisão da ADR 0003 encontrou (RLS não protege dentro de função `security definer`): `contato_excluido` (contato soft-deletado depois de enfileirado, antes do worker rodar) e `sem_endereco_email`/`sem_endereco_whatsapp` (contato sem telefone/e-mail no canal do envio).
+
+Também ganhou `updated_at` + trigger (exigido pelo checklist de `.claude/rules/Supabase.md`, omitido no texto original), e dois índices em vez de um (`(empresa_id)` pra leitura via RLS, `(status, agendado_para) where status='pendente'` pro worker — que varre todas as empresas de uma vez, sem filtrar por `empresa_id`).

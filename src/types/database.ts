@@ -639,6 +639,81 @@ export type Database = {
           },
         ]
       }
+      fila_envios: {
+        Row: {
+          agendado_para: string
+          assunto: string | null
+          canal: string
+          chave_idempotencia: string
+          contato_id: string
+          conteudo: string
+          created_at: string
+          created_by: string | null
+          empresa_id: string
+          finalidade: string
+          id: string
+          motivo_bloqueio: string | null
+          origem_id: string
+          origem_tipo: string
+          processado_em: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          agendado_para?: string
+          assunto?: string | null
+          canal: string
+          chave_idempotencia: string
+          contato_id: string
+          conteudo: string
+          created_at?: string
+          created_by?: string | null
+          empresa_id: string
+          finalidade: string
+          id?: string
+          motivo_bloqueio?: string | null
+          origem_id: string
+          origem_tipo: string
+          processado_em?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          agendado_para?: string
+          assunto?: string | null
+          canal?: string
+          chave_idempotencia?: string
+          contato_id?: string
+          conteudo?: string
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          finalidade?: string
+          id?: string
+          motivo_bloqueio?: string | null
+          origem_id?: string
+          origem_tipo?: string
+          processado_em?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fila_envios_empresa_contato_id_fkey"
+            columns: ["empresa_id", "contato_id"]
+            isOneToOne: false
+            referencedRelation: "contatos"
+            referencedColumns: ["empresa_id", "id"]
+          },
+          {
+            foreignKeyName: "fila_envios_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       funis: {
         Row: {
           ativo: boolean
@@ -1538,6 +1613,24 @@ export type Database = {
         Args: { p_aceite_termos: boolean; p_nicho: string; p_nome: string }
         Returns: string
       }
+      dentro_horario_comercial: {
+        Args: { p_empresa_id: string; p_momento: string }
+        Returns: boolean
+      }
+      enfileirar_envio: {
+        Args: {
+          p_agendado_para?: string
+          p_assunto?: string
+          p_canal: string
+          p_chave_idempotencia: string
+          p_contato_id: string
+          p_conteudo: string
+          p_finalidade: string
+          p_origem_id: string
+          p_origem_tipo: string
+        }
+        Returns: string
+      }
       excluir_registro: {
         Args: { p_id: string; p_tabela: string }
         Returns: undefined
@@ -1559,6 +1652,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      mock_enviar_mensagem: {
+        Args: { p_canal: string; p_conteudo: string }
+        Returns: boolean
+      }
       mover_negocio_etapa: {
         Args: {
           p_etapa_id: string
@@ -1571,6 +1668,18 @@ export type Database = {
       pode_acessar_responsavel: {
         Args: { p_empresa_id: string; p_responsavel_id: string }
         Returns: boolean
+      }
+      processar_fila_envios: {
+        Args: { p_agora?: string; p_limite?: number }
+        Returns: {
+          bloqueadas: number
+          enviadas: number
+          reagendadas: number
+        }[]
+      }
+      proximo_horario_comercial: {
+        Args: { p_empresa_id: string; p_momento: string }
+        Returns: string
       }
       renovar_vencimento: {
         Args: {
