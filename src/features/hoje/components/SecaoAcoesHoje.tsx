@@ -12,7 +12,7 @@ export function SecaoAcoesHoje({ titulo, quantidade, children }: SecaoProps) {
   if (quantidade === 0) return null;
   return (
     <section className="space-y-2">
-      <h2 className="text-sm font-semibold text-muted-foreground">
+      <h2 className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
         {titulo} <span className="text-foreground">({quantidade})</span>
       </h2>
       <div className="space-y-2">{children}</div>

@@ -18,15 +18,18 @@ interface Props {
  * Identificação visual por fase — puramente decorativa, não carrega
  * significado de ação/estado (por isso não usa `primary`/`accent`).
  * Cicla pela posição da etapa no funil, já que etapas são dinâmicas
- * por empresa (vêm do template do nicho).
+ * por empresa (vêm do template do nicho). Evita âmbar/esmeralda/rosa —
+ * são os tokens semânticos de warning/success/danger do design system
+ * (docs/design-system.md); reaproveitar essas cores aqui de forma
+ * decorativa confundiria ("esse card tá verde, é sucesso?").
  */
 const CORES_ETAPA = [
   "border-l-violet-500 bg-violet-50 dark:border-l-violet-400 dark:bg-violet-950/30",
   "border-l-pink-500 bg-pink-50 dark:border-l-pink-400 dark:bg-pink-950/30",
-  "border-l-amber-500 bg-amber-50 dark:border-l-amber-400 dark:bg-amber-950/30",
-  "border-l-emerald-500 bg-emerald-50 dark:border-l-emerald-400 dark:bg-emerald-950/30",
-  "border-l-cyan-500 bg-cyan-50 dark:border-l-cyan-400 dark:bg-cyan-950/30",
   "border-l-fuchsia-500 bg-fuchsia-50 dark:border-l-fuchsia-400 dark:bg-fuchsia-950/30",
+  "border-l-teal-500 bg-teal-50 dark:border-l-teal-400 dark:bg-teal-950/30",
+  "border-l-purple-500 bg-purple-50 dark:border-l-purple-400 dark:bg-purple-950/30",
+  "border-l-lime-500 bg-lime-50 dark:border-l-lime-400 dark:bg-lime-950/30",
 ];
 
 /** Card arrastável do quadro (PRD §6.5) — cor por fase, dias parado na etapa e destaque de urgência. */

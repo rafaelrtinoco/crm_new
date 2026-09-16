@@ -1,3 +1,4 @@
+import { CalendarPlus, PieChart as PieChartIcon } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -11,6 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import type { ResumoNumeros, VencimentoPorSemana } from "@/features/hoje/api/useResumoHoje";
 
 interface Props {
@@ -18,8 +20,8 @@ interface Props {
   vencimentosPorSemana: VencimentoPorSemana[];
 }
 
-const COR_RENOVADO = "hsl(var(--primary))";
-const COR_NAO_RENOVADO = "hsl(var(--urgencia))";
+const COR_RENOVADO = "hsl(var(--success))";
+const COR_NAO_RENOVADO = "hsl(var(--destructive))";
 
 /** Gráficos da tela "Hoje" — vencimentos das próximas semanas e taxa de renovação do mês. */
 export function GraficoResumo({ resumo, vencimentosPorSemana }: Props) {
@@ -32,9 +34,11 @@ export function GraficoResumo({ resumo, vencimentosPorSemana }: Props) {
 
   return (
     <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-      <Card>
+      <Card variant="destaque">
         <CardHeader className="pb-0">
-          <CardTitle className="text-sm font-semibold">Vencimentos nas próximas semanas</CardTitle>
+          <CardTitle className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+            Vencimentos nas próximas semanas
+          </CardTitle>
         </CardHeader>
         <CardContent className="pt-4">
           {temVencimentos ? (
@@ -74,16 +78,21 @@ export function GraficoResumo({ resumo, vencimentosPorSemana }: Props) {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <p className="py-12 text-center text-sm text-muted-foreground">
-              Nenhum vencimento nos próximos 30 dias.
-            </p>
+            <EmptyState
+              icone={CalendarPlus}
+              titulo="Nenhum vencimento nos próximos 30 dias"
+              acao={{ rotulo: "+ Adicionar vencimento", href: "/vencimentos/novo" }}
+              className="p-4"
+            />
           )}
         </CardContent>
       </Card>
 
-      <Card>
+      <Card variant="destaque">
         <CardHeader className="pb-0">
-          <CardTitle className="text-sm font-semibold">Taxa de renovação do mês</CardTitle>
+          <CardTitle className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+            Taxa de renovação do mês
+          </CardTitle>
         </CardHeader>
         <CardContent className="flex items-center gap-4 pt-4">
           {temRenovacao ? (
@@ -123,9 +132,12 @@ export function GraficoResumo({ resumo, vencimentosPorSemana }: Props) {
               </div>
             </>
           ) : (
-            <p className="py-12 text-center text-sm text-muted-foreground">
-              Nenhum vencimento resolvido este mês ainda.
-            </p>
+            <EmptyState
+              icone={PieChartIcon}
+              titulo="Nenhum vencimento resolvido este mês ainda"
+              acao={{ rotulo: "+ Adicionar vencimento", href: "/vencimentos/novo" }}
+              className="p-4"
+            />
           )}
         </CardContent>
       </Card>

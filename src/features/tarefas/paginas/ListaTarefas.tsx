@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
+import { ListChecks, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Select,
   SelectContent,
@@ -79,13 +81,18 @@ export function ListaTarefas() {
     <main className="mx-auto max-w-7xl space-y-4 p-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">{vocabulario.tarefaPlural}</h1>
-        <Button onClick={abrirNova}>Nova {vocabulario.tarefa.toLowerCase()}</Button>
+        <div className="ml-auto flex items-center gap-2">
+          <Button onClick={abrirNova}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nova {vocabulario.tarefa.toLowerCase()}
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2">
         <Select value={status} onValueChange={(v) => setStatus(v as FiltrosTarefas["status"])}>
-          <SelectTrigger className="w-40">
-            <SelectValue />
+          <SelectTrigger className="w-40 max-w-[180px]">
+            <SelectValue className="truncate" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="pendente">Pendentes</SelectItem>
@@ -94,8 +101,8 @@ export function ListaTarefas() {
           </SelectContent>
         </Select>
         <Select value={tipo} onValueChange={setTipo}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Tipo" />
+          <SelectTrigger className="w-40 max-w-[180px]">
+            <SelectValue className="truncate" placeholder="Tipo" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={SEM_FILTRO}>Qualquer tipo</SelectItem>
@@ -108,8 +115,8 @@ export function ListaTarefas() {
         </Select>
         {membros && membros.length > 0 && (
           <Select value={responsavelId} onValueChange={setResponsavelId}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Responsável" />
+            <SelectTrigger className="w-48 max-w-[180px]">
+              <SelectValue className="truncate" placeholder="Responsável" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={SEM_FILTRO}>Qualquer responsável</SelectItem>
@@ -126,9 +133,12 @@ export function ListaTarefas() {
       {isLoading && <p className="text-sm text-muted-foreground">Carregando…</p>}
 
       {!isLoading && tarefas && tarefas.length === 0 && (
-        <p className="text-sm text-muted-foreground">
-          Nenhuma {vocabulario.tarefa.toLowerCase()} por aqui. Que tal criar a primeira?
-        </p>
+        <EmptyState
+          icone={ListChecks}
+          titulo={`Nenhuma ${vocabulario.tarefa.toLowerCase()} por aqui`}
+          descricao={`Que tal criar a primeira ${vocabulario.tarefa.toLowerCase()}?`}
+          acao={{ rotulo: `Nova ${vocabulario.tarefa.toLowerCase()}`, onClick: abrirNova }}
+        />
       )}
 
       {!isLoading && grupos && (

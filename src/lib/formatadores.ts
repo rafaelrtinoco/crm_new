@@ -72,3 +72,14 @@ export function validarCNPJ(valor: string): boolean {
   const dv2 = digitoVerificador(digitos, [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
   return Number(digitos[12]) === dv1 && Number(digitos[13]) === dv2;
 }
+
+/**
+ * Maiúscula só a primeira letra da frase — diferente do `capitalize` do
+ * Tailwind (`text-transform: capitalize`), que maiúscula toda palavra.
+ * Usado em textos que vêm em minúsculo do `Intl.DateTimeFormat`
+ * (`pt-BR` devolve "qua., 16 de set.", não "Qua., 16 De Set.").
+ */
+export function capitalizarPrimeiraLetra(texto: string): string {
+  if (!texto) return texto;
+  return texto[0]?.toUpperCase() + texto.slice(1);
+}

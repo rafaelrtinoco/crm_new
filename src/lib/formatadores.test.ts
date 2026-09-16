@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  capitalizarPrimeiraLetra,
   formatarBRL,
   formatarCEP,
   formatarCNPJ,
@@ -9,6 +10,17 @@ import {
   validarCNPJ,
   validarCPF,
 } from "./formatadores";
+
+describe("capitalizarPrimeiraLetra", () => {
+  it("maiúscula só a primeira letra, não cada palavra", () => {
+    expect(capitalizarPrimeiraLetra("qua., 16 de set.")).toBe("Qua., 16 de set.");
+    expect(capitalizarPrimeiraLetra("setembro de 2026")).toBe("Setembro de 2026");
+  });
+
+  it("string vazia continua vazia", () => {
+    expect(capitalizarPrimeiraLetra("")).toBe("");
+  });
+});
 
 describe("formatarBRL", () => {
   it("formata número como moeda BRL", () => {

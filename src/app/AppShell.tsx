@@ -1,12 +1,16 @@
-import { type ReactNode } from "react";
-import { NavLink, Navigate, Outlet } from "react-router-dom";
+import { useMemo, useState, type ReactNode } from "react";
+import { Link, NavLink, Navigate, Outlet } from "react-router-dom";
 import {
   CalendarClock,
+  CalendarDays,
   ChevronsUpDown,
+  ChevronUp,
   Home,
   ListChecks,
   LogOut,
   Moon,
+  Plus,
+  Search,
   Sun,
   Users,
   Workflow,
@@ -14,9 +18,16 @@ import {
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { useTema } from "@/app/useTema";
+import { useRelogio } from "@/app/useRelogio";
+import { useVocabulario } from "@/lib/vocabulario";
+import { formatarDataHoraFuso, gradeCalendario, hojeNoFuso } from "@/lib/datas";
+import { capitalizarPrimeiraLetra } from "@/lib/formatadores";
 import { useAuth } from "@/features/auth/api/useAuth";
 import { useEmpresaAtual, useEmpresas } from "@/features/onboarding/api/useEmpresas";
 import { SinoNotificacoes } from "@/features/notificacoes/components/SinoNotificacoes";
+import { DialogoTarefa } from "@/features/tarefas/components/DialogoTarefa";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +36,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const itensNav = [
   { rotulo: "Início", rota: "/", Icone: Home },
@@ -48,8 +60,13 @@ function ItemNav({ rota, rotulo, Icone }: { rota: string; rotulo: string; Icone:
       end={rota === "/"}
       className={({ isActive }) =>
         cn(
-          "flex items-center gap-3 rounded-md border-l-2 border-transparent px-3 py-2 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-accent hover:text-accent-foreground",
-          isActive && "border-l-primary bg-accent text-accent-foreground",
+          // Sidebar é sempre escura (claro ou escuro) — hover em
+          // opacidade sobre sidebar-foreground, não `accent` (que
+          // pressupõe fundo claro). Item ativo vira pílula com o glow
+          // do design system, não mais borda esquerda.
+          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-sidebar-foreground/70 transition-all duration-150 ease-in-out hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground",
+          isActive &&
+            "bg-primary text-primary-foreground shadow-sidebar-active hover:bg-primary hover:text-primary-foreground",
         )
       }
     >
@@ -84,7 +101,19 @@ function TrocadorEmpresa({ children }: { children: ReactNode }) {
   );
 }
 
-function MenuUsuario({ children }: { children: ReactNode }) {
+interface MenuUsuarioProps {
+  children: ReactNode;
+  side?: "top" | "bottom" | "left" | "right";
+  align?: "start" | "center" | "end";
+}
+
+/**
+ * "Meu Perfil"/"Configurações"/"Assinatura" ficam desabilitados de
+ * propósito — sinalizam que vão existir sem fingir que já funcionam.
+ * Nenhuma das três telas existe ainda (Configurações é módulo inteiro
+ * do PRD §6.15; Assinatura é Fase 4 explícita).
+ */
+function MenuUsuario({ children, side = "bottom", align = "end" }: MenuUsuarioProps) {
   const { usuario } = useAuth();
   const { tema, alternar } = useTema();
   const nome =
@@ -93,8 +122,12 @@ function MenuUsuario({ children }: { children: ReactNode }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent side={side} align={align} className="w-56">
         <DropdownMenuLabel className="truncate">{nome}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem disabled>Meu Perfil</DropdownMenuItem>
+        <DropdownMenuItem disabled>Configurações</DropdownMenuItem>
+        <DropdownMenuItem disabled>Assinatura</DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={alternar}>
           {tema === "escuro" ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
@@ -109,10 +142,129 @@ function MenuUsuario({ children }: { children: ReactNode }) {
   );
 }
 
+const DIAS_SEMANA = ["D", "S", "T", "Q", "Q", "S", "S"];
+
+interface RelogioCalendarioProps {
+  fuso: string;
+}
+
+/**
+ * Relógio da topbar — data/hora sempre no fuso da EMPRESA
+ * (`empresas.fuso`), nunca no do navegador, mesma regra que já vale pra
+ * "hoje" em toda a tela Hoje/réguas (`hojeNoFuso`). O calendário que
+ * abre é só consulta visual (mês atual, hoje destacado) — clicar num
+ * dia não faz nada, decisão tomada com o usuário: não existe (ainda)
+ * nenhuma visão de calendário no produto pra linkar.
+ */
+function RelogioCalendario({ fuso }: RelogioCalendarioProps) {
+  const agora = useRelogio();
+  const hoje = hojeNoFuso(fuso);
+  const [ano, mes] = hoje.split("-").map(Number) as [number, number];
+
+  const grade = useMemo(() => gradeCalendario(ano, mes - 1), [ano, mes]);
+  const nomeMes = useMemo(
+    () =>
+      new Intl.DateTimeFormat("pt-BR", {
+        month: "long",
+        year: "numeric",
+        timeZone: "UTC",
+      }).format(new Date(Date.UTC(ano, mes - 1, 1))),
+    [ano, mes],
+  );
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-all duration-150 ease-in-out hover:bg-accent hover:text-accent-foreground"
+        >
+          <CalendarDays className="h-4 w-4" />
+          <span>{capitalizarPrimeiraLetra(formatarDataHoraFuso(agora, fuso))}</span>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-64">
+        <p className="mb-2 text-center text-sm font-semibold">
+          {capitalizarPrimeiraLetra(nomeMes)}
+        </p>
+        <div className="grid grid-cols-7 gap-y-1 text-center text-xs text-muted-foreground">
+          {DIAS_SEMANA.map((dia, indice) => (
+            <span key={`${dia}-${indice}`}>{dia}</span>
+          ))}
+          {grade.map((dia) => (
+            <span
+              key={dia.data}
+              className={cn(
+                "mx-auto flex h-7 w-7 items-center justify-center rounded-full text-xs text-foreground",
+                !dia.noMes && "text-muted-foreground/40",
+                dia.data === hoje && "bg-primary font-semibold text-primary-foreground",
+              )}
+            >
+              {Number(dia.data.slice(-2))}
+            </span>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+interface TopoDesktopProps {
+  fuso: string;
+  onNovaTarefa: () => void;
+}
+
+/**
+ * Busca é só o campo visual por enquanto (lupa + placeholder) — sem
+ * buscar nada ainda. A busca global de verdade (PRD §4: por nome,
+ * telefone, e-mail, CPF/CNPJ) é um próximo passo à parte, não desta
+ * rodada.
+ */
+function TopoDesktop({ fuso, onNovaTarefa }: TopoDesktopProps) {
+  const vocabulario = useVocabulario();
+
+  return (
+    <header className="hidden shrink-0 items-center gap-3 border-b border-border bg-background px-6 py-3 md:flex">
+      <div className="relative max-w-sm flex-1">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input placeholder="Buscar... Ctrl+K" className="pl-9" />
+      </div>
+      {/* ml-auto: empurra o grupo pro canto direito, longe da busca —
+          o relógio fica por último, no canto de verdade. */}
+      <div className="ml-auto flex items-center gap-3">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Criar
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <Link to="/contatos/novo">Novo {vocabulario.contato.toLowerCase()}</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/vencimentos/novo">Novo {vocabulario.vencimento.toLowerCase()}</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={onNovaTarefa}>
+              Nova {vocabulario.tarefa.toLowerCase()}
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/funis/negocios/novo">Novo {vocabulario.negocio.toLowerCase()}</Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <RelogioCalendario fuso={fuso} />
+      </div>
+    </header>
+  );
+}
+
 export function AppShell() {
   const { isLoading } = useEmpresas();
   const { empresas, atual } = useEmpresaAtual();
   const { usuario } = useAuth();
+  const [dialogoTarefaAberto, setDialogoTarefaAberto] = useState(false);
 
   if (isLoading) return null;
   if (empresas.length === 0) return <Navigate to="/onboarding" replace />;
@@ -121,17 +273,17 @@ export function AppShell() {
     (usuario?.user_metadata as { nome?: string } | undefined)?.nome ?? usuario?.email ?? "";
 
   return (
-    <div className="min-h-screen bg-background md:flex">
+    <div className="flex h-screen overflow-hidden bg-background">
       {/* Sidebar — desktop */}
-      <aside className="hidden w-60 shrink-0 flex-col border-r border-border bg-sidebar md:flex">
+      <aside className="hidden w-60 shrink-0 flex-col border-r border-sidebar-foreground/10 bg-sidebar md:flex">
         <div className="px-4 pb-4 pt-5">
           <TrocadorEmpresa>
             <button
               type="button"
-              className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left hover:bg-accent"
+              className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left transition-all duration-150 ease-in-out hover:bg-sidebar-foreground/10"
             >
               <div>
-                <p className="font-display text-lg font-medium leading-tight text-sidebar-foreground">
+                <p className="font-display text-lg font-extrabold tracking-[-0.02em] leading-tight text-sidebar-foreground">
                   Facility
                 </p>
                 <p className="truncate text-xs text-muted-foreground">{atual?.nome}</p>
@@ -149,28 +301,29 @@ export function AppShell() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-1 border-t border-border p-3">
-          <MenuUsuario>
+        <div className="flex items-center gap-1 border-t border-sidebar-foreground/10 p-3">
+          <MenuUsuario side="top" align="start">
             <button
               type="button"
-              className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-2 text-left hover:bg-accent"
+              className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-2 text-left transition-all duration-150 ease-in-out hover:bg-sidebar-foreground/10"
             >
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
                 {iniciais(nomeUsuario)}
               </span>
-              <span className="truncate text-sm font-medium text-sidebar-foreground">
+              <span className="min-w-0 flex-1 truncate text-sm font-medium text-sidebar-foreground">
                 {nomeUsuario}
               </span>
+              <ChevronUp className="h-4 w-4 shrink-0 text-sidebar-foreground/50" />
             </button>
           </MenuUsuario>
           <SinoNotificacoes empresaId={atual?.empresaId ?? null} />
         </div>
       </aside>
 
-      <div className="flex min-h-screen w-full min-w-0 flex-col md:min-h-0">
+      <div className="flex h-full min-h-0 w-full min-w-0 flex-col">
         {/* Barra superior — mobile */}
-        <header className="flex items-center justify-between border-b border-border bg-sidebar px-4 py-3 md:hidden">
-          <p className="font-display text-base font-medium text-sidebar-foreground">
+        <header className="flex shrink-0 items-center justify-between border-b border-sidebar-foreground/10 bg-sidebar px-4 py-3 md:hidden">
+          <p className="font-display text-base font-extrabold tracking-[-0.02em] text-sidebar-foreground">
             {atual?.nome}
           </p>
           <div className="flex items-center gap-1">
@@ -186,12 +339,18 @@ export function AppShell() {
           </div>
         </header>
 
-        <main className="min-w-0 flex-1 pb-16 md:pb-0">
+        {/* Topbar — desktop, busca + relógio + criar, presente em toda tela. */}
+        <TopoDesktop
+          fuso={atual?.fuso ?? "America/Sao_Paulo"}
+          onNovaTarefa={() => setDialogoTarefaAberto(true)}
+        />
+
+        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto pb-16 md:pb-0">
           <Outlet />
         </main>
 
         {/* Abas inferiores — mobile */}
-        <nav className="fixed inset-x-0 bottom-0 z-10 flex border-t border-border bg-sidebar md:hidden">
+        <nav className="fixed inset-x-0 bottom-0 z-10 flex border-t border-sidebar-foreground/10 bg-sidebar md:hidden">
           {itensNav.map(({ rota, rotulo, Icone }) => (
             <NavLink
               key={rota}
@@ -210,6 +369,8 @@ export function AppShell() {
           ))}
         </nav>
       </div>
+
+      <DialogoTarefa open={dialogoTarefaAberto} onOpenChange={setDialogoTarefaAberto} />
     </div>
   );
 }

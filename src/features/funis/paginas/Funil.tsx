@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -58,24 +59,25 @@ export function Funil() {
   const etapaDestino = etapas?.find((e) => e.id === movimento?.etapaId) ?? null;
 
   return (
-    <main className="mx-auto max-w-7xl space-y-4 p-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+    <main className="mx-auto flex h-full min-h-0 max-w-7xl flex-col space-y-4 p-4">
+      <div className="shrink-0 flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-semibold">{vocabulario.negocioPlural}</h1>
         <Button asChild>
           <Link to={`/funis/negocios/novo${funilId ? `?funilId=${funilId}` : ""}`}>
+            <Plus className="mr-2 h-4 w-4" />
             Novo {vocabulario.negocio.toLowerCase()}
           </Link>
         </Button>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex shrink-0 flex-wrap items-center gap-2">
         {funis && funis.length > 1 && (
           <Select
             value={funilId ?? undefined}
             onValueChange={(id) => setSearchParams({ funilId: id })}
           >
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Funil" />
+            <SelectTrigger className="w-48 max-w-[180px]">
+              <SelectValue className="truncate" placeholder="Funil" />
             </SelectTrigger>
             <SelectContent>
               {funis.map((funil) => (
@@ -87,8 +89,8 @@ export function Funil() {
           </Select>
         )}
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Status" />
+          <SelectTrigger className="w-40 max-w-[180px]">
+            <SelectValue className="truncate" placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="aberto">Abertos</SelectItem>
@@ -99,8 +101,8 @@ export function Funil() {
         </Select>
         {membros && membros.length > 0 && (
           <Select value={responsavelId} onValueChange={setResponsavelId}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Responsável" />
+            <SelectTrigger className="w-48 max-w-[180px]">
+              <SelectValue className="truncate" placeholder="Responsável" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={SEM_FILTRO}>Qualquer responsável</SelectItem>
@@ -132,13 +134,15 @@ export function Funil() {
 
       {etapas && negocios && (
         <>
-          {/* Mobile: sempre em lista — arrastar colunas em tela pequena é ruim. */}
+          {/* Mobile: sempre em lista — arrastar colunas em tela pequena é ruim.
+              Scroll de página normal, sem altura fixa. */}
           <div className="md:hidden">
             <ListaNegocios negocios={negocios} etapas={etapas} hoje={hoje} />
           </div>
 
-          {/* Desktop: quadro ou lista, conforme o alternador acima. */}
-          <div className="hidden md:block">
+          {/* Desktop: quadro (altura fixa, scroll interno por coluna) ou
+              lista (scroll de página normal). */}
+          <div className="hidden min-h-0 flex-1 md:block">
             {visao === "quadro" ? (
               <QuadroFunil
                 etapas={etapas}

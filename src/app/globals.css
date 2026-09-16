@@ -1,5 +1,11 @@
-@import "@fontsource/calistoga/latin-400.css";
-@import "@fontsource/calistoga/latin-ext-400.css";
+@import "@fontsource/plus-jakarta-sans/latin-400.css";
+@import "@fontsource/plus-jakarta-sans/latin-500.css";
+@import "@fontsource/plus-jakarta-sans/latin-600.css";
+@import "@fontsource/plus-jakarta-sans/latin-700.css";
+@import "@fontsource/plus-jakarta-sans/latin-800.css";
+@import "@fontsource/plus-jakarta-sans/latin-ext-400.css";
+@import "@fontsource/plus-jakarta-sans/latin-ext-700.css";
+@import "@fontsource/plus-jakarta-sans/latin-ext-800.css";
 @import "@fontsource/inter/latin-400.css";
 @import "@fontsource/inter/latin-500.css";
 @import "@fontsource/inter/latin-600.css";
@@ -15,58 +21,84 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Identidade "Soft Professional" — ver docs/design-system.md pro spec
+ * completo e a tabela de conversão hex→HSL. Sidebar escura fixa
+ * (#0f172a) nos dois temas — não faz sentido "inverter" uma cor que já
+ * é escura; só o conteúdo alterna claro/escuro.
+ */
 @layer base {
   :root {
-    --background: 210 40% 98%;
+    /*
+     * Fundo, card e borda precisam de contraste real entre si no tema
+     * claro — com os três quase na mesma luminosidade (98%/100%/96.1%
+     * antes), dava pra "perder" onde um card terminava e o fundo
+     * começava. Fundo mais acinzentado, card branco puro, borda
+     * visivelmente mais escura que os dois.
+     */
+    --background: 210 30% 95%;
     --foreground: 222.2 47.4% 11.2%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 47.4% 11.2%;
-    --primary: 221.2 83.2% 53.3%;
+    --primary: 243.4 75.3% 58.6%;
     --primary-foreground: 0 0% 100%;
     --secondary: 217.2 91.2% 59.8%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 220 75% 96.9%;
+    --success: 160.1 84.1% 39.4%;
+    --success-foreground: 0 0% 100%;
+    --info: 217.2 91.2% 59.8%;
+    --info-foreground: 0 0% 100%;
+    --muted: 210 25% 91%;
     --muted-foreground: 215.3 19.3% 34.5%;
-    --accent: 214.3 94.6% 92.7%;
-    --accent-foreground: 224.4 64.3% 32.9%;
-    --destructive: 0 72.2% 50.6%;
+    --accent: 234 89% 96%;
+    --accent-foreground: 243.4 75.3% 40%;
+    --destructive: 349.7 89.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
-    --urgencia: 20.5 90.2% 48.2%;
+    --urgencia: 37.7 92.1% 50.2%;
     --urgencia-foreground: 222.2 47.4% 11.2%;
-    --border: 220 80% 94.1%;
-    --input: 220 80% 94.1%;
-    --ring: 221.2 83.2% 53.3%;
+    --border: 214 20% 84%;
+    --input: 214 20% 84%;
+    --ring: 243.4 75.3% 58.6%;
     --radius: 0.625rem;
-    --sidebar: 218.6 70% 96.1%;
-    --sidebar-foreground: 222.2 47.4% 11.2%;
+    --sidebar: 222.2 47.4% 11.2%;
+    --sidebar-foreground: 210 40% 98%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 47.4% 11.2%;
   }
 
+  /*
+   * Extrapolação minha — o spec original só cobre o tema claro. Mesmos 5
+   * acentos, fundo escuro (mais fundo que a sidebar, pra ela continuar
+   * se destacando), cards numa superfície um pouco mais clara que o fundo.
+   */
   .dark {
-    --background: 220 48.8% 8.4%;
-    --foreground: 219 71.4% 94.5%;
-    --card: 221.5 41.9% 12.2%;
-    --card-foreground: 219 71.4% 94.5%;
-    --primary: 213.1 93.9% 67.8%;
-    --primary-foreground: 220 48.8% 8.4%;
-    --secondary: 224.4 64.3% 32.9%;
-    --secondary-foreground: 211.7 96.4% 78.4%;
-    --muted: 218.3 45% 15.7%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 224.4 64.3% 32.9%;
-    --accent-foreground: 211.7 96.4% 78.4%;
-    --destructive: 0 72.2% 50.6%;
-    --destructive-foreground: 0 85.7% 97.3%;
-    --urgencia: 27 96% 61%;
-    --urgencia-foreground: 222.2 47.4% 11.2%;
-    --border: 219.5 34.5% 21.6%;
-    --input: 219.5 34.5% 21.6%;
-    --ring: 213.1 93.9% 67.8%;
-    --sidebar: 220 52.9% 6.7%;
-    --sidebar-foreground: 219 71.4% 94.5%;
-    --popover: 221.5 41.9% 12.2%;
-    --popover-foreground: 219 71.4% 94.5%;
+    --background: 222 47% 6%;
+    --foreground: 210 40% 96%;
+    --card: 222 43% 10%;
+    --card-foreground: 210 40% 96%;
+    --primary: 243.4 82% 70%;
+    --primary-foreground: 222 47% 6%;
+    --secondary: 217.2 91.2% 65%;
+    --secondary-foreground: 222 47% 6%;
+    --success: 160.1 70% 50%;
+    --success-foreground: 222 47% 6%;
+    --info: 217.2 91.2% 65%;
+    --info-foreground: 222 47% 6%;
+    --muted: 222 35% 15%;
+    --muted-foreground: 215 20% 68%;
+    --accent: 243.4 45% 22%;
+    --accent-foreground: 234 89% 88%;
+    --destructive: 349.7 89.2% 66%;
+    --destructive-foreground: 222 47% 6%;
+    --urgencia: 37.7 92.1% 58%;
+    --urgencia-foreground: 222 47% 6%;
+    --border: 222 30% 18%;
+    --input: 222 30% 18%;
+    --ring: 243.4 82% 70%;
+    --sidebar: 222.2 47.4% 11.2%;
+    --sidebar-foreground: 210 40% 98%;
+    --popover: 222 43% 10%;
+    --popover-foreground: 210 40% 96%;
   }
 
   * {
@@ -75,5 +107,25 @@
 
   body {
     @apply bg-background text-foreground font-sans;
+  }
+}
+
+/* Barra de rolagem fina e discreta — quadro de Funis (scroll horizontal
+   das colunas e vertical dentro de cada coluna). */
+@layer utilities {
+  .scrollbar-fina {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+  .scrollbar-fina::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-fina::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-fina::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--border));
+    border-radius: 9999px;
   }
 }

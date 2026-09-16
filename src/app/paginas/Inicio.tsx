@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatarDataBR, hojeNoFuso } from "@/lib/datas";
 import { useVocabulario } from "@/lib/vocabulario";
@@ -74,7 +75,9 @@ export function Inicio() {
   return (
     <main className="mx-auto max-w-7xl space-y-6 p-4">
       <div>
-        <h1 className="font-display text-2xl font-medium">Bem-vindo(a), {nome}</h1>
+        <h1 className="font-display text-2xl font-extrabold tracking-[-0.02em]">
+          Bem-vindo(a), {nome}
+        </h1>
         <p className="text-sm text-muted-foreground">
           Você está em <strong>{atual?.nome}</strong>.
         </p>
@@ -88,7 +91,8 @@ export function Inicio() {
       {primeirosPassos && <BarraPrimeirosPassos passos={primeirosPassos} />}
 
       {totalAcoes === 0 && (
-        <p className="rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
+        <p className="flex items-center gap-2 rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
+          <Sun className="h-4 w-4 text-success" />
           Nada pendente por hoje.
         </p>
       )}

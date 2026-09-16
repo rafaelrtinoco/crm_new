@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { CalendarClock, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Select,
   SelectContent,
@@ -54,15 +56,20 @@ export function ListaVencimentos() {
     <main className="mx-auto max-w-7xl space-y-4 p-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">{vocabulario.vencimentoPlural}</h1>
-        <Button asChild>
-          <Link to="/vencimentos/novo">Novo {vocabulario.vencimento.toLowerCase()}</Link>
-        </Button>
+        <div className="ml-auto flex items-center gap-2">
+          <Button asChild>
+            <Link to="/vencimentos/novo">
+              <Plus className="mr-2 h-4 w-4" />
+              Novo {vocabulario.vencimento.toLowerCase()}
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2">
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Status" />
+          <SelectTrigger className="w-48 max-w-[180px]">
+            <SelectValue className="truncate" placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={SEM_FILTRO}>Todos os status</SelectItem>
@@ -75,8 +82,8 @@ export function ListaVencimentos() {
         </Select>
         {tipos && tipos.length > 0 && (
           <Select value={tipoId} onValueChange={setTipoId}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Tipo" />
+            <SelectTrigger className="w-48 max-w-[180px]">
+              <SelectValue className="truncate" placeholder="Tipo" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={SEM_FILTRO}>Qualquer tipo</SelectItem>
@@ -93,9 +100,15 @@ export function ListaVencimentos() {
       {isLoading && <p className="text-sm text-muted-foreground">Carregando…</p>}
 
       {!isLoading && vencimentos && vencimentos.length === 0 && (
-        <p className="text-sm text-muted-foreground">
-          Nenhum {vocabulario.vencimento.toLowerCase()} encontrado.
-        </p>
+        <EmptyState
+          icone={CalendarClock}
+          titulo={`Nenhum ${vocabulario.vencimento.toLowerCase()} encontrado`}
+          descricao={`Cadastre um ${vocabulario.vencimento.toLowerCase()} pra começar a acompanhar os prazos.`}
+          acao={{
+            rotulo: `Novo ${vocabulario.vencimento.toLowerCase()}`,
+            href: "/vencimentos/novo",
+          }}
+        />
       )}
 
       {!isLoading && vencimentos && vencimentos.length > 0 && (

@@ -1,13 +1,39 @@
 import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn("rounded-lg border border-border bg-card text-card-foreground", className)}
-      {...props}
-    />
+/**
+ * `default` cobre a maioria dos usos (fichas, listas, diálogos) — 16px.
+ * `destaque` é só para painéis de destaque (KPIs, gráficos de resumo) —
+ * 20px (`card-lg` em tailwind.config.ts; era 40px, reduzido a pedido do
+ * usuário — ver docs/design-system.md). Não usar `destaque` em contextos
+ * densos (linhas de lista, cards dentro de kanban): o raio grande só
+ * funciona com espaço de sobra ao redor.
+ */
+const cardVariants = cva(
+  "border border-border bg-card text-card-foreground shadow-card transition-all duration-300 ease-in-out",
+  {
+    variants: {
+      variant: {
+        default: "rounded-2xl",
+        // Hover-scale só no destaque: é o painel pequeno e vistoso (KPI,
+        // gráfico) — num painel grande e estático (ficha, formulário),
+        // a tela inteira "pulando" no hover atrapalha mais que ajuda.
+        destaque: "rounded-card-lg hover:scale-[1.02]",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  },
+);
+
+export interface CardProps
+  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof cardVariants> {}
+
+const Card = React.forwardRef<HTMLDivElement, CardProps>(
+  ({ className, variant, ...props }, ref) => (
+    <div ref={ref} className={cn(cardVariants({ variant }), className)} {...props} />
   ),
 );
 Card.displayName = "Card";

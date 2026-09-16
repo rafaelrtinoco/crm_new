@@ -53,3 +53,64 @@ export function diferencaEmDias(dataA: string, dataB: string): number {
   };
   return Math.round((paraUTC(dataB) - paraUTC(dataA)) / msPorDia);
 }
+
+/**
+ * Data por extenso + hora, no fuso informado — nunca no fuso do
+ * navegador (mesma regra de `hojeNoFuso`). `data` representa um
+ * instante absoluto; é a opção `timeZone` do `Intl.DateTimeFormat` que
+ * faz a conversão na hora de formatar, sem precisar "deslocar" o objeto
+ * `Date`. Usado no relógio da topbar (`AppShell.tsx`).
+ */
+export function formatarDataHoraFuso(data: Date, fuso: string): string {
+  const dataFmt = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: fuso,
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+  }).format(data);
+  const horaFmt = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: fuso,
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(data);
+  return `${dataFmt} • ${horaFmt}`;
+}
+
+export interface DiaCalendario {
+  /** "YYYY-MM-DD" */
+  data: string;
+  /** false pros dias do mês anterior/seguinte que completam a semana. */
+  noMes: boolean;
+}
+
+/**
+ * Grade de semanas (domingo–sábado) do mês pedido, incluindo dias do mês
+ * anterior/seguinte pra completar a primeira e a última semana — sempre
+ * um múltiplo de 7. Matemática pura em UTC (não usa o relógio nem o
+ * fuso do navegador — a grade em si é só aritmética de calendário,
+ * indiferente a fuso; quem decide "qual mês" é o chamador, via
+ * `hojeNoFuso`).
+ */
+export function gradeCalendario(ano: number, mes: number): DiaCalendario[] {
+  const paraISO = (d: Date) => d.toISOString().slice(0, 10);
+
+  const primeiroDia = new Date(Date.UTC(ano, mes, 1));
+  const diaSemanaInicio = primeiroDia.getUTCDay();
+  const ultimoDiaMes = new Date(Date.UTC(ano, mes + 1, 0)).getUTCDate();
+
+  const grade: DiaCalendario[] = [];
+
+  for (let i = diaSemanaInicio; i > 0; i--) {
+    grade.push({ data: paraISO(new Date(Date.UTC(ano, mes, 1 - i))), noMes: false });
+  }
+  for (let dia = 1; dia <= ultimoDiaMes; dia++) {
+    grade.push({ data: paraISO(new Date(Date.UTC(ano, mes, dia))), noMes: true });
+  }
+  let diaExtra = 1;
+  while (grade.length % 7 !== 0) {
+    grade.push({ data: paraISO(new Date(Date.UTC(ano, mes + 1, diaExtra))), noMes: false });
+    diaExtra += 1;
+  }
+
+  return grade;
+}

@@ -28,9 +28,11 @@ export function BarraPrimeirosPassos({ passos }: Props) {
   const concluidos = itens.filter((item) => passos[item.chave]).length;
 
   return (
-    <div className="space-y-3 rounded-lg border border-border bg-card p-4">
+    <div className="space-y-3 rounded-2xl border border-border bg-card p-4 shadow-card">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold">Primeiros passos</h2>
+        <h2 className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+          Primeiros passos
+        </h2>
         <span className="text-xs text-muted-foreground">
           {concluidos}/{itens.length}
         </span>

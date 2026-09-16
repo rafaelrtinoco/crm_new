@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { Plus, Upload, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -60,12 +62,18 @@ export function ListaContatos() {
     <main className="mx-auto max-w-7xl space-y-4 p-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">{vocabulario.contatoPlural}</h1>
-        <div className="flex gap-2">
+        <div className="ml-auto flex items-center gap-2">
           <Button asChild variant="outline">
-            <Link to="/contatos/importar">Importar planilha</Link>
+            <Link to="/contatos/importar">
+              <Upload className="mr-2 h-4 w-4" />
+              Importar planilha
+            </Link>
           </Button>
           <Button asChild>
-            <Link to="/contatos/novo">Novo {vocabulario.contato.toLowerCase()}</Link>
+            <Link to="/contatos/novo">
+              <Plus className="mr-2 h-4 w-4" />
+              Novo {vocabulario.contato.toLowerCase()}
+            </Link>
           </Button>
         </div>
       </div>
@@ -78,8 +86,8 @@ export function ListaContatos() {
           className="max-w-xs"
         />
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Status" />
+          <SelectTrigger className="w-40 max-w-[180px]">
+            <SelectValue className="truncate" placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={SEM_FILTRO}>Todos os status</SelectItem>
@@ -89,8 +97,8 @@ export function ListaContatos() {
           </SelectContent>
         </Select>
         <Select value={temperatura} onValueChange={setTemperatura}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Temperatura" />
+          <SelectTrigger className="w-40 max-w-[180px]">
+            <SelectValue className="truncate" placeholder="Temperatura" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={SEM_FILTRO}>Qualquer temperatura</SelectItem>
@@ -101,8 +109,8 @@ export function ListaContatos() {
         </Select>
         {tags && tags.length > 0 && (
           <Select value={tagId} onValueChange={setTagId}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Tag" />
+            <SelectTrigger className="w-40 max-w-[180px]">
+              <SelectValue className="truncate" placeholder="Tag" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={SEM_FILTRO}>Qualquer tag</SelectItem>
@@ -119,9 +127,12 @@ export function ListaContatos() {
       {isLoading && <p className="text-sm text-muted-foreground">Carregando…</p>}
 
       {!isLoading && contatos && contatos.length === 0 && (
-        <p className="text-sm text-muted-foreground">
-          Nenhum {vocabulario.contato.toLowerCase()} encontrado. Que tal cadastrar o primeiro?
-        </p>
+        <EmptyState
+          icone={Users}
+          titulo={`Nenhum ${vocabulario.contato.toLowerCase()} encontrado`}
+          descricao={`Que tal cadastrar o primeiro ${vocabulario.contato.toLowerCase()}?`}
+          acao={{ rotulo: `Novo ${vocabulario.contato.toLowerCase()}`, href: "/contatos/novo" }}
+        />
       )}
 
       {!isLoading && contatos && contatos.length > 0 && (

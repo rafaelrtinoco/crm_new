@@ -40,6 +40,14 @@ export default {
           DEFAULT: "hsl(var(--urgencia))",
           foreground: "hsl(var(--urgencia-foreground))",
         },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        info: {
+          DEFAULT: "hsl(var(--info))",
+          foreground: "hsl(var(--info-foreground))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -50,7 +58,7 @@ export default {
         },
       },
       fontFamily: {
-        display: ["Calistoga", "serif"],
+        display: ["'Plus Jakarta Sans'", "sans-serif"],
         sans: ["Inter", "sans-serif"],
         mono: ["'JetBrains Mono'", "monospace"],
       },
@@ -58,6 +66,11 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        "card-lg": "1.25rem",
+      },
+      boxShadow: {
+        card: "0 4px 6px -1px rgb(0 0 0 / 0.05)",
+        "sidebar-active": "0 10px 15px -3px rgb(79 70 229 / 0.4)",
       },
     },
   },
