@@ -239,8 +239,8 @@ Proponha o SQL completo a partir desta base, ajustando o que for necessário:
 ## 9. Fases de entrega
 
 - **Fase 1 — Fundação e núcleo:** multiempresa com RLS e testes de isolamento, autenticação, convites, onboarding com template de corretora, importação de planilha, contatos, vencimentos, funis com próximo passo obrigatório, tarefas, tela "Hoje" e PWA instalável.
-- **Fase 2 — WhatsApp e réguas:** conexão do número, envio e recebimento, templates com botões, inbox simples, automações de vencimento e aniversário, cadências de follow-up e notificações.
-- **Fase 3 — Marketing e captura:** segmentos, campanhas por WhatsApp e e-mail, formulários, páginas de captura, webhook de entrada, Meta Lead Ads e relatórios por origem.
+- **Fase 2 — WhatsApp e réguas:** conexão real do número (credenciamento na Meta), envio e recebimento, templates com botões, inbox simples, automações de vencimento e aniversário, cadências de follow-up e notificações. **Adiada** — decisão do usuário de não conectar a API do WhatsApp por enquanto. Retomar a partir do §6.7 e de `docs/decisoes/0004-fase2-adiada-fase3-sem-integracoes-externas.md`.
+- **Fase 3 — Marketing e captura:** segmentos, campanhas por WhatsApp e e-mail, formulários, páginas de captura, webhook de entrada, Meta Lead Ads e relatórios por origem. **Entra em execução antes da Fase 2, recortada**: campanhas por WhatsApp entram contra um `WhatsAppProvider` mock (nenhuma mensagem real sai — a conexão de verdade com a Meta continua na Fase 2); a integração com Meta Lead Ads fica de fora até a Fase 2 existir (dados de captura só manuais/formulário/webhook genérico até lá). Detalhe: `docs/decisoes/0004-fase2-adiada-fase3-sem-integracoes-externas.md`.
 - **Fase 4 — Monetização:** planos, feature flags, limites de uso, trial, cobrança recorrente e backoffice `/admin`.
 - **Fase 5 — Relacionamento:** termômetro, detalhes pessoais, eventos de vida, NPS, indicações, avaliação no Google, cartões de aniversário e calendário de marketing.
 - **Fase 6 — Inteligência e expansão:** assistente com IA, novos templates de nicho (contabilidade, imobiliária, despachante), relatórios avançados e API pública.

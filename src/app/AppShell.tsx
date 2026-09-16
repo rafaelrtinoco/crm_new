@@ -227,7 +227,7 @@ function TopoDesktop({ fuso, onNovaTarefa }: TopoDesktopProps) {
     <header className="hidden shrink-0 items-center gap-3 border-b border-border bg-background px-6 py-3 md:flex">
       <div className="relative max-w-sm flex-1">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input placeholder="Buscar... Ctrl+K" className="pl-9" />
+        <Input placeholder="Buscar" className="pl-9" />
       </div>
       {/* ml-auto: empurra o grupo pro canto direito, longe da busca —
           o relógio fica por último, no canto de verdade. */}
