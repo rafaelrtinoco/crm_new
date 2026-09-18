@@ -13,6 +13,7 @@ import {
   Search,
   Sun,
   Users,
+  Users2,
   Workflow,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -44,6 +45,7 @@ const itensNav = [
   { rotulo: "Vencimentos", rota: "/vencimentos", Icone: CalendarClock },
   { rotulo: "Funis", rota: "/funis", Icone: Workflow },
   { rotulo: "Tarefas", rota: "/tarefas", Icone: ListChecks },
+  { rotulo: "Segmentos", rota: "/segmentos", Icone: Users2 },
 ];
 
 function iniciais(texto: string) {

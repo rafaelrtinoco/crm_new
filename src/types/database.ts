@@ -1280,6 +1280,47 @@ export type Database = {
         }
         Relationships: []
       }
+      segmentos: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          criterios: Json
+          deleted_at: string | null
+          empresa_id: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          criterios?: Json
+          deleted_at?: string | null
+          empresa_id: string
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          criterios?: Json
+          deleted_at?: string | null
+          empresa_id?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "segmentos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tags: {
         Row: {
           cor: string | null
@@ -1589,6 +1630,7 @@ export type Database = {
         Args: { p_empresa_id: string; p_nicho: string }
         Returns: undefined
       }
+      avaliar_segmento: { Args: { p_segmento_id: string }; Returns: string[] }
       buscar_possiveis_duplicatas: {
         Args: {
           p_cpf_cnpj?: string
@@ -1607,6 +1649,15 @@ export type Database = {
       }
       carteira_compartilhada: {
         Args: { p_empresa_id: string }
+        Returns: boolean
+      }
+      contar_segmento: { Args: { p_segmento_id: string }; Returns: number }
+      contar_segmento_provisorio: {
+        Args: { p_criterios: Json; p_empresa_id: string }
+        Returns: number
+      }
+      contato_bate_criterios: {
+        Args: { p_contato_id: string; p_criterios: Json }
         Returns: boolean
       }
       criar_empresa_com_onboarding: {
@@ -1669,6 +1720,41 @@ export type Database = {
         Args: { p_empresa_id: string; p_responsavel_id: string }
         Returns: boolean
       }
+      prever_contato_segmento: {
+        Args: { p_segmento_id: string }
+        Returns: {
+          campos: Json
+          cpf_cnpj: string | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          email: string | null
+          empresa_id: string
+          endereco: Json | null
+          id: string
+          nascimento: string | null
+          nome: string
+          organizacao_id: string | null
+          origem: string | null
+          responsavel_id: string | null
+          status: string
+          telefone: string | null
+          temperatura: string | null
+          ultimo_contato_em: string | null
+          updated_at: string
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "contatos"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       processar_fila_envios: {
         Args: { p_agora?: string; p_limite?: number }
         Returns: {
@@ -1696,6 +1782,10 @@ export type Database = {
       }
       tem_papel: {
         Args: { p_empresa_id: string; p_papel: string }
+        Returns: boolean
+      }
+      validar_criterios_segmento: {
+        Args: { p_criterios: Json }
         Returns: boolean
       }
     }

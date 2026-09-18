@@ -93,3 +93,15 @@ Sem migration nova além da criação de `segmentos` — reaproveita `contatos`/
 ## Open Questions
 
 - As duas assunções da seção acima (combinador AND-only, sem materialização) — se o usuário discordar na revisão, isso muda o schema da DSL antes de codar, não depois.
+
+## Correções aplicadas na implementação (2026-09-18)
+
+A exploração de código antes de implementar encontrou pontos que este spec não previu corretamente ou deixou subespecificados:
+
+1. **RLS não segue `excluir_registro`.** O texto original dizia "soft delete via padrão `excluir_registro` já existente", mas essa função só cobre tabelas com dono (`contatos`/`vencimentos`/`negocios`/`tarefas`/`organizacoes`, autorizadas por `pode_acessar_responsavel`) — `segmentos` é configuração compartilhada, igual `funis`/`motivos_perda`. Corrigido pro mesmo padrão dessas duas: policy de `select` (`is_membro`) + policy `FOR ALL` de escrita (`tem_papel(empresa_id,'gestor')`), sem `deleted_at is null` na policy (evita a armadilha de auto-bloqueio documentada em `soft_delete_e_dedup.sql`). Exclusão é um `UPDATE` direto do client (`useExcluirSegmento`), não uma RPC — a RLS já autoriza sozinha. Filtro de `deleted_at` fica no client, mesma convenção de `useFunis.ts`.
+2. **`unique (empresa_id, id)` adicionado proativamente** — não estava no texto original, mas `campanhas.segmento_id` (módulo seguinte) vai precisar de uma FK composta apontando pra cá (ADR 0003). Adicionar agora evita uma migration só pra isso depois.
+3. **CHECK de validação do `campo`** (`validar_criterios_segmento`) — o spec só falava em validar na hora de *avaliar* o segmento; adicionado também um `check` na própria tabela, então um `campo` fora do conjunto fechado é rejeitado na hora de *salvar*, não só quando alguém tentar usar o segmento numa campanha.
+4. **Validação de `operador` por campo**, não só de `campo`. O spec não especificava isso — `contato_bate_criterios` agora levanta exceção se o `operador` não bater com o único válido pra cada campo (ex.: `status` só aceita `em`; `idade` só aceita `entre`), consistente com o boundary "campo/operador são um conjunto fechado".
+5. **`contar_segmento_provisorio(empresa_id, criterios)` nova** — o spec previa `contar_segmento(segmento_id)`, que exige uma linha já salva em `segmentos`. Pra atender o Success Criteria ("ver a contagem mudar ao vivo" enquanto o usuário ainda está montando o segmento, antes de salvar), foi necessária uma variante que avalia `criterios` direto, sem precisar de um `segmento_id`.
+
+Achado do `security-check`, documentado como aceito (não é bug): como `avaliar_segmento`/`contar_segmento_provisorio` são `security invoker` — de propósito, é o que garante que dois usuários com alcance diferente vejam resultados diferentes pro mesmo segmento —, o Postgres exige `EXECUTE` direto de quem chama em cada função da cadeia, incluindo `contato_bate_criterios`. Isso a torna chamável via RPC por qualquer autenticado, não só internamente — mas como ela é `security invoker`, a RLS de `contatos`/`contato_tags`/`vencimentos` continua valendo, então não vaza nada além do que a pessoa já veria de qualquer forma.

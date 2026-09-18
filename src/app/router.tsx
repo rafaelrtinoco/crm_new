@@ -21,6 +21,8 @@ import { DetalheNegocio } from "@/features/funis/paginas/DetalheNegocio";
 import { FormularioNegocio } from "@/features/funis/paginas/FormularioNegocio";
 import { Funil } from "@/features/funis/paginas/Funil";
 import { ListaTarefas } from "@/features/tarefas/paginas/ListaTarefas";
+import { FormularioSegmento } from "@/features/segmentos/paginas/FormularioSegmento";
+import { ListaSegmentos } from "@/features/segmentos/paginas/ListaSegmentos";
 
 export const router = createBrowserRouter([
   {
@@ -56,6 +58,9 @@ export const router = createBrowserRouter([
           { path: "/funis/negocios/:id", element: <DetalheNegocio /> },
           { path: "/funis/negocios/:id/editar", element: <FormularioNegocio /> },
           { path: "/tarefas", element: <ListaTarefas /> },
+          { path: "/segmentos", element: <ListaSegmentos /> },
+          { path: "/segmentos/novo", element: <FormularioSegmento /> },
+          { path: "/segmentos/:id/editar", element: <FormularioSegmento /> },
         ],
       },
     ],

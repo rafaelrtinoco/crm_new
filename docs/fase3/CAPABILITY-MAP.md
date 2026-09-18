@@ -19,9 +19,9 @@ Aprovado pelo usuário em 2026-09-16. Escopo e o que fica de fora: `docs/decisoe
 ## Specs dos módulos
 
 - `SPEC-fila-envios.md` — **implementado** (2026-09-16); ver também `docs/decisoes/0005-fila-envios-worker-em-postgres.md` e a seção "Correções aplicadas na implementação" no próprio spec
-- `SPEC-segmentos.md` — escrito e aprovado (2026-09-16)
+- `SPEC-segmentos.md` — **implementado** (2026-09-18); ver a seção "Correções aplicadas na implementação" no próprio spec
 - `SPEC-captura-leads.md` — escrito e aprovado (2026-09-16)
-- `SPEC-campanhas.md` — escrito e aprovado (2026-09-16)
+- `SPEC-campanhas.md` — escrito e aprovado (2026-09-16) — depende de `fila-envios` (pronto) + `segmentos` (pronto), já pode entrar em Plan/Tasks
 - `SPEC-relatorios-origem.md` — escrito, pendente de revisão (2026-09-16) — só resta decidir a posição na navegação (ver "Open Questions" do próprio spec)
 
-**Todos os 5 specs da Fase 3 recortada estão na Fase 1 (Specify) do `spec-driven-development` — nenhum passou ainda pra Plan/Tasks/Implement.** Próximo passo, quando o usuário pedir: revisar `SPEC-relatorios-origem.md`, depois gerar o plano técnico (Fase 2) e a lista de tarefas (Fase 3) módulo a módulo, na ordem de build do mapa acima, antes de codar qualquer linha.
+**Próximo passo, quando o usuário pedir:** `captura-leads` (sem dependência restante) ou já avançar pra `campanhas` (dependências satisfeitas) — qualquer um dos dois é válido pela ordem de build; `relatorios-origem` continua por último.

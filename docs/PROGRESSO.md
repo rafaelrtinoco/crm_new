@@ -2,6 +2,14 @@
 
 Log de continuidade entre máquinas/sessões. Atualize a seção "Estado atual" a cada incremento entregue; não precisa reescrever o histórico abaixo dela.
 
+## Estado atual — 2026-09-18
+
+**Fase 3 recortada, módulo 2/5 (`segmentos`) implementado, testado e validado no navegador.** `supabase/migrations/20260918174420_segmentos.sql` — tabela `segmentos` (RLS gestor+ escreve, qualquer membro lê — padrão `funis`/`motivos_perda`, não `excluir_registro`), `validar_criterios_segmento` (CHECK na hora de salvar), `contato_bate_criterios` (avaliador da DSL sem SQL dinâmico, `security invoker`), `avaliar_segmento`/`contar_segmento`/`contar_segmento_provisorio`/`prever_contato_segmento`. Frontend novo em `src/features/segmentos/` (construtor de regras cobrindo os 10 campos da DSL, contagem ao vivo com debounce). **203/203 pgTAP** (só a falha pré-existente de `notificacoes.sql`, não relacionada — ver nota abaixo); `lint`/`typecheck`/`test` (32/32)/`build` limpos. `security-check` rodado — 0 crítico/alto/médio, 2 info aceitos (ver spec). Testado no navegador pelo usuário — funcionou.
+
+A exploração antes de implementar encontrou 5 correções em relação ao spec original — todas documentadas na seção "Correções aplicadas na implementação" de `docs/fase3/SPEC-segmentos.md`: RLS corrigida pro padrão certo (não `excluir_registro`, que não cobre tabela de configuração compartilhada), `unique(empresa_id,id)` adicionado proativamente pra FK futura de `campanhas`, CHECK de `campo` na escrita (não só na avaliação), validação de `operador` por campo (o spec original não especificava), e uma função nova (`contar_segmento_provisorio`) pro preview ao vivo antes de salvar — sem ela não dava pra atender o Success Criteria de "contagem muda ao vivo" enquanto o segmento ainda não existe.
+
+`campanhas` (módulo 4/5) já tem as duas dependências prontas (`fila-envios` + `segmentos`) e pode entrar em Plan/Tasks quando o usuário pedir.
+
 ## Estado atual — 2026-09-16
 
 **Fase 3 recortada, módulo 1/5 (`fila-envios`) implementado e testado.** `supabase/migrations/20260916192944_fila_envios.sql` — tabela `fila_envios`, helpers `dentro_horario_comercial`/`proximo_horario_comercial`, `enfileirar_envio` (RPC pra `authenticated`), `mock_enviar_mensagem` (interna) e o worker `processar_fila_envios` (agendado via `pg_cron` a cada minuto, sem Edge Function — ADR 0005). **192/192 pgTAP** (178 existentes − os 2 de `notificacoes.sql` que agora falham por um motivo não relacionado, ver nota abaixo — + os novos de `fila_envios.sql`); `lint`/`typecheck`/`test` (32/32)/`build` limpos. Testado fim a fim via SQL direto contra o banco local (enfileirar → processar dentro/fora do horário comercial, com os resultados batendo exatamente com `proximo_horario_comercial`); teste no navegador da fatia extra (consentimento na ficha do contato) pendente de confirmação do usuário.
