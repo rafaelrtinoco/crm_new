@@ -25,13 +25,16 @@ create table public.formularios (
   nome text not null,
   campos jsonb not null default '["nome","telefone","email"]'::jsonb, -- quais campos pedir
   distribuicao_tipo text not null default 'rodizio' check (distribuicao_tipo in ('rodizio','fixo')),
-  responsavel_fixo_id uuid references auth.users (id),
+  responsavel_fixo_id uuid, -- FK composta abaixo (ADR 0003)
   proximo_indice_rodizio integer not null default 0, -- ponteiro do round-robin
   ativo boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   created_by uuid references auth.users (id),
-  deleted_at timestamptz
+  deleted_at timestamptz,
+  constraint formularios_empresa_responsavel_fixo_id_fkey
+    foreign key (empresa_id, responsavel_fixo_id) references public.empresa_membros (empresa_id, usuario_id),
+  unique (empresa_id, id) -- alvo de FK composta (paginas_captura.formulario_id)
 );
 
 create table public.paginas_captura (
@@ -41,7 +44,7 @@ create table public.paginas_captura (
   titulo text not null,
   texto text,
   imagem_url text,
-  formulario_id uuid references public.formularios (id),
+  formulario_id uuid, -- FK composta abaixo
   whatsapp_numero text,
   whatsapp_mensagem text,
   ativo boolean not null default true,
@@ -49,6 +52,8 @@ create table public.paginas_captura (
   updated_at timestamptz not null default now(),
   created_by uuid references auth.users (id),
   deleted_at timestamptz,
+  constraint paginas_captura_empresa_formulario_id_fkey
+    foreign key (empresa_id, formulario_id) references public.formularios (empresa_id, id),
   unique (empresa_id, slug)
 );
 
@@ -59,15 +64,19 @@ create table public.integracoes (
   nome text not null,
   token_hash text not null, -- sha-256 do token; o token em claro só existe na resposta da criação, nunca persistido
   distribuicao_tipo text not null default 'rodizio' check (distribuicao_tipo in ('rodizio','fixo')),
-  responsavel_fixo_id uuid references auth.users (id),
+  responsavel_fixo_id uuid, -- FK composta abaixo
   proximo_indice_rodizio integer not null default 0,
   ativo boolean not null default true,
   ultimo_uso_em timestamptz,
   created_at timestamptz not null default now(),
   created_by uuid references auth.users (id),
-  revogado_em timestamptz
+  revogado_em timestamptz,
+  constraint integracoes_empresa_responsavel_fixo_id_fkey
+    foreign key (empresa_id, responsavel_fixo_id) references public.empresa_membros (empresa_id, usuario_id)
 );
 ```
+
+**Correção pós-revisão (2026-09-23):** `responsavel_fixo_id` (em `formularios` e `integracoes`) e `formulario_id` (em `paginas_captura`) viraram FK composta por `empresa_id` — o spec original (2026-09-16) tinha FK simples pra `auth.users(id)`/`formularios(id)`, desatualizado em relação à ADR 0003 (um dia mais velha que este spec, já aplicada em `negocios`/`tarefas`/`organizacoes` etc.): FK simples deixaria uma empresa apontar `responsavel_fixo_id` pra um usuário sem crachá ali, ou uma página de captura apontar pra um formulário de outra empresa.
 
 RLS: `formularios`/`paginas_captura`/`integracoes` seguem o padrão "qualquer membro lê, só gestor+ escreve" (mesmo grupo de `segmentos`/`tags`/`funis`) — **exceto** que `integracoes.token_hash` nunca deve ir pro cliente em nenhum `select` (nem pra gestor): a política de `select` usa uma coluna computada/omite o hash, ou o hash mora numa tabela separada só acessível por função `security definer`. **Decisão de schema:** `token_hash` fica na mesma tabela mas **nenhuma policy de `select` inclui essa coluna** — o frontend usa uma view (`security_invoker`) `integracoes_publico` sem `token_hash`, mesmo padrão de `membros_empresa` da ADR 0003.
 
@@ -86,7 +95,7 @@ Público (`anon`): sem `select`/`insert` direto em nenhuma tabela do núcleo. To
 - `api/` — `useFormularios`/`useMutacoesFormulario`, `usePaginasCaptura`/`useMutacoesPaginaCaptura`, `useIntegracoes`/`useCriarIntegracao` (mostra o token em claro só uma vez, no retorno da criação — mesmo padrão de "copiar link" do convite no 1B), `useSubmeterFormularioPublico` (chama a RPC pública, sem `supabase.auth` — cliente anônimo).
 - `paginas/ListaFormularios.tsx`, `FormularioFormulario.tsx` (builder de campos + distribuição), `ListaPaginasCaptura.tsx`, `FormularioPaginaCaptura.tsx`, `ListaIntegracoes.tsx` (gera/revoga token de webhook, mostra `curl` de exemplo).
 - **Rotas públicas, fora do `AppShell`** (sem sidebar/autenticação): `/f/:empresaSlug/:formularioId` (formulário embutível — página nua, pra `iframe`), `/p/:empresaSlug/:paginaSlug` (página de captura completa, com marca). `FormularioFormulario.tsx` gera o snippet de embed (`<iframe src="…">`) a partir da URL de `/f/...`.
-- Rotas autenticadas novas: `/captura/formularios*`, `/captura/paginas*`, `/captura/integracoes*`. Nav: mesma decisão adiada do spec de `segmentos` (agrupamento final da seção de marketing definido no spec de `campanhas`).
+- Rotas autenticadas novas: `/captura/formularios*`, `/captura/paginas*`, `/captura/integracoes*`. **Nav (atualizado 2026-09-23):** o agrupamento "Marketing" já existe (`src/app/AppShell.tsx`, item com `prefixosAtivos`, e `src/app/paginas/Marketing.tsx`), cobrindo hoje Segmentos + Campanhas — era essa a decisão que este spec deixava pendente. `captura-leads` entra no mesmo grupo: acrescentar `/captura` a `prefixosAtivos` e um terceiro card em `Marketing.tsx`.
 
 ## Testing Strategy
 
@@ -117,3 +126,17 @@ Sem teste Vitest de lógica pura nova relevante (a lógica de negócio mora nas 
 ## Open Questions
 
 Nenhuma pendente — as duas decisões de arquitetura (mecanismo do webhook, ausência de anti-abuso nesta fase) foram fechadas com o usuário antes deste spec.
+
+## Correções aplicadas na implementação
+
+Além das 2 correções de FK composta/nav já registradas acima (aplicadas em 2026-09-23, antes de codar), a exploração ao escrever as funções encontrou mais 4:
+
+1. **`obter_pagina_captura_publica` virou `security definer`**, não `invoker` como o spec propunha — `anon` não tem nenhuma policy de select em `paginas_captura`/`empresas` (só `to authenticated`); invoker rodando como `anon` sempre devolveria zero linhas pra um visitante de verdade.
+2. **`obter_formulario_publico` é função nova**, ausente do spec — a rota `/f/:empresaSlug/:formularioId` não tinha nenhuma função pública equivalente à de `/p/...`.
+3. **`token_hash` nunca exposto por REVOKE de coluna**, não só pela convenção de view que o spec sugeria (`membros_empresa` existe pra juntar tabelas sem FK direta, não pra esconder coluna — uma view não impede consulta direta na tabela base).
+4. **CHECK novo:** `distribuicao_tipo='fixo'` exige `responsavel_fixo_id` preenchido, em `formularios` e `integracoes`.
+5. **`definir_slug_empresa` é função nova**, ausente do spec — a única policy de UPDATE em `empresas` é `dono`-only; um gestor não conseguiria configurar a URL pública da própria empresa sem essa função dedicada.
+
+**`security-check` rodado** (2026-09-23) — 1 médio, corrigido antes de fechar: `submeter_formulario` checava `ativo` mas não `deleted_at` — um formulário "excluído" (soft delete) continuava aceitando submissão de quem já tivesse o `formulario_id` salvo, mesmo tendo sumido da lista e do embed público. Corrigido e coberto por pgTAP. Confirmado sem findings adicionais: nenhum caminho de escrita pública escapa de `receber_lead`, token com 256 bits de entropia, RPCs públicas não vazam mais que o pretendido, sem XSS nos campos de branding renderizados.
+
+**259/259 pgTAP** (227 anteriores + 32 novos deste módulo — as 2 falhas de `notificacoes.sql` são pré-existentes, não relacionadas); `lint`/`typecheck`/`test`/`build` limpos. Teste no navegador ainda pendente de confirmação do usuário.

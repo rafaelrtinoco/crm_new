@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react";
-import { Link, NavLink, Navigate, Outlet } from "react-router-dom";
+import { Link, Navigate, Outlet, useLocation } from "react-router-dom";
 import {
   CalendarClock,
   CalendarDays,
@@ -8,12 +8,12 @@ import {
   Home,
   ListChecks,
   LogOut,
+  Megaphone,
   Moon,
   Plus,
   Search,
   Sun,
   Users,
-  Users2,
   Workflow,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -39,14 +39,34 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-const itensNav = [
+interface ItemNavConfig {
+  rotulo: string;
+  rota: string;
+  Icone: typeof Home;
+  /** Item cujo destino agrupa várias rotas (ex.: "Marketing" cobre segmentos/campanhas) — fica ativo em qualquer uma delas, não só em `rota`. */
+  prefixosAtivos?: string[];
+}
+
+const itensNav: ItemNavConfig[] = [
   { rotulo: "Início", rota: "/", Icone: Home },
   { rotulo: "Contatos", rota: "/contatos", Icone: Users },
   { rotulo: "Vencimentos", rota: "/vencimentos", Icone: CalendarClock },
   { rotulo: "Funis", rota: "/funis", Icone: Workflow },
   { rotulo: "Tarefas", rota: "/tarefas", Icone: ListChecks },
-  { rotulo: "Segmentos", rota: "/segmentos", Icone: Users2 },
+  {
+    rotulo: "Marketing",
+    rota: "/marketing",
+    Icone: Megaphone,
+    prefixosAtivos: ["/marketing", "/segmentos", "/campanhas", "/captura"],
+  },
 ];
+
+/** Segmentos/campanhas/captura são rotas próprias (fora de /marketing), mas o item "Marketing" precisa acender pra elas — ver `prefixosAtivos`. */
+function itemNavEstaAtivo(pathname: string, item: ItemNavConfig): boolean {
+  if (item.prefixosAtivos)
+    return item.prefixosAtivos.some((prefixo) => pathname.startsWith(prefixo));
+  return item.rota === "/" ? pathname === "/" : pathname.startsWith(item.rota);
+}
 
 function iniciais(texto: string) {
   const partes = texto.trim().split(/\s+/);
@@ -55,26 +75,42 @@ function iniciais(texto: string) {
   return (primeira + ultima).toUpperCase() || "?";
 }
 
-function ItemNav({ rota, rotulo, Icone }: { rota: string; rotulo: string; Icone: typeof Home }) {
+function ItemNav({ rota, rotulo, Icone, prefixosAtivos }: ItemNavConfig) {
+  const { pathname } = useLocation();
+  const ativo = itemNavEstaAtivo(pathname, { rota, rotulo, Icone, prefixosAtivos });
   return (
-    <NavLink
+    <Link
       to={rota}
-      end={rota === "/"}
-      className={({ isActive }) =>
-        cn(
-          // Sidebar é sempre escura (claro ou escuro) — hover em
-          // opacidade sobre sidebar-foreground, não `accent` (que
-          // pressupõe fundo claro). Item ativo vira pílula com o glow
-          // do design system, não mais borda esquerda.
-          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-sidebar-foreground/70 transition-all duration-150 ease-in-out hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground",
-          isActive &&
-            "bg-primary text-primary-foreground shadow-sidebar-active hover:bg-primary hover:text-primary-foreground",
-        )
-      }
+      className={cn(
+        // Sidebar é sempre escura (claro ou escuro) — hover em
+        // opacidade sobre sidebar-foreground, não `accent` (que
+        // pressupõe fundo claro). Item ativo vira pílula com o glow
+        // do design system, não mais borda esquerda.
+        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-sidebar-foreground/70 transition-all duration-150 ease-in-out hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground",
+        ativo &&
+          "bg-primary text-primary-foreground shadow-sidebar-active hover:bg-primary hover:text-primary-foreground",
+      )}
     >
       <Icone className="h-4 w-4 shrink-0" />
       {rotulo}
-    </NavLink>
+    </Link>
+  );
+}
+
+function ItemNavMobile({ rota, rotulo, Icone, prefixosAtivos }: ItemNavConfig) {
+  const { pathname } = useLocation();
+  const ativo = itemNavEstaAtivo(pathname, { rota, rotulo, Icone, prefixosAtivos });
+  return (
+    <Link
+      to={rota}
+      className={cn(
+        "flex flex-1 flex-col items-center gap-1 py-2 text-[11px] font-medium text-sidebar-foreground/60",
+        ativo && "text-primary",
+      )}
+    >
+      <Icone className="h-5 w-5" />
+      {rotulo}
+    </Link>
   );
 }
 
@@ -353,21 +389,8 @@ export function AppShell() {
 
         {/* Abas inferiores — mobile */}
         <nav className="fixed inset-x-0 bottom-0 z-10 flex border-t border-sidebar-foreground/10 bg-sidebar md:hidden">
-          {itensNav.map(({ rota, rotulo, Icone }) => (
-            <NavLink
-              key={rota}
-              to={rota}
-              end={rota === "/"}
-              className={({ isActive }) =>
-                cn(
-                  "flex flex-1 flex-col items-center gap-1 py-2 text-[11px] font-medium text-sidebar-foreground/60",
-                  isActive && "text-primary",
-                )
-              }
-            >
-              <Icone className="h-5 w-5" />
-              {rotulo}
-            </NavLink>
+          {itensNav.map((item) => (
+            <ItemNavMobile key={item.rota} {...item} />
           ))}
         </nav>
       </div>

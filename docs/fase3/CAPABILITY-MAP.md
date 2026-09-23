@@ -20,8 +20,8 @@ Aprovado pelo usuário em 2026-09-16. Escopo e o que fica de fora: `docs/decisoe
 
 - `SPEC-fila-envios.md` — **implementado** (2026-09-16); ver também `docs/decisoes/0005-fila-envios-worker-em-postgres.md` e a seção "Correções aplicadas na implementação" no próprio spec
 - `SPEC-segmentos.md` — **implementado** (2026-09-18); ver a seção "Correções aplicadas na implementação" no próprio spec
-- `SPEC-captura-leads.md` — escrito e aprovado (2026-09-16)
-- `SPEC-campanhas.md` — escrito e aprovado (2026-09-16) — depende de `fila-envios` (pronto) + `segmentos` (pronto), já pode entrar em Plan/Tasks
+- `SPEC-captura-leads.md` — **implementado** (2026-09-23); ver a seção "Correções aplicadas na implementação" no próprio spec
+- `SPEC-campanhas.md` — **implementado** (2026-09-23); ver a seção "Correções aplicadas na implementação" no próprio spec
 - `SPEC-relatorios-origem.md` — escrito, pendente de revisão (2026-09-16) — só resta decidir a posição na navegação (ver "Open Questions" do próprio spec)
 
-**Próximo passo, quando o usuário pedir:** `captura-leads` (sem dependência restante) ou já avançar pra `campanhas` (dependências satisfeitas) — qualquer um dos dois é válido pela ordem de build; `relatorios-origem` continua por último.
+**Próximo passo, quando o usuário pedir:** `relatorios-origem` (5/5, último do capability map) — `captura-leads` e `campanhas` já entregues, então as duas dependências dele estão prontas.

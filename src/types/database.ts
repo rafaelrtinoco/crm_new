@@ -177,6 +177,141 @@ export type Database = {
           },
         ]
       }
+      campanha_envios: {
+        Row: {
+          campanha_id: string
+          contato_id: string
+          created_at: string
+          empresa_id: string
+          fila_envios_id: string | null
+          id: string
+          motivo_bloqueio: string | null
+        }
+        Insert: {
+          campanha_id: string
+          contato_id: string
+          created_at?: string
+          empresa_id: string
+          fila_envios_id?: string | null
+          id?: string
+          motivo_bloqueio?: string | null
+        }
+        Update: {
+          campanha_id?: string
+          contato_id?: string
+          created_at?: string
+          empresa_id?: string
+          fila_envios_id?: string | null
+          id?: string
+          motivo_bloqueio?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campanha_envios_empresa_campanha_id_fkey"
+            columns: ["empresa_id", "campanha_id"]
+            isOneToOne: false
+            referencedRelation: "campanhas"
+            referencedColumns: ["empresa_id", "id"]
+          },
+          {
+            foreignKeyName: "campanha_envios_empresa_contato_id_fkey"
+            columns: ["empresa_id", "contato_id"]
+            isOneToOne: false
+            referencedRelation: "contatos"
+            referencedColumns: ["empresa_id", "id"]
+          },
+          {
+            foreignKeyName: "campanha_envios_empresa_fila_envios_id_fkey"
+            columns: ["empresa_id", "fila_envios_id"]
+            isOneToOne: true
+            referencedRelation: "fila_envios"
+            referencedColumns: ["empresa_id", "id"]
+          },
+          {
+            foreignKeyName: "campanha_envios_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campanhas: {
+        Row: {
+          agendado_para: string | null
+          assunto: string | null
+          blocos: Json
+          canal: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          disparada_em: string | null
+          empresa_id: string
+          id: string
+          nome: string
+          segmento_id: string
+          status: string
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          agendado_para?: string | null
+          assunto?: string | null
+          blocos?: Json
+          canal: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          disparada_em?: string | null
+          empresa_id: string
+          id?: string
+          nome: string
+          segmento_id: string
+          status?: string
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agendado_para?: string | null
+          assunto?: string | null
+          blocos?: Json
+          canal?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          disparada_em?: string | null
+          empresa_id?: string
+          id?: string
+          nome?: string
+          segmento_id?: string
+          status?: string
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campanhas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campanhas_empresa_segmento_id_fkey"
+            columns: ["empresa_id", "segmento_id"]
+            isOneToOne: false
+            referencedRelation: "segmentos"
+            referencedColumns: ["empresa_id", "id"]
+          },
+          {
+            foreignKeyName: "campanhas_empresa_template_id_fkey"
+            columns: ["empresa_id", "template_id"]
+            isOneToOne: false
+            referencedRelation: "templates_mensagem"
+            referencedColumns: ["empresa_id", "id"]
+          },
+        ]
+      }
       campos_personalizados: {
         Row: {
           chave: string
@@ -547,6 +682,7 @@ export type Database = {
           logo_url: string | null
           nicho: string
           nome: string
+          slug: string | null
           trial_termina_em: string | null
           updated_at: string
           vocabulario: Json
@@ -563,6 +699,7 @@ export type Database = {
           logo_url?: string | null
           nicho: string
           nome: string
+          slug?: string | null
           trial_termina_em?: string | null
           updated_at?: string
           vocabulario?: Json
@@ -579,6 +716,7 @@ export type Database = {
           logo_url?: string | null
           nicho?: string
           nome?: string
+          slug?: string | null
           trial_termina_em?: string | null
           updated_at?: string
           vocabulario?: Json
@@ -711,6 +849,73 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "empresas"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      formularios: {
+        Row: {
+          ativo: boolean
+          campos: Json
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          distribuicao_tipo: string
+          empresa_id: string
+          id: string
+          nome: string
+          proximo_indice_rodizio: number
+          responsavel_fixo_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          campos?: Json
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          distribuicao_tipo?: string
+          empresa_id: string
+          id?: string
+          nome: string
+          proximo_indice_rodizio?: number
+          responsavel_fixo_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          campos?: Json
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          distribuicao_tipo?: string
+          empresa_id?: string
+          id?: string
+          nome?: string
+          proximo_indice_rodizio?: number
+          responsavel_fixo_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "formularios_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "formularios_empresa_responsavel_fixo_id_fkey"
+            columns: ["empresa_id", "responsavel_fixo_id"]
+            isOneToOne: false
+            referencedRelation: "empresa_membros"
+            referencedColumns: ["empresa_id", "usuario_id"]
+          },
+          {
+            foreignKeyName: "formularios_empresa_responsavel_fixo_id_fkey"
+            columns: ["empresa_id", "responsavel_fixo_id"]
+            isOneToOne: false
+            referencedRelation: "membros_empresa"
+            referencedColumns: ["empresa_id", "usuario_id"]
           },
         ]
       }
@@ -853,6 +1058,76 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "empresas"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      integracoes: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          created_by: string | null
+          distribuicao_tipo: string
+          empresa_id: string
+          id: string
+          nome: string
+          proximo_indice_rodizio: number
+          responsavel_fixo_id: string | null
+          revogado_em: string | null
+          tipo: string
+          token_hash: string
+          ultimo_uso_em: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          distribuicao_tipo?: string
+          empresa_id: string
+          id?: string
+          nome: string
+          proximo_indice_rodizio?: number
+          responsavel_fixo_id?: string | null
+          revogado_em?: string | null
+          tipo: string
+          token_hash: string
+          ultimo_uso_em?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          distribuicao_tipo?: string
+          empresa_id?: string
+          id?: string
+          nome?: string
+          proximo_indice_rodizio?: number
+          responsavel_fixo_id?: string | null
+          revogado_em?: string | null
+          tipo?: string
+          token_hash?: string
+          ultimo_uso_em?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integracoes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "integracoes_empresa_responsavel_fixo_id_fkey"
+            columns: ["empresa_id", "responsavel_fixo_id"]
+            isOneToOne: false
+            referencedRelation: "empresa_membros"
+            referencedColumns: ["empresa_id", "usuario_id"]
+          },
+          {
+            foreignKeyName: "integracoes_empresa_responsavel_fixo_id_fkey"
+            columns: ["empresa_id", "responsavel_fixo_id"]
+            isOneToOne: false
+            referencedRelation: "membros_empresa"
+            referencedColumns: ["empresa_id", "usuario_id"]
           },
         ]
       }
@@ -1202,6 +1477,72 @@ export type Database = {
           },
         ]
       }
+      paginas_captura: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          empresa_id: string
+          formulario_id: string | null
+          id: string
+          imagem_url: string | null
+          slug: string
+          texto: string | null
+          titulo: string
+          updated_at: string
+          whatsapp_mensagem: string | null
+          whatsapp_numero: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          empresa_id: string
+          formulario_id?: string | null
+          id?: string
+          imagem_url?: string | null
+          slug: string
+          texto?: string | null
+          titulo: string
+          updated_at?: string
+          whatsapp_mensagem?: string | null
+          whatsapp_numero?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          empresa_id?: string
+          formulario_id?: string | null
+          id?: string
+          imagem_url?: string | null
+          slug?: string
+          texto?: string | null
+          titulo?: string
+          updated_at?: string
+          whatsapp_mensagem?: string | null
+          whatsapp_numero?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paginas_captura_empresa_formulario_id_fkey"
+            columns: ["empresa_id", "formulario_id"]
+            isOneToOne: false
+            referencedRelation: "formularios"
+            referencedColumns: ["empresa_id", "id"]
+          },
+          {
+            foreignKeyName: "paginas_captura_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       perfis: {
         Row: {
           created_at: string
@@ -1456,6 +1797,59 @@ export type Database = {
           },
         ]
       }
+      templates_mensagem: {
+        Row: {
+          ativo: boolean
+          canal: string
+          conteudo: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          empresa_id: string
+          id: string
+          nome: string
+          status: string
+          updated_at: string
+          variaveis: Json
+        }
+        Insert: {
+          ativo?: boolean
+          canal: string
+          conteudo: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          empresa_id: string
+          id?: string
+          nome: string
+          status?: string
+          updated_at?: string
+          variaveis?: Json
+        }
+        Update: {
+          ativo?: boolean
+          canal?: string
+          conteudo?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          empresa_id?: string
+          id?: string
+          nome?: string
+          status?: string
+          updated_at?: string
+          variaveis?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "templates_mensagem_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vencimento_tipos: {
         Row: {
           ativo: boolean
@@ -1630,6 +2024,7 @@ export type Database = {
         Args: { p_empresa_id: string; p_nicho: string }
         Returns: undefined
       }
+      atualizar_status_campanhas: { Args: never; Returns: undefined }
       avaliar_segmento: { Args: { p_segmento_id: string }; Returns: string[] }
       buscar_possiveis_duplicatas: {
         Args: {
@@ -1664,9 +2059,30 @@ export type Database = {
         Args: { p_aceite_termos: boolean; p_nicho: string; p_nome: string }
         Returns: string
       }
+      criar_integracao: {
+        Args: {
+          p_distribuicao_tipo?: string
+          p_empresa_id: string
+          p_nome: string
+          p_responsavel_fixo_id?: string
+        }
+        Returns: {
+          id: string
+          token: string
+        }[]
+      }
+      definir_slug_empresa: {
+        Args: { p_empresa_id: string; p_slug: string }
+        Returns: undefined
+      }
       dentro_horario_comercial: {
         Args: { p_empresa_id: string; p_momento: string }
         Returns: boolean
+      }
+      disparar_campanha: { Args: { p_campanha_id: string }; Returns: undefined }
+      disparar_campanhas_agendadas: {
+        Args: { p_agora?: string }
+        Returns: undefined
       }
       enfileirar_envio: {
         Args: {
@@ -1703,6 +2119,17 @@ export type Database = {
         }
         Returns: undefined
       }
+      metricas_campanha: {
+        Args: { p_campanha_id: string }
+        Returns: {
+          bloqueados: number
+          entregues: number
+          enviados: number
+          lidos: number
+          negocios_gerados: number
+          optouts: number
+        }[]
+      }
       mock_enviar_mensagem: {
         Args: { p_canal: string; p_conteudo: string }
         Returns: boolean
@@ -1715,6 +2142,27 @@ export type Database = {
           p_proximo_passo_em: string
         }
         Returns: undefined
+      }
+      obter_formulario_publico: {
+        Args: { p_formulario_id: string }
+        Returns: {
+          campos: Json
+          nome: string
+        }[]
+      }
+      obter_pagina_captura_publica: {
+        Args: { p_empresa_slug: string; p_pagina_slug: string }
+        Returns: {
+          empresa_cor_primaria: string
+          empresa_logo_url: string
+          empresa_nome: string
+          formulario_id: string
+          imagem_url: string
+          texto: string
+          titulo: string
+          whatsapp_mensagem: string
+          whatsapp_numero: string
+        }[]
       }
       pode_acessar_responsavel: {
         Args: { p_empresa_id: string; p_responsavel_id: string }
@@ -1755,6 +2203,13 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      preview_campanha: {
+        Args: { p_campanha_id: string }
+        Returns: {
+          contato_id: string
+          conteudo_resolvido: string
+        }[]
+      }
       processar_fila_envios: {
         Args: { p_agora?: string; p_limite?: number }
         Returns: {
@@ -1767,6 +2222,33 @@ export type Database = {
         Args: { p_empresa_id: string; p_momento: string }
         Returns: string
       }
+      receber_lead: {
+        Args: {
+          p_campos: Json
+          p_distribuicao_tipo: string
+          p_email: string
+          p_empresa_id: string
+          p_nome: string
+          p_origem: string
+          p_proximo_indice_rodizio: number
+          p_responsavel_fixo_id: string
+          p_telefone: string
+          p_utm: Json
+        }
+        Returns: string
+      }
+      receber_lead_webhook: {
+        Args: {
+          p_campos?: Json
+          p_email?: string
+          p_nome: string
+          p_telefone?: string
+          p_token: string
+          p_utm?: Json
+        }
+        Returns: undefined
+      }
+      renderizar_blocos_campanha: { Args: { p_blocos: Json }; Returns: string }
       renovar_vencimento: {
         Args: {
           p_nova_data: string
@@ -1776,8 +2258,20 @@ export type Database = {
         }
         Returns: string
       }
+      resolver_variaveis_campanha: {
+        Args: { p_contato_id: string; p_texto: string }
+        Returns: string
+      }
       restaurar_registro: {
         Args: { p_id: string; p_tabela: string }
+        Returns: undefined
+      }
+      revogar_integracao: {
+        Args: { p_integracao_id: string }
+        Returns: undefined
+      }
+      submeter_formulario: {
+        Args: { p_dados: Json; p_formulario_id: string; p_utm?: Json }
         Returns: undefined
       }
       tem_papel: {
@@ -1786,6 +2280,10 @@ export type Database = {
       }
       validar_criterios_segmento: {
         Args: { p_criterios: Json }
+        Returns: boolean
+      }
+      validar_variaveis_campanha: {
+        Args: { p_variaveis: Json }
         Returns: boolean
       }
     }

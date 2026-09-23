@@ -3,6 +3,7 @@ import { AppShell } from "@/app/AppShell";
 import { RotaProtegida } from "@/app/RotaProtegida";
 import { RotaPublica } from "@/app/RotaPublica";
 import { Inicio } from "@/app/paginas/Inicio";
+import { Marketing } from "@/app/paginas/Marketing";
 import { Privacidade } from "@/app/paginas/Privacidade";
 import { Termos } from "@/app/paginas/Termos";
 import { Entrar } from "@/features/auth/paginas/Entrar";
@@ -23,6 +24,18 @@ import { Funil } from "@/features/funis/paginas/Funil";
 import { ListaTarefas } from "@/features/tarefas/paginas/ListaTarefas";
 import { FormularioSegmento } from "@/features/segmentos/paginas/FormularioSegmento";
 import { ListaSegmentos } from "@/features/segmentos/paginas/ListaSegmentos";
+import { DetalheCampanha } from "@/features/campanhas/paginas/DetalheCampanha";
+import { FormularioCampanha } from "@/features/campanhas/paginas/FormularioCampanha";
+import { FormularioTemplate } from "@/features/campanhas/paginas/FormularioTemplate";
+import { ListaCampanhas } from "@/features/campanhas/paginas/ListaCampanhas";
+import { ListaTemplates } from "@/features/campanhas/paginas/ListaTemplates";
+import { FormularioFormulario } from "@/features/captura/paginas/FormularioFormulario";
+import { FormularioPaginaCaptura } from "@/features/captura/paginas/FormularioPaginaCaptura";
+import { FormularioPublico } from "@/features/captura/paginas/FormularioPublico";
+import { ListaFormularios } from "@/features/captura/paginas/ListaFormularios";
+import { ListaIntegracoes } from "@/features/captura/paginas/ListaIntegracoes";
+import { ListaPaginasCaptura } from "@/features/captura/paginas/ListaPaginasCaptura";
+import { PaginaCapturaPublica } from "@/features/captura/paginas/PaginaCapturaPublica";
 
 export const router = createBrowserRouter([
   {
@@ -35,6 +48,8 @@ export const router = createBrowserRouter([
   { path: "/termos", element: <Termos /> },
   { path: "/privacidade", element: <Privacidade /> },
   { path: "/convite/:token", element: <AceitarConvite /> },
+  { path: "/f/:empresaSlug/:formularioId", element: <FormularioPublico /> },
+  { path: "/p/:empresaSlug/:paginaSlug", element: <PaginaCapturaPublica /> },
   {
     element: <RotaProtegida />,
     children: [
@@ -61,6 +76,21 @@ export const router = createBrowserRouter([
           { path: "/segmentos", element: <ListaSegmentos /> },
           { path: "/segmentos/novo", element: <FormularioSegmento /> },
           { path: "/segmentos/:id/editar", element: <FormularioSegmento /> },
+          { path: "/marketing", element: <Marketing /> },
+          { path: "/campanhas", element: <ListaCampanhas /> },
+          { path: "/campanhas/novo", element: <FormularioCampanha /> },
+          { path: "/campanhas/templates", element: <ListaTemplates /> },
+          { path: "/campanhas/templates/novo", element: <FormularioTemplate /> },
+          { path: "/campanhas/templates/:id/editar", element: <FormularioTemplate /> },
+          { path: "/campanhas/:id", element: <DetalheCampanha /> },
+          { path: "/campanhas/:id/editar", element: <FormularioCampanha /> },
+          { path: "/captura/formularios", element: <ListaFormularios /> },
+          { path: "/captura/formularios/novo", element: <FormularioFormulario /> },
+          { path: "/captura/formularios/:id/editar", element: <FormularioFormulario /> },
+          { path: "/captura/paginas", element: <ListaPaginasCaptura /> },
+          { path: "/captura/paginas/novo", element: <FormularioPaginaCaptura /> },
+          { path: "/captura/paginas/:id/editar", element: <FormularioPaginaCaptura /> },
+          { path: "/captura/integracoes", element: <ListaIntegracoes /> },
         ],
       },
     ],

@@ -12,6 +12,8 @@ export interface EmpresaMembro {
   fuso: string;
   papel: "dono" | "gestor" | "usuario";
   vocabulario: unknown;
+  /** Usado nas URLs públicas de captura (/p/{slug}/..., /f/{slug}/...) — null até alguém configurar. */
+  slug: string | null;
 }
 
 /** Empresas às quais o usuário logado pertence (PRD §5.1: pode pertencer a mais de uma). */
@@ -23,7 +25,7 @@ export function useEmpresas() {
     queryFn: async (): Promise<EmpresaMembro[]> => {
       const { data, error } = await supabase
         .from("empresa_membros")
-        .select("empresa_id, papel, empresas(nome, nicho, fuso, vocabulario)")
+        .select("empresa_id, papel, empresas(nome, nicho, fuso, vocabulario, slug)")
         .order("created_at", { ascending: true });
       if (error) throw error;
       return (data ?? []).map((linha) => ({
@@ -33,6 +35,7 @@ export function useEmpresas() {
         nicho: linha.empresas?.nicho ?? "",
         fuso: linha.empresas?.fuso ?? "America/Sao_Paulo",
         vocabulario: linha.empresas?.vocabulario,
+        slug: linha.empresas?.slug ?? null,
       }));
     },
   });

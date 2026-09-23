@@ -10,11 +10,23 @@ Comentários HTML como este não entram no contexto do Claude.
 
 CRM multiempresa para corretores de seguros (nicho de lançamento) e, depois, outros negócios do ramo administrativo. Foco: leads, funil, vencimentos com lembretes automáticos, follow-up e campanhas. **Não** é sistema de gestão de apólices, financeiro ou comissões.
 
-> **Estado atual:** Fase 1C completa — 1A (fundação), 1B (auth/onboarding/convites), 1C-1 (Contatos), 1C-2 (Vencimentos) e 1C-3 (Importação) implementados; 1C-1/1C-2 testados no navegador, 1C-3 ainda pendente de teste no navegador. **1D-1 (layout)**, **1D-2 (Funis de venda)**, a **identidade visual (`ui-ux-pro-max`)**, **1D-3 (Tarefas)** e **1D-4 (Tela "Hoje")** implementados e validados no navegador. **Correções de layout pós-1D-4** (duas rodadas) e **1D-5 (Notificações — central no app + push)** implementados — 102/102 pgTAP, lint/typecheck/test/build limpos, teste no navegador pendente (1D-5 precisa das chaves VAPID em `.env.local`/`supabase/functions/.env` primeiro — ver `docs/PROGRESSO.md`). **1D inteiro fechado — e a Fase 1 inteira.** Redesenho arquitetural do núcleo (integridade multiempresa por FK composta) e retrabalho visual completo ("Soft Professional" — paleta indigo/emerald/amber, Plus Jakarta Sans) concluídos em seguida, com relógio/calendário na topbar. **Fase 2 (WhatsApp) adiada por decisão do usuário** — próximo ciclo é uma **Fase 3 recortada** (sem campanhas por WhatsApp nem Meta Lead Ads, dados de captura manuais/webhook genérico por enquanto). Detalhe: `docs/decisoes/0004-fase2-adiada-fase3-sem-integracoes-externas.md`. **Planejamento (Specify) da Fase 3 recortada completo** — capability map + 5 specs de módulo em `docs/fase3/` (`fila-envios`, `segmentos`, `captura-leads`, `campanhas`, `relatorios-origem`); ver `docs/decisoes/0005-fila-envios-worker-em-postgres.md` pra uma decisão de arquitetura que sai desse planejamento. **Módulo 1/5 (`fila-envios`) implementado** — 192/192 pgTAP, lint/typecheck/test/build limpos, teste no navegador da fatia extra de consentimento pendente. **Módulo 2/5 (`segmentos`) implementado e validado no navegador** — 203/203 pgTAP, lint/typecheck/test/build limpos, `security-check` sem bloqueadores; `campanhas` (módulo 4/5) já tem as duas dependências prontas. Detalhes: `docs/PROGRESSO.md`. **Pendência de lançamento:** `auth.email.enable_confirmations` precisa virar `true` antes de qualquer Supabase de staging/produção. Detalhes: `docs/PROGRESSO.md`.
+> **Estado atual:** Fase 1 fechada. Em curso: **Fase 3 recortada** (5 módulos
+> especificados em `docs/fase3/`) — `fila-envios`, `segmentos`, `campanhas` e
+> `captura-leads` entregues (259/259 pgTAP); `relatorios-origem` (último) é o
+> próximo passo válido. Fase 2 (WhatsApp) adiada — ADR 0004.
+>
+> **Log de continuidade (fonte da verdade):** `docs/PROGRESSO.md` — leia antes
+> de retomar trabalho; é lá que ficam pendências, achados e próximos passos.
+>
+> **Pendência de lançamento:** `auth.email.enable_confirmations` precisa virar
+> `true` antes de qualquer Supabase de staging/produção.
 
 - **Especificação:** `docs/PRD.md` — leia apenas a seção do que estiver implementando.
-- **Fase atual: 1 — Fundação e núcleo.** Não implemente nada de fases futuras sem eu pedir.
+- **Ciclo atual: Fase 3 recortada.** Não implemente módulo de outro ciclo sem eu pedir.
 - **Decisões de arquitetura:** `docs/decisoes/NNNN-titulo.md` (ADR curta, uma por arquivo).
+- **Identidade visual:** `docs/design-system.md` ("Soft Professional") — confira antes de inventar cor, raio ou peso de fonte.
+- **Specs do ciclo atual:** `docs/fase3/CAPABILITY-MAP.md` + `docs/fase3/SPEC-<modulo>.md`.
+- **Regras por área:** `.claude/rules/` (`Supabase.md`, `Frontend.md`, `Mensageria.md`) — carregam sozinhas ao mexer nos paths correspondentes.
 - **Sobre este repositório:** o `README.md` documenta o produto; a documentação original do starter pack (hooks, skills, permissões) está em `docs/starter-pack.md`.
 
 ## Stack
@@ -23,6 +35,17 @@ CRM multiempresa para corretores de seguros (nicho de lançamento) e, depois, ou
 - **Frontend:** React + Vite + TypeScript strict, Tailwind + shadcn/ui, TanStack Query, React Hook Form + Zod, React Router, PWA
 - **Infra:** Vercel (frontend) + projetos Supabase separados para local, staging e produção
 - **Padrão:** SaaS multiempresa; vertical slices em `src/features/<slice>`
+
+## Arquitetura — invariantes do núcleo
+
+Acertos do redesenho arquitetural (ADR 0003) e do ciclo atual (ADR 0005) que uma migration ou query escrita "do jeito óbvio" desfaz em silêncio.
+
+- **Toda FK é composta.** `(empresa_id, <fk>) references <tabela> (empresa_id, id)`, nunca `references <tabela>(id)`. `responsavel_id` referencia `empresa_membros (empresa_id, usuario_id)`, não `auth.users`. A RLS valida quem escreve na linha, não para onde as colunas apontam — FK simples deixa a empresa A apontar para dados da B. Tabela nova precisa de `unique (empresa_id, id)` para servir de alvo. Ver `docs/decisoes/0003-integridade-multiempresa-por-chave-composta.md`.
+- **Dois padrões de RLS — escolha explícita.** *Tabelas com dono* (`contatos`, `vencimentos`, `negocios`, `tarefas`, `organizacoes`): `pode_acessar_responsavel(...)` + `deleted_at is null` na policy de SELECT, **4 policies separadas** (select/insert/update/delete, nunca `FOR ALL`), exclusão só via RPC `excluir_registro`/`restaurar_registro` — `UPDATE deleted_at` direto é rejeitado de propósito. *Configuração compartilhada* (`funis`, `tags`, `motivos_perda`, `vencimento_tipos`, `segmentos`): qualquer membro lê, gestor+ escreve, sem `deleted_at` na policy — filtro fica no cliente. Misturar os dois reabre a armadilha de auto-bloqueio de `FOR ALL` + `deleted_at is null` (RLS reaplica a `USING` de SELECT contra a linha nova em todo UPDATE).
+- **A timeline é automática.** `atividades` é escrita por trigger do banco (mudança de etapa, ganho, perda, tarefa concluída, vencimento renovado). Não insira `atividades` do cliente — duplica. Mover negócio é um RPC só (`mover_negocio_etapa`).
+- **O worker da fila roda em Postgres.** `processar_fila_envios` (plpgsql + pg_cron a cada minuto) + `mock_enviar_mensagem`, sem Edge Function e sem pg_net enquanto os providers forem mock. Enfileirar é `enfileirar_envio` (RPC). Ver `docs/decisoes/0005-fila-envios-worker-em-postgres.md`.
+- **`empresa_id` no frontend: cinto e suspensório.** A RLS já isola, mas toda query também filtra `.eq("empresa_id", empresaId)` explicitamente. `queryKey` segue `["entidade", empresaId, ...filtros]`, pro cache não vazar entre empresas ao trocar de contexto. A empresa selecionada vem de `useEmpresaAtual()` (`src/features/onboarding/api/useEmpresas.ts`), persistida como UUID em `localStorage` — só o UUID, nunca dado pessoal.
+- **Providers globais** em `src/app/providers.tsx`, nesta ordem: `QueryClientProvider` → `AuthProvider` → `VocabularioProvider`. É esse encadeamento que faz `useVocabulario()` resolver os rótulos da empresa corrente.
 
 ## Comandos essenciais
 
@@ -33,6 +56,11 @@ CRM multiempresa para corretores de seguros (nicho de lançamento) e, depois, ou
 npm install              # make install
 npm run dev               # make dev — sobe Supabase local + Vite juntos (precisa do Docker aberto)
 npm run functions         # make functions — Edge Functions locais
+npm run supabase:stop     # para o Supabase local
+
+# Build e testes de app
+npm run build              # tsc -b (3 projetos: app, node, sw) + vite build
+npm run test:watch          # vitest em modo watch
 
 # Banco
 npm run db:migration -- <nome>   # make migration name=<nome>
@@ -41,7 +69,7 @@ npm run db:types          # make db-types — regenera src/types/database.ts
 
 # Qualidade
 npm run lint               # make lint
-npm run typecheck          # make typecheck
+npm run typecheck          # make typecheck — tsc -b sobre tsconfig.app/node/sw.json
 npm run test                # make test — vitest
 npm run test:db             # make test-db — pgTAP: RLS e isolamento entre empresas
 
@@ -50,24 +78,26 @@ npx vitest run <arquivo>              # um arquivo de teste
 npx vitest run -t "<nome do teste>"   # um teste pelo nome
 npx supabase test db --file supabase/tests/<arquivo>.sql   # um pgTAP
 
-# Deploy — ainda não configurado (entra quando houver staging/produção)
+# Deploy — alvos existem no Makefile mas ainda não implementados (saem com erro)
 make deploy-staging
 make deploy-prod
 ```
 
+`src/sw.ts` (service worker do PWA — push + notificationclick) fica fora do projeto TS `app` de propósito; é compilado à parte pelo `injectManifest` do `vite-plugin-pwa` (`vite.config.ts`), com `tsconfig.sw.json` próprio.
+
 ## Regras de ouro
 
-- **Isolamento entre empresas é inegociável.** Toda tabela de dados tem `empresa_id` e RLS. Tabela nova só está pronta com política RLS e teste pgTAP de isolamento.
+- **Isolamento entre empresas é inegociável.** Toda tabela de dados tem `empresa_id` e RLS, e toda FK entre tabelas com `empresa_id` é composta (ver "Arquitetura" acima). Tabela nova só está pronta com política RLS, FK composta onde aplicável e teste pgTAP de isolamento.
 - **Nada de nicho no código.** Rótulos, campos, funis, tipos de vencimento e mensagens vêm do template da empresa. Nunca escreva "apólice", "segurado" ou "corretor" em componente — use `useVocabulario()`.
 - **Datas de calendário são `date`.** Vencimento e aniversário não são `timestamptz`. Régua e "hoje" são calculados no fuso da empresa, nunca no do servidor ou do navegador.
-- **Toda mensagem sai pela fila de envios.** Consentimento, opt-out, horário comercial, janela de 24h e limite do plano são checados em um único lugar.
-- **Integrações só via providers** em `supabase/functions/_shared/providers/`. Em dev e testes, o mock é o padrão.
+- **Toda mensagem sai pela fila de envios** (`enfileirar_envio` → `processar_fila_envios`). Consentimento, opt-out, horário comercial, janela de 24h e limite do plano são checados em um único lugar.
+- **Integrações externas só via providers** em `supabase/functions/_shared/providers/`, quando deixarem de ser mock — hoje o worker da fila roda inteiro em Postgres (ver "Arquitetura"), sem Edge Function.
 - **`service_role` só em Edge Functions**, com filtro explícito de `empresa_id` em toda query.
 
 ## Convenções
 
 - **Branches:** `feat/<slice>-<short-desc>`, `fix/<short-desc>`, `chore/<short-desc>`
-  - Slices: `onboarding`, `contatos`, `vencimentos`, `funis`, `tarefas`, `hoje`, `whatsapp`, `automacoes`, `campanhas`, `captura`, `billing`, `admin`
+  - Slices: `onboarding`, `contatos`, `vencimentos`, `funis`, `tarefas`, `hoje`, `notificacoes`, `segmentos`, `whatsapp`, `automacoes`, `campanhas`, `captura`, `billing`, `admin`
 - **Commits:** Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`), descrição em português
 - **PRs:** Sempre referencie a issue, descreva o "porquê", não só o "o quê"
 - **Tests:** TDD onde a complexidade pede; testes lêem como spec. Obrigatório em: cálculo de réguas e recorrência, regras da fila de envios e isolamento RLS
@@ -77,27 +107,33 @@ make deploy-prod
 
 ```
 docs/
-  PRD.md
-  decisoes/
+  PRD.md                # spec do produto (§9 = fases); leia só a seção do que estiver fazendo
+  PROGRESSO.md          # log de continuidade entre sessões — fonte da verdade do estado
+  design-system.md      # "Soft Professional" (indigo/emerald/amber, Plus Jakarta Sans)
+  fase3/                # capability map + SPEC-<modulo>.md dos 5 módulos do ciclo atual
+  decisoes/             # ADRs 0001–0005
 src/
-  app/                  # rotas, layouts, providers globais, guards (RotaProtegida/RotaPublica)
-  features/<slice>/     # api/ (hooks TanStack Query), components/, schemas.ts, páginas — existe: auth, onboarding, contatos, vencimentos, importacao
-  components/ui/        # shadcn/ui — existe: button, input, label, card, select, checkbox
-  lib/                  # cliente supabase, datas, formatadores BR, vocabulário
+  app/                  # router, AppShell, providers, guards (RotaProtegida/RotaPublica), globals.css
+  features/<slice>/     # api/ (hooks TanStack Query), components/, paginas/, schemas.ts
+                         # 12 slices: auth, onboarding, contatos, vencimentos, importacao,
+                         # funis, tarefas, hoje, notificacoes, segmentos, campanhas, captura
+  components/ui/        # shadcn/ui, sem regra de negócio (14 componentes)
+  lib/                  # supabase, datas, formatadores BR, vocabulario, camposPersonalizados
+  sw.ts                 # service worker do PWA (push + notificationclick) — tsconfig próprio
   types/database.ts     # GERADO — use npm run db:types
 supabase/
-  migrations/           # 10 migrations (1A: fundação; 1B: onboarding; 1C-1: ultimo_contato_em; 1C-2: renovar_vencimento; 1C-3: importacao_erros insert)
-  functions/_shared/    # providers, fila de envios, validação — chega na Fase 2 (WhatsApp)
-  tests/                # pgTAP — isolamento multiempresa, carteira compartilhada, plataforma_admins, onboarding, contatos, vencimentos, importacao
+  migrations/           # 23 migrations, em ordem cronológica; nunca editar uma já aplicada
+  functions/            # enviar-notificacoes-push/ + _shared/ (supabaseAdmin, providers/tipos)
+  tests/                # 17 arquivos pgTAP — isolamento, integridade, soft delete, por slice
   seed.sql              # duas empresas fictícias (Alfa e Beta), nenhum dado real
-tests/e2e/              # smoke tests — ainda não existe
+.claude/rules/          # regras por path: Supabase.md, Frontend.md, Mensageria.md
 ```
 
 ## Quando pedir ajuda
 
 - Antes de codar uma feature nova sem spec clara: invoque `spec-driven-development`.
 - Para decisões não triviais ou de alto risco (RLS, billing, operações irreversíveis): invoque `doubt-driven-development`.
-- Para construir/ajustar UI: invoque `frontend-ui-engineering`.
+- Para construir/ajustar UI: invoque `frontend-ui-engineering`; antes de criar tela nova, consulte `docs/design-system.md`.
 - Se houver suspeita de regressão de performance ou N+1: invoque `performance-optimization`.
 - Para revisão: invoque a skill `code-review-b2` — o checklist foi escrito para Python/Flask + Next.js; aplique o espírito (VSA, DDD, Security by Design), não a stack literal.
 - Para auditoria de segurança: invoque a skill `security-check` — obrigatório ao mexer em RLS, auth, webhooks ou billing.
@@ -116,4 +152,6 @@ tests/e2e/              # smoke tests — ainda não existe
 - Não rodar comandos de banco contra projetos remotos fora de `make deploy-*`.
 - Não usar bibliotecas não oficiais de WhatsApp.
 - Não guardar dados pessoais de contatos em `localStorage`, URLs ou logs.
+- Não inserir `atividades` do cliente — o trigger do banco já faz isso (ver "Arquitetura").
+- Não escrever FK simples entre tabelas com `empresa_id` — sempre composta.
 - Nunca parecer que o sistema foi criado por uma IA. 

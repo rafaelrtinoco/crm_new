@@ -108,3 +108,20 @@ pgTAP (`supabase/tests/campanhas.sql`):
 ## Open Questions
 
 Nenhuma pendente — as assunções da seção acima ficam sujeitas à revisão deste spec, mas nenhuma delas é uma bifurcação de arquitetura (diferente das decisões dos módulos anteriores).
+
+## Correções aplicadas na implementação
+
+A exploração antes de codar encontrou 6 furos no spec original, todos resolvidos:
+
+1. **Impersonação no disparo agendado.** `disparar_campanhas_agendadas` roda via `pg_cron`, sem JWT/sessão — mas `enfileirar_envio` (`fila-envios`) autoriza cada contato checando `pode_acessar_responsavel`, que depende de `auth.uid()`. Sem sessão, `auth.uid()` é `null` e todo disparo agendado falharia com "sem permissão". Resolvido impersonando — só durante a chamada, via `set_config('request.jwt.claims', ..., true)` (local à transação) — quem criou a campanha, sem tocar em `enfileirar_envio`.
+2. **`campanha_envios.fila_envios_id` virou nullable** (o spec pedia NOT NULL/"1:1"). Necessário pro caso "variável sem valor bloqueia só aquele contato": esse bloqueio acontece *antes* de chamar `enfileirar_envio` (o conteúdo nem existe resolvido ainda), não depois. Adicionado `motivo_bloqueio` na própria tabela para esse caso, com CHECK garantindo exatamente um dos dois preenchido.
+3. **`disparar_campanha` processa cada contato num bloco `exception when others` próprio** (mesmo padrão de `processar_fila_envios`): um erro num contato não aborta a campanha inteira.
+4. **`cron.schedule('processar-fila-envios', ...)` é re-registrado** (mesmo nome — `cron.schedule` faz upsert), já que a migration de `fila-envios` não pode ser editada.
+5. **Variáveis de template num vocabulário fechado** (`nome`, `primeiro_nome`, `email`, `telefone`) — o PRD não especificava a lista.
+6. **`fila_envios` ganhou `unique (empresa_id, id)`** — a migration de `fila-envios` não previu FK composta apontando pra ela; só `campanhas` precisa disso.
+
+**`security-check` rodado** (2026-09-23) — 1 médio + 1 info, ambos corrigidos antes de fechar o módulo:
+- `campanhas.created_by` não era validado contra `auth.uid()` no INSERT. Como esse campo é usado pra impersonação (correção 1), um gestor podia inserir uma campanha atribuindo a autoria a outro usuário da mesma empresa — sem razão legítima, mesmo com dano prático baixo (mesmo nível de acesso). Corrigido dividindo a policy `FOR ALL` em `campanhas_insert_proprio` (exige `created_by = auth.uid()`) + `campanhas_update_gestor` + `campanhas_delete_gestor`, mesmo padrão de `importacoes.sql`.
+- `resolver_variaveis_campanha` podia interpretar `\1` literal (num nome/e-mail de contato) como backreference de `regexp_replace`. Corrigido escapando barra invertida antes de usar como substituição.
+
+**227/227 pgTAP** (203 anteriores + 24 novos deste módulo — as 2 falhas de `notificacoes.sql` são pré-existentes, documentadas em `docs/PROGRESSO.md`, não relacionadas); `lint`/`typecheck`/`test`/`build` limpos. Testado no navegador pelo usuário (2026-09-23) — funcionou.
