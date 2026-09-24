@@ -8,7 +8,7 @@ CRM SaaS multiempresa de relacionamento, focado em leads, funil de vendas, venci
 
 ## Estado atual
 
-**Fase 1 — Fundação e núcleo** (ver `docs/PRD.md` seção 9): **1A, 1B e 1C completos** (schema/RLS; auth/onboarding/convites; contatos, vencimentos e importação de planilha) — 1A/1B/1C-1/1C-2 validados no navegador, **1C-3 (Importação)** concluído com 82 testes pgTAP + 25 Vitest, teste no navegador pendente. Do **1D** (funis, tarefas, tela "Hoje", PWA completo e layout geral da plataforma): **1D-1**, **1D-2**, a identidade visual (plugin `ui-ux-pro-max`), **1D-3** e **1D-4** implementados e validados no navegador. Correções de layout (duas rodadas) e **1D-5 (Notificações — central no app + push)** implementados, teste no navegador pendente. **1D inteiro fechado — Fase 1 completa.** Próximo: Fase 2 (WhatsApp e réguas).
+**Fase 1 fechada.** Ciclo atual: **Fase 3 recortada** (5 módulos especificados em `docs/fase3/`). Fase 2 (WhatsApp e réguas) foi adiada — ver `docs/decisoes/0004-fase2-adiada-fase3-sem-integracoes-externas.md`. Estado exato do ciclo (módulo entregue, pendências, próximo passo) vive em `docs/PROGRESSO.md` — é lá que se atualiza a cada incremento, não aqui.
 
 ## Stack
 

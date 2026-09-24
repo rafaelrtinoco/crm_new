@@ -10,13 +10,11 @@ Comentários HTML como este não entram no contexto do Claude.
 
 CRM multiempresa para corretores de seguros (nicho de lançamento) e, depois, outros negócios do ramo administrativo. Foco: leads, funil, vencimentos com lembretes automáticos, follow-up e campanhas. **Não** é sistema de gestão de apólices, financeiro ou comissões.
 
-> **Estado atual:** Fase 1 fechada. Em curso: **Fase 3 recortada** (5 módulos
-> especificados em `docs/fase3/`) — `fila-envios`, `segmentos`, `campanhas` e
-> `captura-leads` entregues (259/259 pgTAP); `relatorios-origem` (último) é o
-> próximo passo válido. Fase 2 (WhatsApp) adiada — ADR 0004.
+> **Ciclo atual:** Fase 3 recortada (5 módulos em `docs/fase3/`).
+> Fase 2 (WhatsApp) adiada — ADR 0004.
 >
-> **Log de continuidade (fonte da verdade):** `docs/PROGRESSO.md` — leia antes
-> de retomar trabalho; é lá que ficam pendências, achados e próximos passos.
+> **Leia `docs/PROGRESSO.md` antes de retomar** — módulo entregue, pendências
+> e próximo passo ficam lá, não aqui.
 >
 > **Pendência de lançamento:** `auth.email.enable_confirmations` precisa virar
 > `true` antes de qualquer Supabase de staging/produção.
@@ -85,12 +83,14 @@ make deploy-prod
 
 `src/sw.ts` (service worker do PWA — push + notificationclick) fica fora do projeto TS `app` de propósito; é compilado à parte pelo `injectManifest` do `vite-plugin-pwa` (`vite.config.ts`), com `tsconfig.sw.json` próprio.
 
+Não existe `vitest.config.ts` — a config do Vitest é a chave `test` do próprio `vite.config.ts` (jsdom, `globals: true`, setup em `src/test/setup.ts`). Testes de app ficam co-localizados com o código (`*.test.ts`); a maior parte da cobertura é pgTAP.
+
 ## Regras de ouro
 
 - **Isolamento entre empresas é inegociável.** Toda tabela de dados tem `empresa_id` e RLS, e toda FK entre tabelas com `empresa_id` é composta (ver "Arquitetura" acima). Tabela nova só está pronta com política RLS, FK composta onde aplicável e teste pgTAP de isolamento.
 - **Nada de nicho no código.** Rótulos, campos, funis, tipos de vencimento e mensagens vêm do template da empresa. Nunca escreva "apólice", "segurado" ou "corretor" em componente — use `useVocabulario()`.
 - **Datas de calendário são `date`.** Vencimento e aniversário não são `timestamptz`. Régua e "hoje" são calculados no fuso da empresa, nunca no do servidor ou do navegador.
-- **Toda mensagem sai pela fila de envios** (`enfileirar_envio` → `processar_fila_envios`). Consentimento, opt-out, horário comercial, janela de 24h e limite do plano são checados em um único lugar.
+- **Toda mensagem sai pela fila de envios** (`enfileirar_envio` → `processar_fila_envios`). Endereço válido, consentimento, opt-out e horário comercial são checados em um único lugar, nesta ordem; fora do horário comercial reagenda, não bloqueia. Limite de envios do plano e janela de 24h do WhatsApp são desenho de fase futura, ainda não implementados — não checar duas vezes nem assumir que já existem.
 - **Integrações externas só via providers** em `supabase/functions/_shared/providers/`, quando deixarem de ser mock — hoje o worker da fila roda inteiro em Postgres (ver "Arquitetura"), sem Edge Function.
 - **`service_role` só em Edge Functions**, com filtro explícito de `empresa_id` em toda query.
 
@@ -102,6 +102,8 @@ make deploy-prod
 - **PRs:** Sempre referencie a issue, descreva o "porquê", não só o "o quê"
 - **Tests:** TDD onde a complexidade pede; testes lêem como spec. Obrigatório em: cálculo de réguas e recorrência, regras da fila de envios e isolamento RLS
 - **Idioma:** UI em pt-BR. Nomes de domínio em português, espelhando o banco (`contatos`, `Vencimento`, `useNegocios`); termos técnicos genéricos em inglês (`utils`, `hooks`, `components`)
+- **Imports:** alias `@/` aponta pra `src/` (`tsconfig.app.json` + `vite.config.ts`) — sempre usar, nunca `../../..`.
+- **TypeScript além do `strict`:** `noUncheckedIndexedAccess` (acesso a array/objeto por índice devolve `T | undefined`), `noUnusedLocals`, `noUnusedParameters`, `noFallthroughCasesInSwitch`.
 
 ## Estrutura
 
@@ -114,7 +116,7 @@ docs/
   decisoes/             # ADRs 0001–0005
 src/
   app/                  # router, AppShell, providers, guards (RotaProtegida/RotaPublica), globals.css
-  features/<slice>/     # api/ (hooks TanStack Query), components/, paginas/, schemas.ts
+  features/<slice>/     # api/ (hooks TanStack Query), components/, paginas/, schemas.ts, logica/ (regra pura testável)
                          # 12 slices: auth, onboarding, contatos, vencimentos, importacao,
                          # funis, tarefas, hoje, notificacoes, segmentos, campanhas, captura
   components/ui/        # shadcn/ui, sem regra de negócio (14 componentes)
