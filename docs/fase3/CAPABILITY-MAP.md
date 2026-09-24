@@ -22,6 +22,6 @@ Aprovado pelo usuário em 2026-09-16. Escopo e o que fica de fora: `docs/decisoe
 - `SPEC-segmentos.md` — **implementado** (2026-09-18); ver a seção "Correções aplicadas na implementação" no próprio spec
 - `SPEC-captura-leads.md` — **implementado** (2026-09-23); ver a seção "Correções aplicadas na implementação" no próprio spec
 - `SPEC-campanhas.md` — **implementado** (2026-09-23); ver a seção "Correções aplicadas na implementação" no próprio spec
-- `SPEC-relatorios-origem.md` — escrito, pendente de revisão (2026-09-16) — só resta decidir a posição na navegação (ver "Open Questions" do próprio spec)
+- `SPEC-relatorios-origem.md` — **implementado** (2026-09-24); ver a seção "Correções aplicadas na implementação" no próprio spec
 
-**Próximo passo, quando o usuário pedir:** `relatorios-origem` (5/5, último do capability map) — `captura-leads` e `campanhas` já entregues, então as duas dependências dele estão prontas.
+**Capability map completo — Fase 3 recortada fechada.** Os 5 módulos (`fila-envios`, `segmentos`, `captura-leads`, `campanhas`, `relatorios-origem`) estão implementados. Verificação de banco (`db:reset`/`db:types`/`test:db`) e teste no navegador de `relatorios-origem` ficaram pendentes por falta de Docker Desktop na sessão que implementou — ver `docs/PROGRESSO.md`.

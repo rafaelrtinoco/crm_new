@@ -57,7 +57,7 @@ const itensNav: ItemNavConfig[] = [
     rotulo: "Marketing",
     rota: "/marketing",
     Icone: Megaphone,
-    prefixosAtivos: ["/marketing", "/segmentos", "/campanhas", "/captura"],
+    prefixosAtivos: ["/marketing", "/segmentos", "/campanhas", "/captura", "/relatorios"],
   },
 ];
 

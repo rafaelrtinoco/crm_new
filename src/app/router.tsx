@@ -36,6 +36,8 @@ import { ListaFormularios } from "@/features/captura/paginas/ListaFormularios";
 import { ListaIntegracoes } from "@/features/captura/paginas/ListaIntegracoes";
 import { ListaPaginasCaptura } from "@/features/captura/paginas/ListaPaginasCaptura";
 import { PaginaCapturaPublica } from "@/features/captura/paginas/PaginaCapturaPublica";
+import { RelatorioLeadsOrigem } from "@/features/relatorios/paginas/RelatorioLeadsOrigem";
+import { RelatorioDesempenhoCampanhas } from "@/features/relatorios/paginas/RelatorioDesempenhoCampanhas";
 
 export const router = createBrowserRouter([
   {
@@ -91,6 +93,8 @@ export const router = createBrowserRouter([
           { path: "/captura/paginas/novo", element: <FormularioPaginaCaptura /> },
           { path: "/captura/paginas/:id/editar", element: <FormularioPaginaCaptura /> },
           { path: "/captura/integracoes", element: <ListaIntegracoes /> },
+          { path: "/relatorios/leads-origem", element: <RelatorioLeadsOrigem /> },
+          { path: "/relatorios/campanhas", element: <RelatorioDesempenhoCampanhas /> },
         ],
       },
     ],

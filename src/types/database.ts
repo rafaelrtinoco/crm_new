@@ -2248,6 +2248,37 @@ export type Database = {
         }
         Returns: undefined
       }
+      relatorio_desempenho_campanhas: {
+        Args: {
+          p_data_fim: string
+          p_data_inicio: string
+          p_empresa_id: string
+        }
+        Returns: {
+          bloqueados: number
+          campanha_id: string
+          canal: string
+          disparada_em: string
+          enviados: number
+          negocios_gerados: number
+          nome: string
+          optouts: number
+        }[]
+      }
+      relatorio_leads_por_origem: {
+        Args: {
+          p_data_fim: string
+          p_data_inicio: string
+          p_empresa_id: string
+        }
+        Returns: {
+          convertidos: number
+          origem: string
+          taxa_conversao: number
+          total_leads: number
+          utm_campaign: string
+        }[]
+      }
       renderizar_blocos_campanha: { Args: { p_blocos: Json }; Returns: string }
       renovar_vencimento: {
         Args: {

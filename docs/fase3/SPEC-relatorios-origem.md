@@ -47,4 +47,11 @@ Sem migration nova — sem risco de RLS além do já coberto pelos módulos de o
 
 ## Open Questions
 
-- Posição na navegação (item próprio "Relatórios" vs. dentro de "Marketing") — decisão de baixo risco, resolver na revisão deste spec, não bloqueia o resto.
+- ~~Posição na navegação~~ — resolvido na implementação: dois cards novos no índice de "Marketing" (não item próprio), ver "Correções aplicadas na implementação".
+
+## Correções aplicadas na implementação
+
+1. **`p_empresa_id` explícito nas duas funções** — o spec original propunha `security_invoker` sozinho ("a RLS de contatos já limita a quem tem acesso"), mas isso é incompleto: a RLS de `contatos`/`campanhas` restringe por MEMBRESIA (`is_membro`), não pela empresa selecionada no frontend. Um usuário membro de duas empresas, sem esse filtro, veria leads/campanhas das duas misturados no mesmo relatório. Corrigido acrescentando `p_empresa_id uuid` como primeiro parâmetro nas duas funções — mesmo padrão já usado em `contar_segmento_provisorio` (`segmentos.sql`) para função sem entidade âncora, e a regra "empresa_id: cinto e suspensório" do CLAUDE.md. pgTAP cobre o cenário concreto: um gestor da Alfa que também é membro (comum) da Beta pedindo relatório com `p_empresa_id` da Alfa não vê o contato da Beta.
+2. **Navegação: cards no índice de "Marketing"**, não item de sidebar próprio — a sidebar mobile já tem 6 itens (Início/Contatos/Vencimentos/Funis/Tarefas/Marketing); um item "Relatórios" a mais apertaria a barra inferior sem necessidade, já que os dois relatórios deste recorte são leitura sobre dado de Marketing (leads de captura + campanhas). `AppShell.tsx`: `/relatorios` entrou em `prefixosAtivos` do item "Marketing", pra ele continuar aceso nessas rotas.
+3. **`relatorio_desempenho_campanhas` filtra `deleted_at is null` explicitamente** — `campanhas` é "configuração compartilhada" (RLS não filtra `deleted_at`, fica pro chamador, mesmo padrão de `useCampanhas` no frontend); sem esse filtro, campanha excluída (soft delete) apareceria no relatório.
+4. **`npm run db:reset && npm run db:types && npm run test:db` não rodaram nesta sessão** — ambiente sem Docker Desktop disponível. `lint`, `typecheck` (exceto os 2 novos RPCs, que só existem depois de `db:types`) e `test` (32/32 Vitest) foram confirmados; `build`/`typecheck` completos e o teste no navegador ficam pendentes de rodar numa máquina com Docker aberto, seguindo os passos de "Success Criteria".

@@ -1,5 +1,14 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, ClipboardList, LayoutTemplate, Plug, Send, Users2 } from "lucide-react";
+import {
+  ArrowRight,
+  BarChart3,
+  ClipboardList,
+  LayoutTemplate,
+  Plug,
+  Send,
+  TrendingUp,
+  Users2,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const ITENS = [
@@ -37,9 +46,21 @@ const ITENS = [
     href: "/captura/integracoes",
     Icone: Plug,
   },
+  {
+    titulo: "Leads por origem",
+    descricao: "De onde vêm os leads — origem e UTM da campanha, com taxa de conversão.",
+    href: "/relatorios/leads-origem",
+    Icone: TrendingUp,
+  },
+  {
+    titulo: "Desempenho de campanhas",
+    descricao: "Enviados, bloqueados, opt-outs e negócios gerados por campanha disparada.",
+    href: "/relatorios/campanhas",
+    Icone: BarChart3,
+  },
 ];
 
-/** Página índice de "Marketing" — agrupa segmentos, campanhas e captura de leads (SPEC-campanhas.md, decisão de navegação). */
+/** Página índice de "Marketing" — agrupa segmentos, campanhas, captura de leads e os relatórios de origem/desempenho (SPEC-campanhas.md/SPEC-relatorios-origem.md, decisão de navegação). */
 export function Marketing() {
   return (
     <main className="mx-auto max-w-4xl space-y-4 p-4">

@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -42,7 +43,11 @@ export function SeletorTemplate({ empresaId, value, onChange }: SeletorTemplateP
       </Select>
       {!isLoading && templatesWhatsapp.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          Nenhum template de WhatsApp ainda — crie um em Templates antes de disparar.
+          Nenhum template de WhatsApp ainda —{" "}
+          <Link to="/campanhas/templates/novo" className="underline">
+            crie um
+          </Link>{" "}
+          antes de disparar.
         </p>
       )}
     </div>

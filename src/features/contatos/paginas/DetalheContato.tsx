@@ -30,6 +30,7 @@ import { useContato } from "@/features/contatos/api/useContatos";
 import { useExcluirContato } from "@/features/contatos/api/useMutacoesContato";
 import { useTagsDoContato } from "@/features/contatos/api/useTags";
 import { CardConsentimento } from "@/features/contatos/components/CardConsentimento";
+import { ChatWhatsapp } from "@/features/contatos/components/ChatWhatsapp";
 import { TimelineContato } from "@/features/contatos/components/TimelineContato";
 import { useVencimentos } from "@/features/vencimentos/api/useVencimentos";
 import { useNegociosDoContato } from "@/features/funis/api/useNegocios";
@@ -216,6 +217,7 @@ export function DetalheContato() {
             <TabsList>
               <TabsTrigger value="dados">Dados</TabsTrigger>
               <TabsTrigger value="timeline">Timeline</TabsTrigger>
+              <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
               <TabsTrigger value="vencimentos">Vencimentos</TabsTrigger>
               <TabsTrigger value="negocios">Negócios</TabsTrigger>
               <TabsTrigger value="tarefas">Tarefas</TabsTrigger>
@@ -251,6 +253,15 @@ export function DetalheContato() {
             </TabsContent>
             <TabsContent value="timeline">
               <TimelineContato atividades={atividades ?? []} />
+            </TabsContent>
+            <TabsContent value="whatsapp">
+              {atual?.empresaId && id && usuario?.id && (
+                <ChatWhatsapp
+                  empresaId={atual.empresaId}
+                  contatoId={id}
+                  responsavelId={usuario.id}
+                />
+              )}
             </TabsContent>
             <TabsContent value="vencimentos" className="space-y-3">
               <Button size="sm" variant="outline" asChild>

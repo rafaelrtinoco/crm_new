@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Mail, MessageCircle, Plus, Send } from "lucide-react";
+import { LayoutTemplate, Mail, MessageCircle, Plus, Send } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -41,12 +41,20 @@ export function ListaCampanhas() {
     <main className="mx-auto max-w-7xl space-y-4 p-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Campanhas</h1>
-        <Button asChild>
-          <Link to="/campanhas/novo">
-            <Plus className="mr-2 h-4 w-4" />
-            Nova campanha
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="outline">
+            <Link to="/campanhas/templates">
+              <LayoutTemplate className="mr-2 h-4 w-4" />
+              Templates
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link to="/campanhas/novo">
+              <Plus className="mr-2 h-4 w-4" />
+              Nova campanha
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {isLoading && <p className="text-sm text-muted-foreground">Carregando…</p>}
