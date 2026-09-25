@@ -2,6 +2,7 @@ import { createBrowserRouter } from "react-router-dom";
 import { AppShell } from "@/app/AppShell";
 import { RotaProtegida } from "@/app/RotaProtegida";
 import { RotaPublica } from "@/app/RotaPublica";
+import { Configuracoes } from "@/app/paginas/Configuracoes";
 import { Inicio } from "@/app/paginas/Inicio";
 import { Marketing } from "@/app/paginas/Marketing";
 import { Privacidade } from "@/app/paginas/Privacidade";
@@ -38,6 +39,7 @@ import { ListaPaginasCaptura } from "@/features/captura/paginas/ListaPaginasCapt
 import { PaginaCapturaPublica } from "@/features/captura/paginas/PaginaCapturaPublica";
 import { RelatorioLeadsOrigem } from "@/features/relatorios/paginas/RelatorioLeadsOrigem";
 import { RelatorioDesempenhoCampanhas } from "@/features/relatorios/paginas/RelatorioDesempenhoCampanhas";
+import { ConfiguracoesEmpresa } from "@/features/configuracoes/paginas/ConfiguracoesEmpresa";
 
 export const router = createBrowserRouter([
   {
@@ -95,6 +97,8 @@ export const router = createBrowserRouter([
           { path: "/captura/integracoes", element: <ListaIntegracoes /> },
           { path: "/relatorios/leads-origem", element: <RelatorioLeadsOrigem /> },
           { path: "/relatorios/campanhas", element: <RelatorioDesempenhoCampanhas /> },
+          { path: "/configuracoes", element: <Configuracoes /> },
+          { path: "/configuracoes/empresa", element: <ConfiguracoesEmpresa /> },
         ],
       },
     ],

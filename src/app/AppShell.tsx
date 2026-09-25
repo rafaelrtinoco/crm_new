@@ -146,14 +146,16 @@ interface MenuUsuarioProps {
 }
 
 /**
- * "Meu Perfil"/"Configurações"/"Assinatura" ficam desabilitados de
- * propósito — sinalizam que vão existir sem fingir que já funcionam.
- * Nenhuma das três telas existe ainda (Configurações é módulo inteiro
- * do PRD §6.15; Assinatura é Fase 4 explícita).
+ * "Meu Perfil"/"Assinatura" ficam desabilitados de propósito — sinalizam
+ * que vão existir sem fingir que já funcionam (Assinatura é Fase 4
+ * explícita). "Configurações" (PRD §6.15) já tem fatia 1 implementada —
+ * link ativo, só pra gestor/dono (mesmo guard-é-UX de `Convidar.tsx`;
+ * quem protege de verdade é a RLS/RPC).
  */
 function MenuUsuario({ children, side = "bottom", align = "end" }: MenuUsuarioProps) {
   const { usuario } = useAuth();
   const { tema, alternar } = useTema();
+  const { atual } = useEmpresaAtual();
   const nome =
     (usuario?.user_metadata as { nome?: string } | undefined)?.nome ?? usuario?.email ?? "";
 
@@ -164,7 +166,11 @@ function MenuUsuario({ children, side = "bottom", align = "end" }: MenuUsuarioPr
         <DropdownMenuLabel className="truncate">{nome}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem disabled>Meu Perfil</DropdownMenuItem>
-        <DropdownMenuItem disabled>Configurações</DropdownMenuItem>
+        {atual && atual.papel !== "usuario" && (
+          <DropdownMenuItem asChild>
+            <Link to="/configuracoes">Configurações</Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem disabled>Assinatura</DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={alternar}>

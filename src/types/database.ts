@@ -2024,6 +2024,17 @@ export type Database = {
         Args: { p_empresa_id: string; p_nicho: string }
         Returns: undefined
       }
+      atualizar_configuracoes_empresa: {
+        Args: {
+          p_cor_primaria: string
+          p_empresa_id: string
+          p_fuso: string
+          p_horario_comercial: Json
+          p_logo_url: string
+          p_nome: string
+        }
+        Returns: undefined
+      }
       atualizar_status_campanhas: { Args: never; Returns: undefined }
       avaliar_segmento: { Args: { p_segmento_id: string }; Returns: string[] }
       buscar_possiveis_duplicatas: {
@@ -2107,6 +2118,7 @@ export type Database = {
         Returns: undefined
       }
       is_membro: { Args: { p_empresa_id: string }; Returns: boolean }
+      janela_horario_valida: { Args: { p_janela: Json }; Returns: boolean }
       marcar_negocio_ganho: {
         Args: { p_negocio_id: string }
         Returns: undefined
@@ -2300,6 +2312,10 @@ export type Database = {
       revogar_integracao: {
         Args: { p_integracao_id: string }
         Returns: undefined
+      }
+      storage_pasta_e_empresa_gestor: {
+        Args: { p_nome: string }
+        Returns: boolean
       }
       submeter_formulario: {
         Args: { p_dados: Json; p_formulario_id: string; p_utm?: Json }

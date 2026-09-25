@@ -2,6 +2,66 @@
 
 Log de continuidade entre máquinas/sessões. Atualize a seção "Estado atual" a cada incremento entregue; não precisa reescrever o histórico abaixo dela.
 
+## Estado atual — 2026-09-25
+
+**Configurações da empresa — fatia 1 (Empresa) implementada.** Fora do capability map da
+Fase 3 (fechado) — recorte de PRD §6.15, pedido do usuário depois de uma auditoria de "o
+que ficou pendente entre fases" que achou que **não existia nenhuma tela de
+Configurações**: funis/etapas, tipos de vencimento, campos personalizados, motivos de
+perda, horário comercial, fuso, dados/logo/cores da empresa e slug só nasciam uma vez em
+`aplicar_template()` (onboarding) e nunca mais podiam ser mudados pela interface. Dois
+recursos do produto já dependiam de campos que ninguém conseguia editar: `processar_fila_envios`
+reagenda por `empresas.horario_comercial`, sem tela pra corrigir quem tivesse horário
+diferente do padrão do template; `logo_url`/`cor_primaria` já eram lidos por
+`obter_pagina_captura_publica`/`PaginaCapturaPublica.tsx`, mas nunca preenchidos por nada.
+
+Escopo fechado com o usuário via `AskUserQuestion`: só a fatia 1 (Empresa) nesta rodada —
+fatias 2 (funis/tipos de vencimento/campos personalizados/tags/motivos de perda — RLS já
+pronta desde a fundação, só falta UI) e 3 (equipe — bloqueada por um furo real:
+`empresa_membros_gestor_escreve` é `FOR ALL` pra gestor, deixaria um gestor promover a si
+mesmo a dono) ficaram especificadas no capítulo "Mapa das três fatias" do spec, não
+implementadas. Acesso só gestor+; logo via upload de Storage (não campo de URL).
+
+`supabase/migrations/20260925130602_configuracoes_empresa.sql` — sem tabela nova (`empresas`
+já tinha as colunas desde a fundação). RPC `atualizar_configuracoes_empresa` (`security
+definer`, mesmo caminho que `definir_slug_empresa` já tinha aberto: função dedicada pra
+gestor, não afrouxar a policy `empresas_update_dono` inteira); trigger
+`validar_empresa_antes_de_salvar` em `empresas` (`before insert or update`, valida fuso
+contra `pg_timezone_names`, formato de `horario_comercial` e hex de `cor_primaria` — cobre
+os **dois** caminhos de escrita, RPC do gestor e `UPDATE` direto do dono, provado por
+pgTAP); primeira vez que o projeto usa **Supabase Storage** — bucket público `logos`
+(sem SVG, decisão deliberada contra XSS de bucket público; 2 MB; PNG/JPEG/WebP), policies
+via `storage_pasta_e_empresa_gestor` (valida formato de UUID da pasta antes do cast, depois
+`tem_papel` da empresa daquela pasta). `carteira_compartilhada` fica de propósito fora da
+RPC — continua só do dono, via `.update()` direto (muda quem lê contato de quem).
+
+Frontend novo em `src/features/configuracoes/` (hooks, `logica/horarioComercial.ts` +
+`logica/fusos.ts` — primeira curadoria de fuso do produto, nenhuma tela antes deixava
+escolher —, `CampoHorarioComercial`, `CampoLogo`, `ConfiguracoesEmpresa.tsx`) +
+`src/app/paginas/Configuracoes.tsx` (índice, molde de `Marketing.tsx`, só um card nesta
+fatia). O item "Configurações" do menu do usuário (`AppShell.tsx`, desabilitado desde o
+1D-1) virou link ativo, visível só pra gestor/dono.
+
+**Achado ao caminho, corrigido antes de começar (não fazia parte do pedido original):**
+`supabase/tests/notificacoes.sql` falhava 2/10 desde 16/09 — bug real em
+`gerar_notificacoes_diarias`, não só de teste: a idempotência comparava `created_at`
+(relógio real, `default now()`) contra `v_hoje` (derivado de `p_agora`, o parâmetro que
+existe justamente pra permitir teste determinístico) — qualquer chamada com `p_agora`
+distante do relógio real duplicava a notificação. Corrigido em
+`supabase/migrations/20260925130243_corrige_idempotencia_notificacoes_diarias.sql`, gravando
+`created_at = p_agora` explicitamente — sem mudar nada em produção (onde `p_agora` já é
+`now()`). Detalhe completo nas duas migrations/`docs/configuracoes/SPEC-configuracoes-empresa.md`.
+
+`security-check` rodado — 0 crítico/alto/médio, 2 info aceitos (`logo_url` sem validação de
+formato, mesmo padrão já existente em `paginas_captura.imagem_url`; sem limite de tamanho
+em `nome`, consistente com o resto do schema).
+
+**`npm run db:reset && npm run db:types && npm run test:db` limpos — 291/291, primeira vez
+limpo desde 16/09** (os 269 anteriores + 22 novos de `configuracoes_empresa.sql`, e o fix
+de `notificacoes.sql` acima). `npm run lint && npm run typecheck && npm run test` (40/40
+Vitest, +8 novos de `horarioComercial.test.ts`) / `npm run build` limpos. **Testado no
+navegador pelo usuário — funcionou.**
+
 ## Estado atual — 2026-09-24 (2)
 
 **Simulação de chat WhatsApp (mock) implementada** — fora do capability map da Fase 3 (que fechou na entrada anterior), recorte isolado de PRD §6.7 (Inbox) sem conexão real com a Meta; Fase 2 continua formalmente adiada (ADR 0004). Pedido do usuário: simular um cenário de mensagens de WhatsApp mockadas, sem pretensão de conectar a API real. `supabase/migrations/20260924195210_mensagens_whatsapp.sql`.
