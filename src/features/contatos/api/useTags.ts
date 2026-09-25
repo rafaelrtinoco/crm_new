@@ -17,6 +17,7 @@ export function useTags(empresaId: string | null) {
         .from("tags")
         .select("id, nome, cor")
         .eq("empresa_id", empresaId as string)
+        .is("deleted_at", null)
         .order("nome", { ascending: true });
       if (error) throw error;
       return data ?? [];

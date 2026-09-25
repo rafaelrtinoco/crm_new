@@ -40,6 +40,11 @@ import { PaginaCapturaPublica } from "@/features/captura/paginas/PaginaCapturaPu
 import { RelatorioLeadsOrigem } from "@/features/relatorios/paginas/RelatorioLeadsOrigem";
 import { RelatorioDesempenhoCampanhas } from "@/features/relatorios/paginas/RelatorioDesempenhoCampanhas";
 import { ConfiguracoesEmpresa } from "@/features/configuracoes/paginas/ConfiguracoesEmpresa";
+import { ListaFunis } from "@/features/configuracoes/paginas/ListaFunis";
+import { ListaVencimentoTipos } from "@/features/configuracoes/paginas/ListaVencimentoTipos";
+import { ListaCamposPersonalizados } from "@/features/configuracoes/paginas/ListaCamposPersonalizados";
+import { ListaTags } from "@/features/configuracoes/paginas/ListaTags";
+import { ListaMotivosPerda } from "@/features/configuracoes/paginas/ListaMotivosPerda";
 
 export const router = createBrowserRouter([
   {
@@ -99,6 +104,14 @@ export const router = createBrowserRouter([
           { path: "/relatorios/campanhas", element: <RelatorioDesempenhoCampanhas /> },
           { path: "/configuracoes", element: <Configuracoes /> },
           { path: "/configuracoes/empresa", element: <ConfiguracoesEmpresa /> },
+          { path: "/configuracoes/funis", element: <ListaFunis /> },
+          { path: "/configuracoes/tipos-vencimento", element: <ListaVencimentoTipos /> },
+          {
+            path: "/configuracoes/campos-personalizados",
+            element: <ListaCamposPersonalizados />,
+          },
+          { path: "/configuracoes/tags", element: <ListaTags /> },
+          { path: "/configuracoes/motivos-perda", element: <ListaMotivosPerda /> },
         ],
       },
     ],

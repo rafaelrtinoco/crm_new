@@ -2,6 +2,65 @@
 
 Log de continuidade entre máquinas/sessões. Atualize a seção "Estado atual" a cada incremento entregue; não precisa reescrever o histórico abaixo dela.
 
+## Estado atual — 2026-09-25 (2)
+
+**Configurações da empresa — fatia 2 (Núcleo) implementada.** Continuação da fatia 1
+(Empresa, entrada anterior). CRUD pras seis entidades que só nasciam uma vez em
+`aplicar_template()`: funis + etapas, tipos de vencimento, campos personalizados, tags,
+motivos de perda. A RLS de escrita (`*_gestor_escreve`/`tags_membro`) já existia desde a
+fundação — o trabalho real foi a UI, mais dois ajustes de banco achados antes de qualquer
+tela existir pra expô-los: (1) quatro hooks de leitura (`useVencimentoTipos`,
+`useCamposPersonalizados`, `useTags`, `useMotivosPerda`) não filtravam `deleted_at` — sem
+exclusão exposta isso nunca importou; (2) as 6 constraints `unique(..., nome)` eram simples,
+não índices parciais — excluir e recriar com o mesmo nome falharia pra sempre. Corrigidos os
+dois antes de escrever qualquer tela.
+
+**Decisão fechada com o usuário via `AskUserQuestion`:** excluir é uma ação só, bloqueada
+quando o item está em uso (não duas ações "desativar"/"excluir"). `funis`/`vencimento_tipos`/
+`motivos_perda` têm uma coluna `ativo` que nenhuma tela jamais escreveu — fica de fora desta
+rodada, registrada como dívida técnica no spec, não como recurso "pausar sem excluir"
+ativado agora. O bloqueio de uso é reforçado por trigger no banco (não só no cliente): um
+por tabela referenciada por FK (funis/etapas/motivos_perda contra `negocios`,
+vencimento_tipos contra `vencimentos`, tags contra `contato_tags`+`contatos`).
+`campos_personalizados` fica de fora do bloqueio de propósito — o valor mora dentro de
+`contatos.campos`/`vencimentos.campos` (jsonb sem FK), checar exigiria varrer a tabela
+inteira sem índice.
+
+`supabase/migrations/20260925172529_configuracoes_nucleo.sql` (índices parciais + 5
+triggers) + `20260925173903_corrige_visibilidade_guarda_exclusao_tag.sql` (correção do
+`security-check`, ver abaixo). Frontend novo em `src/features/configuracoes/` — 5 páginas
+lista+Dialog (`ListaFunis` com um segundo Dialog aninhado pras etapas,
+`ListaVencimentoTipos`, `ListaCamposPersonalizados` com abas Contato/Vencimento,
+`ListaTags`, `ListaMotivosPerda`), RHF+Zod em todo formulário. 5 cards novos no índice de
+`/configuracoes`.
+
+**Achados ao caminho, corrigidos antes de fechar (detalhe completo em
+`docs/configuracoes/SPEC-configuracoes-nucleo.md`, seção "Correções aplicadas"):**
+1. Armadilha real do Postgres achada escrevendo o pgTAP —
+   `with novo as (insert ... returning id) update ... where id = (select id from novo)`
+   num statement só não funciona (`UPDATE 0` silencioso, o `UPDATE` usa o snapshot de antes
+   do `INSERT` da própria CTE). Isolado fora do pgTAP (`docker exec psql`) antes de confirmar
+   que não era bug de produto.
+2. Teste de isolamento testava a exceção errada — `UPDATE` sob RLS não lança exceção quando
+   a linha é filtrada, só afeta zero linhas (mesma classe de bug já documentada no spec do
+   chat WhatsApp mock).
+3. **`security-check` achou 1 médio, corrigido:** `impedir_exclusao_tag_em_uso()` não era
+   `security definer` — a contagem de uso rodava sujeita à RLS de `contatos` de quem
+   chamou. Só importa pra `tags` (única das 5 tabelas que qualquer membro, não só gestor+,
+   pode excluir) — um usuário comum sem carteira compartilhada só enxergava os próprios
+   contatos, então conseguia excluir uma tag ainda em uso no contato de um colega (RLS
+   subestimando o uso real). Corrigido tornando a função `security definer`, com teste
+   pgTAP de regressão provando o cenário exato.
+
+`npm run db:reset && npm run db:types && npm run test:db` limpos — **314/314** (313
+anteriores + 1 novo do teste de regressão do achado 3, acima do "22 novos" original porque
+os testes de bloqueio/reciclagem de nome somaram mais). `npm run lint && npm run typecheck && npm run test`
+(40/40 Vitest, sem novo — nenhuma lógica pura nova nesta fatia) / `npm run build` limpos.
+`security-check` rodado — 0 crítico/alto, 1 médio corrigido (ver achado 3). **Teste no
+navegador ainda pendente** — depende do usuário confirmar (criar/editar/excluir um item de
+cada uma das 5 telas; tentar excluir um item em uso e ver o bloqueio; excluir sem uso e
+recriar com o mesmo nome).
+
 ## Estado atual — 2026-09-25
 
 **Configurações da empresa — fatia 1 (Empresa) implementada.** Fora do capability map da

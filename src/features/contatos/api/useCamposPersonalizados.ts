@@ -24,6 +24,7 @@ export function useCamposPersonalizados(
         .select("id, chave, rotulo, tipo, opcoes, obrigatorio")
         .eq("empresa_id", empresaId as string)
         .eq("entidade", entidade)
+        .is("deleted_at", null)
         .order("ordem", { ascending: true });
       if (error) throw error;
       return (data ?? []).map((c) => ({

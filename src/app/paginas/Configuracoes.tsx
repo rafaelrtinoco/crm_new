@@ -1,5 +1,13 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Building2 } from "lucide-react";
+import {
+  ArrowRight,
+  Building2,
+  CalendarClock,
+  ListChecks,
+  Tag,
+  Workflow,
+  XCircle,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const ITENS = [
@@ -9,14 +17,42 @@ const ITENS = [
     href: "/configuracoes/empresa",
     Icone: Building2,
   },
+  {
+    titulo: "Funis",
+    descricao: "Funis de venda e suas etapas.",
+    href: "/configuracoes/funis",
+    Icone: Workflow,
+  },
+  {
+    titulo: "Tipos de vencimento",
+    descricao: "Categorias de vencimento e a recorrência padrão de cada uma.",
+    href: "/configuracoes/tipos-vencimento",
+    Icone: CalendarClock,
+  },
+  {
+    titulo: "Campos personalizados",
+    descricao: "Campos extras no formulário de contato ou de vencimento.",
+    href: "/configuracoes/campos-personalizados",
+    Icone: ListChecks,
+  },
+  {
+    titulo: "Tags",
+    descricao: "Etiquetas pra organizar contatos — qualquer membro edita.",
+    href: "/configuracoes/tags",
+    Icone: Tag,
+  },
+  {
+    titulo: "Motivos de perda",
+    descricao: "Motivos obrigatórios ao marcar um negócio como perdido.",
+    href: "/configuracoes/motivos-perda",
+    Icone: XCircle,
+  },
 ];
 
 /**
  * Página índice de "Configurações" (PRD §6.15) — molde de `Marketing.tsx`.
- * Só a fatia 1 (Empresa) implementada; funis/tipos de vencimento/campos
- * personalizados/motivos de perda (fatia 2) e equipe (fatia 3) ainda não
- * têm tela — sem link morto, mesma regra que o 1D-1 seguiu com Funis/
- * Tarefas antes de essas telas existirem (ver docs/configuracoes/SPEC-configuracoes-empresa.md).
+ * Fatias 1 (Empresa) e 2 (Núcleo) implementadas; equipe (fatia 3) ainda não
+ * tem tela — bloqueada por um furo de RLS, ver docs/configuracoes/SPEC-configuracoes-empresa.md.
  */
 export function Configuracoes() {
   return (

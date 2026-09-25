@@ -67,6 +67,7 @@ export function useMotivosPerda(empresaId: string | null) {
         .select("id, nome")
         .eq("empresa_id", empresaId as string)
         .eq("ativo", true)
+        .is("deleted_at", null)
         .order("nome", { ascending: true });
       if (error) throw error;
       return data ?? [];
