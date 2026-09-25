@@ -144,6 +144,23 @@ select is(
 -- ---------------------------------------------------------------------
 reset role;
 
+-- Tarefa atrasada de Carla, com data absoluta fixada em relação ao
+-- `p_agora` congelado abaixo (não a tarefa do seed, que usa
+-- `current_date - interval '1 day'` — relativa ao dia real do `db:reset`,
+-- então só ficava "atrasada" quando a sessão rodava em 2026-09-15; em
+-- qualquer outro dia a tarefa nascia vencendo DEPOIS do `p_agora` fixo
+-- abaixo e o follow-up vencido nunca era gerado. Teste próprio, sem
+-- depender do seed, pra não recriar essa armadilha de novo).
+insert into public.tarefas (empresa_id, contato_id, tipo, titulo, data_vencimento, responsavel_id)
+values (
+  'a0000000-0000-0000-0000-000000000001',
+  'a0000000-0000-0000-0000-000000000301',
+  'whatsapp',
+  'Confirmar renovação do seguro de vida (teste)',
+  '2026-09-14',
+  'a0000000-0000-0000-0000-000000000103'
+);
+
 do $$
 begin
   perform public.gerar_notificacoes_diarias('2026-09-15 11:00:00+00'::timestamptz);
@@ -159,8 +176,9 @@ select ok(
   'resumo diário gerado pra Carla no horário local configurado da empresa'
 );
 
--- Seed tem uma tarefa atrasada de Carla ("Confirmar renovação do seguro
--- de vida", vence ontem, sem concluida_em) — deve gerar follow-up vencido.
+-- Tarefa atrasada inserida acima ("Confirmar renovação do seguro de
+-- vida (teste)", vence 2026-09-14, sem concluida_em) — deve gerar
+-- follow-up vencido.
 select ok(
   exists (
     select 1 from public.notificacoes
