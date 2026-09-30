@@ -2,6 +2,65 @@
 
 Log de continuidade entre máquinas/sessões. Atualize a seção "Estado atual" a cada incremento entregue; não precisa reescrever o histórico abaixo dela.
 
+## Estado atual — 2026-09-30
+
+**Configurações da empresa — fatia 3 (Equipe) implementada. Fecha o módulo Configurações**
+(fatias 1 Empresa, 2 Núcleo, 3 Equipe — as três implementadas). Gestor/dono agora trocam o
+papel de um membro (`usuario`/`gestor`/`dono`) e removem membro pela interface — antes só
+existia via SQL direto. Essa fatia ficou de fora das duas anteriores de propósito:
+`empresa_membros_gestor_escreve` é `FOR ALL` pra qualquer gestor, sem diferenciar o papel
+do alvo — sem guarda nova, a tela deixaria um gestor promover a si mesmo a dono, ou
+demover/remover o dono atual.
+
+**Efeito colateral:** `/convidar` (`Convidar.tsx`, funcionando desde o 1B) nunca teve
+nenhum link de navegação até ele — achado procurando onde pôr o botão "Convidar" da tela
+nova. A tela de Equipe virou o lugar de onde se chega lá.
+
+**Achado real antes de codar:** `aceitar_convite` tinha `on conflict (empresa_id,
+usuario_id) do nothing` — nunca importou porque nada jamais setava `deleted_at` em
+`empresa_membros`. Assim que "remover membro" passou a existir, reconvidar alguém removido
+e aceitar o convite não reativava a linha (conflito ignorado silenciosamente, sem erro,
+sem acesso). Corrigido pra `do update` (`create or replace`, migration nova, não editou
+`20260914132658_onboarding.sql`).
+
+**Diferença de arquitetura em relação à fatia 2:** lá, converti `unique(..., nome)` de 6
+tabelas em índices únicos parciais pra permitir excluir-e-recriar. **Não dá pra fazer o
+mesmo em `empresa_membros`** — `contatos.responsavel_id` e outras 5 colunas referenciam
+`empresa_membros (empresa_id, usuario_id)` via FK composta, e Postgres exige que o alvo de
+uma FK seja um índice/constraint **não-parcial**. Remover membro continua soft delete
+puro; reconvidar reativa a mesma linha (é o achado acima).
+
+`supabase/migrations/20260930175537_configuracoes_equipe.sql` — duas camadas de guarda,
+redesenhadas depois de encontrar (revisando o próprio primeiro rascunho) que uma guarda só
+em `empresa_membros` bloquearia até o aceite legítimo de um convite de dono (`aceitar_convite`
+roda como o próprio convidado, que ainda não é dono): (1) trigger em `convites` decide
+"quem pode virar dono" na CRIAÇÃO do convite — é ali que existe um ator de verdade; (2)
+trigger em `empresa_membros` protege contra escrita direta (bypassando convite), usando uma
+flag local à transação (`app.aceitando_convite`) pra não se autobloquear quando a camada 1
+já autorizou. Garante também que a empresa nunca fique com zero donos.
+
+Frontend novo: `src/features/configuracoes/api/useEquipeConfig.ts` + `paginas/ListaEquipe.tsx`
+(tabela, seletor de papel, remover, botão "Convidar" levando a `/convidar`), card "Equipe"
+no índice de `/configuracoes`. Sem RPC nova — CRUD direto contra a RLS
+`empresa_membros_gestor_escreve` que já existia.
+
+**`security-check` achou 1 crítico + 1 médio, os dois corrigidos antes de fechar** (detalhe
+completo em `docs/configuracoes/SPEC-configuracoes-equipe.md`, seção "Correções
+aplicadas"): a guarda de `convites` só cobria `INSERT` — um gestor conseguia criar um
+convite `papel='usuario'` (permitido) e depois fazer `UPDATE` pra `'dono'` na mesma linha,
+sem trigger nenhum barrando; quando aceito, a flag de transação deixaria passar achando que
+já estava autorizado. Corrigido cobrindo `UPDATE` também — e corrigindo, na sequência, o
+efeito colateral óbvio (cobrir `UPDATE` sem cuidado bloquearia até cancelar um convite de
+dono já existente).
+
+`npm run db:reset && npm run db:types && npm run test:db` limpos — **334/334** (os 314
+anteriores + 20 novos de `configuracoes_equipe.sql`). `npm run lint && npm run typecheck && npm run test`
+(40/40 Vitest, sem novo) / `npm run build` limpos. **Teste no navegador ainda pendente** —
+depende do usuário confirmar (como gestor: tentar promover alguém a dono e remover o dono,
+ambos devem falhar/nem aparecer; promover/demover usuário↔gestor normalmente. Como dono:
+promover um gestor a dono, depois se demover/remover. "Equipe" some do menu pra usuário
+comum; "Convidar" leva a `/convidar`).
+
 ## Estado atual — 2026-09-25 (2)
 
 **Configurações da empresa — fatia 2 (Núcleo) implementada.** Continuação da fatia 1

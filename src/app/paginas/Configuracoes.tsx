@@ -5,6 +5,7 @@ import {
   CalendarClock,
   ListChecks,
   Tag,
+  Users,
   Workflow,
   XCircle,
 } from "lucide-react";
@@ -47,12 +48,17 @@ const ITENS = [
     href: "/configuracoes/motivos-perda",
     Icone: XCircle,
   },
+  {
+    titulo: "Equipe",
+    descricao: "Papel de cada membro, convites e remoção.",
+    href: "/configuracoes/equipe",
+    Icone: Users,
+  },
 ];
 
 /**
  * Página índice de "Configurações" (PRD §6.15) — molde de `Marketing.tsx`.
- * Fatias 1 (Empresa) e 2 (Núcleo) implementadas; equipe (fatia 3) ainda não
- * tem tela — bloqueada por um furo de RLS, ver docs/configuracoes/SPEC-configuracoes-empresa.md.
+ * As três fatias (Empresa, Núcleo, Equipe) estão implementadas — fecha o módulo.
  */
 export function Configuracoes() {
   return (

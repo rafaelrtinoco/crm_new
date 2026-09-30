@@ -45,6 +45,7 @@ import { ListaVencimentoTipos } from "@/features/configuracoes/paginas/ListaVenc
 import { ListaCamposPersonalizados } from "@/features/configuracoes/paginas/ListaCamposPersonalizados";
 import { ListaTags } from "@/features/configuracoes/paginas/ListaTags";
 import { ListaMotivosPerda } from "@/features/configuracoes/paginas/ListaMotivosPerda";
+import { ListaEquipe } from "@/features/configuracoes/paginas/ListaEquipe";
 
 export const router = createBrowserRouter([
   {
@@ -112,6 +113,7 @@ export const router = createBrowserRouter([
           },
           { path: "/configuracoes/tags", element: <ListaTags /> },
           { path: "/configuracoes/motivos-perda", element: <ListaMotivosPerda /> },
+          { path: "/configuracoes/equipe", element: <ListaEquipe /> },
         ],
       },
     ],
