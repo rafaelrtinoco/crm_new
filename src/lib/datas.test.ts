@@ -1,5 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { formatarDataHoraFuso, gradeCalendario } from "./datas";
+import { formatarDataHoraFuso, gradeCalendario, subtrairDias } from "./datas";
+
+describe("subtrairDias", () => {
+  it("subtrai dias dentro do mesmo mês", () => {
+    expect(subtrairDias("2026-09-30", 5)).toBe("2026-09-25");
+  });
+
+  it("atravessa virada de mês e de ano", () => {
+    expect(subtrairDias("2026-01-05", 10)).toBe("2025-12-26");
+  });
+
+  it("atravessa ano bissexto", () => {
+    expect(subtrairDias("2028-03-01", 1)).toBe("2028-02-29");
+  });
+});
 
 describe("gradeCalendario", () => {
   it("começa no domingo e termina no sábado, com múltiplo de 7 dias", () => {

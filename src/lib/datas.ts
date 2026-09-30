@@ -44,6 +44,13 @@ export function somarPeriodo(data: string, unidade: "mes" | "ano", quantidade: n
   return dataUTC.toISOString().slice(0, 10);
 }
 
+/** Subtrai dias de uma data de calendário ("YYYY-MM-DD"), devolvendo outra data de calendário. */
+export function subtrairDias(data: string, dias: number): string {
+  const [ano, mes, dia] = data.split("-").map(Number) as [number, number, number];
+  const dataUTC = new Date(Date.UTC(ano, mes - 1, dia) - dias * 24 * 60 * 60 * 1000);
+  return dataUTC.toISOString().slice(0, 10);
+}
+
 /** Diferença em dias inteiros entre duas datas de calendário ("YYYY-MM-DD"). */
 export function diferencaEmDias(dataA: string, dataB: string): number {
   const msPorDia = 24 * 60 * 60 * 1000;

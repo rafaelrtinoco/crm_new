@@ -11,6 +11,7 @@ import { ItemTarefa } from "@/features/tarefas/components/ItemTarefa";
 import { useExcluirTarefa } from "@/features/tarefas/api/useMutacoesTarefa";
 import { useTarefas, type Tarefa } from "@/features/tarefas/api/useTarefas";
 import { BarraPrimeirosPassos } from "@/features/hoje/components/BarraPrimeirosPassos";
+import { CardsCarteira } from "@/features/hoje/components/CardsCarteira";
 import { CardsResumo } from "@/features/hoje/components/CardsResumo";
 import { GraficoResumo } from "@/features/hoje/components/GraficoResumo";
 import { ItemAcao, SecaoAcoesHoje } from "@/features/hoje/components/SecaoAcoesHoje";
@@ -23,6 +24,7 @@ import {
   useVencimentosPendentesHoje,
   useVencimentosPorSemana,
 } from "@/features/hoje/api/useResumoHoje";
+import { useResumoCarteira } from "@/features/hoje/api/useResumoCarteira";
 
 function linkWhatsApp(telefone: string) {
   return `https://wa.me/55${telefone.replace(/\D/g, "")}`;
@@ -50,6 +52,7 @@ export function Inicio() {
   const { data: resumo } = useResumoNumeros(empresaId, hoje);
   const { data: vencimentosPorSemana } = useVencimentosPorSemana(empresaId, hoje);
   const { data: primeirosPassos } = usePrimeirosPassos(empresaId);
+  const { data: resumoCarteira } = useResumoCarteira(empresaId, hoje);
 
   const excluirTarefa = useExcluirTarefa();
   const [dialogoTarefaAberto, setDialogoTarefaAberto] = useState(false);
@@ -87,6 +90,8 @@ export function Inicio() {
       {resumo && (
         <GraficoResumo resumo={resumo} vencimentosPorSemana={vencimentosPorSemana ?? []} />
       )}
+
+      {resumoCarteira && <CardsCarteira resumo={resumoCarteira} />}
 
       {primeirosPassos && <BarraPrimeirosPassos passos={primeirosPassos} />}
 

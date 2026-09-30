@@ -18,6 +18,14 @@ export interface FiltrosContatos {
   temperatura?: string;
   responsavelId?: string;
   tagId?: string;
+  /** Criado a partir desta data ("YYYY-MM-DD") — cards da tela "Hoje" ("Novos clientes"). */
+  criadoDesde?: string;
+  /** Sem contato registrado, ou registrado antes desta data — card "Clientes p/ reativar". */
+  semContatoDesde?: string;
+  /** Sem nenhuma tag — card "Clientes sem tag". */
+  semTag?: boolean;
+  /** Sem nenhum negócio com status "aberto" — card "Sem negócio aberto". */
+  semNegocioAberto?: boolean;
 }
 
 /** Lista de contatos da empresa atual, com os filtros do PRD §6.3. */
@@ -40,6 +48,32 @@ export function useContatos(empresaId: string | null, filtros: FiltrosContatos =
         if (idsComTag.length === 0) return [];
       }
 
+      // "Sem tag"/"sem negócio aberto" são o oposto de um `in` — mesma
+      // resolução em duas etapas do filtro de tag acima (anti-join que
+      // o supabase-js não expressa num único `select`), só que
+      // excluindo os ids em vez de incluir.
+      let idsSemTag: string[] | null = null;
+      if (filtros.semTag) {
+        const { data: vinculos, error: erroSemTag } = await supabase
+          .from("contato_tags")
+          .select("contato_id")
+          .eq("empresa_id", empresaId as string);
+        if (erroSemTag) throw erroSemTag;
+        idsSemTag = [...new Set((vinculos ?? []).map((v) => v.contato_id))];
+      }
+
+      let idsComNegocioAberto: string[] | null = null;
+      if (filtros.semNegocioAberto) {
+        const { data: negocios, error: erroNegocios } = await supabase
+          .from("negocios")
+          .select("contato_id")
+          .eq("empresa_id", empresaId as string)
+          .eq("status", "aberto")
+          .is("deleted_at", null);
+        if (erroNegocios) throw erroNegocios;
+        idsComNegocioAberto = [...new Set((negocios ?? []).map((n) => n.contato_id))];
+      }
+
       let query = supabase
         .from("contatos")
         .select("id, nome, status, temperatura, telefone, email, responsavel_id, ultimo_contato_em")
@@ -51,6 +85,17 @@ export function useContatos(empresaId: string | null, filtros: FiltrosContatos =
       if (filtros.temperatura) query = query.eq("temperatura", filtros.temperatura);
       if (filtros.responsavelId) query = query.eq("responsavel_id", filtros.responsavelId);
       if (idsComTag) query = query.in("id", idsComTag);
+      if (filtros.criadoDesde) query = query.gte("created_at", `${filtros.criadoDesde}T00:00:00Z`);
+      if (filtros.semContatoDesde) {
+        query = query.or(
+          `ultimo_contato_em.is.null,ultimo_contato_em.lt.${filtros.semContatoDesde}T00:00:00Z`,
+        );
+      }
+      if (idsSemTag && idsSemTag.length > 0)
+        query = query.not("id", "in", `(${idsSemTag.join(",")})`);
+      if (idsComNegocioAberto && idsComNegocioAberto.length > 0) {
+        query = query.not("id", "in", `(${idsComNegocioAberto.join(",")})`);
+      }
       if (filtros.busca) {
         const termo = `%${filtros.busca}%`;
         query = query.or(

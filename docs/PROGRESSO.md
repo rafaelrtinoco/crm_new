@@ -2,6 +2,37 @@
 
 Log de continuidade entre máquinas/sessões. Atualize a seção "Estado atual" a cada incremento entregue; não precisa reescrever o histórico abaixo dela.
 
+## Estado atual — 2026-09-30 (2)
+
+**Cards de carteira de clientes na tela "Hoje" — pedido direto do usuário, sem item de PRD
+próprio.** Seis cards novos abaixo dos cards existentes: Clientes ativos, Clientes
+inativos, Novos clientes (mês), Clientes p/ reativar, Clientes sem tag, Sem negócio
+aberto. Todos clicáveis — levam pra `/contatos` já filtrado.
+
+**Sem migration, sem tabela nova.** Reaproveita `contatos.status`/`ultimo_contato_em`,
+`contato_tags` e `negocios.status` — tudo já existente. `src/features/hoje/api/useResumoCarteira.ts` +
+`components/CardsCarteira.tsx`. "Sem tag"/"sem negócio aberto" são anti-join (contato sem
+nenhuma linha relacionada) — resolvidos em duas etapas no cliente (busca os ids do lado
+relacionado, filtra por fora), mesmo padrão que o filtro de tag de `useContatos.ts` já
+usava antes desta sessão.
+
+**Interpretações que são julgamento meu, não regra do PRD** (usuário pode querer ajustar):
+"Clientes p/ reativar" = sem contato há mais de 90 dias (mesmo padrão citado no PRD §6.11
+pro "termômetro de relacionamento", que em si não está implementado); "Sem negócio aberto"
+= proxy de oportunidade de prospecção dentro da carteira.
+
+**Extensão pra deixar os cards clicáveis:** `useContatos.ts`/`ListaContatos.tsx` ganharam 4
+filtros novos (`criadoDesde`, `semContatoDesde`, `semTag`, `semNegocioAberto`), acessíveis
+só via `?carteira=novos|reativar|sem-tag|sem-negocio` na URL (sem controle próprio na barra
+de filtros — só um badge com "×" pra limpar). `status=cliente|inativo` reaproveita o
+dropdown de status que já existia, só passou a ler o valor inicial da URL
+(`useSearchParams`). `subtrairDias()` nova em `src/lib/datas.ts` (com Vitest) — não existia
+um jeito de "voltar N dias" numa data de calendário antes.
+
+`npm run lint && npm run typecheck && npm run test` (43/43 Vitest, +3 de `subtrairDias`) /
+`npm run build` limpos. Sem mudança de RLS/banco — não precisou de `security-check` nem
+`test:db`. **Teste no navegador ainda pendente.**
+
 ## Estado atual — 2026-09-30
 
 **Configurações da empresa — fatia 3 (Equipe) implementada. Fecha o módulo Configurações**
@@ -55,11 +86,8 @@ dono já existente).
 
 `npm run db:reset && npm run db:types && npm run test:db` limpos — **334/334** (os 314
 anteriores + 20 novos de `configuracoes_equipe.sql`). `npm run lint && npm run typecheck && npm run test`
-(40/40 Vitest, sem novo) / `npm run build` limpos. **Teste no navegador ainda pendente** —
-depende do usuário confirmar (como gestor: tentar promover alguém a dono e remover o dono,
-ambos devem falhar/nem aparecer; promover/demover usuário↔gestor normalmente. Como dono:
-promover um gestor a dono, depois se demover/remover. "Equipe" some do menu pra usuário
-comum; "Convidar" leva a `/convidar`).
+(40/40 Vitest, sem novo) / `npm run build` limpos. **Testado no navegador pelo usuário —
+funcionou.**
 
 ## Estado atual — 2026-09-25 (2)
 

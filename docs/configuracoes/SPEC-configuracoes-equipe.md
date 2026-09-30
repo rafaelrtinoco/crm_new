@@ -177,4 +177,4 @@ rotineiras desta fatia — soft delete sem bloqueio de uso, sem auto-edição, m
      já era `dono` de verdade — mesma classe do achado 2 acima, mesmo remédio (só dispara
      em transição de verdade pro papel `dono`).
 
-`npm run db:reset && npm run db:types && npm run test:db` (334/334) / `npm run lint && npm run typecheck && npm run test` (40/40 Vitest, sem novo — nenhuma lógica pura nesta fatia) / `npm run build` confirmados limpos. **Teste no navegador ainda pendente.**
+`npm run db:reset && npm run db:types && npm run test:db` (334/334) / `npm run lint && npm run typecheck && npm run test` (40/40 Vitest, sem novo — nenhuma lógica pura nesta fatia) / `npm run build` confirmados limpos. **Testado no navegador pelo usuário — funcionou.**

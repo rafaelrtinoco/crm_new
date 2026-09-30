@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Plus, Upload, Users } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { Plus, Upload, Users, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -20,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatarDataBR } from "@/lib/datas";
+import { formatarDataBR, hojeNoFuso, subtrairDias } from "@/lib/datas";
 import { formatarTelefone } from "@/lib/formatadores";
 import { useVocabulario } from "@/lib/vocabulario";
 import { useEmpresaAtual } from "@/features/onboarding/api/useEmpresas";
@@ -39,24 +39,66 @@ const rotuloTemperatura: Record<string, string> = {
 };
 
 const SEM_FILTRO = "todos";
+const DIAS_PARA_REATIVAR = 90;
+
+/**
+ * Filtros "de carteira" que só chegam aqui via link dos cards da tela
+ * "Hoje" (`?carteira=...`) — não têm controle próprio na barra de
+ * filtros, só um indicador com botão de limpar. Ver
+ * `src/features/hoje/components/CardsCarteira.tsx`.
+ */
+const ROTULO_CARTEIRA: Record<string, string> = {
+  novos: "Novos clientes este mês",
+  reativar: `Sem contato há mais de ${DIAS_PARA_REATIVAR} dias`,
+  "sem-tag": "Sem nenhuma tag",
+  "sem-negocio": "Sem negócio aberto",
+};
 
 export function ListaContatos() {
   const { atual } = useEmpresaAtual();
   const vocabulario = useVocabulario();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [busca, setBusca] = useState("");
-  const [status, setStatus] = useState(SEM_FILTRO);
+  const [status, setStatus] = useState(searchParams.get("status") ?? SEM_FILTRO);
   const [temperatura, setTemperatura] = useState(SEM_FILTRO);
   const [tagId, setTagId] = useState(SEM_FILTRO);
+
+  const carteira = searchParams.get("carteira");
+  const hoje = useMemo(() => hojeNoFuso(atual?.fuso ?? "America/Sao_Paulo"), [atual?.fuso]);
+
+  const filtrosCarteira: FiltrosContatos = useMemo(() => {
+    switch (carteira) {
+      case "novos":
+        return { criadoDesde: `${hoje.slice(0, 7)}-01` };
+      case "reativar":
+        return { semContatoDesde: subtrairDias(hoje, DIAS_PARA_REATIVAR) };
+      case "sem-tag":
+        return { semTag: true };
+      case "sem-negocio":
+        return { semNegocioAberto: true };
+      default:
+        return {};
+    }
+  }, [carteira, hoje]);
 
   const filtros: FiltrosContatos = {
     busca: busca || undefined,
     status: status === SEM_FILTRO ? undefined : status,
     temperatura: temperatura === SEM_FILTRO ? undefined : temperatura,
     tagId: tagId === SEM_FILTRO ? undefined : tagId,
+    ...filtrosCarteira,
   };
 
   const { data: contatos, isLoading } = useContatos(atual?.empresaId ?? null, filtros);
   const { data: tags } = useTags(atual?.empresaId ?? null);
+
+  function limparFiltroCarteira() {
+    setSearchParams((parametrosAtuais) => {
+      const novo = new URLSearchParams(parametrosAtuais);
+      novo.delete("carteira");
+      return novo;
+    });
+  }
 
   return (
     <main className="mx-auto max-w-7xl space-y-4 p-4">
@@ -77,6 +119,22 @@ export function ListaContatos() {
           </Button>
         </div>
       </div>
+
+      {carteira && ROTULO_CARTEIRA[carteira] && (
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="gap-1.5">
+            {ROTULO_CARTEIRA[carteira]}
+            <button
+              type="button"
+              onClick={limparFiltroCarteira}
+              className="rounded-full hover:bg-muted-foreground/20"
+              aria-label="Limpar filtro"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </Badge>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-2">
         <Input
